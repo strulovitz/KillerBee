@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}{{ swarm.name }} — KillerBee{% endblock %}
+{% block content %}
+<div class="flex-between mb-2">
+  <div>
+    <h1>{{ swarm.name }}</h1>
+    <p class="text-muted">{{ swarm.description or 'No description' }}</p>
+  </div>
+  <div class="flex-gap">
+    {% if current_user.is_authenticated and current_user.role == 'queen' and not swarm.is_full %}
+      <a href="{{ url_for('join_swarm', swarm_id=swarm.id) }}" class="btn btn-gold">Join This Swarm</a>
+    {% endif %}
+    {% if current_user.is_authenticated and current_user.role == 'beekeeper' %}
+      <a href="{{ url_for('submit_job', swarm_id=swarm.id) }}" class="btn btn-red">Submit Task</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-4">
+  <div class="stat-box">
+    <div class="stat-val">{{ swarm.raja_model }}</div>
+    <div class="stat-lbl">Raja Model</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">{{ members|length }}</div>
+    <div class="stat-lbl">Queens</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">{{ swarm.total_workers }}</div>
+    <div class="stat-lbl">Total Workers</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">{{ swarm.total_jobs_completed }}</div>
+    <div class="stat-lbl">Jobs Completed</div>
+  </div>
+</div>
+
+<div class="card mt-2">
+  <div class="card-header">Hierarchy</div>
+  <div class="hierarchy-visual">
+    <span class="raja">RajaBee</span> ({{ swarm.raja_model }}) &mdash; {{ swarm.raja.username }}<br>
+    {% for member in members %}
+    &nbsp;&nbsp;|<br>
+    &nbsp;&nbsp;+-- <span class="queen">{{ member.member_type|capitalize }}</span> @ <code>{{ member.endpoint }}</code>
+    {%- if member.model_name %} ({{ member.model_name }}){% endif %}
+    &mdash; <span class="worker">{{ member.worker_count }} workers</span>
+    {%- if member.status != 'active' %} <span style="color:var(--red)">[{{ member.status }}]</span>{% endif %}<br>
+    {% endfor %}
+    {% if not members %}
+    &nbsp;&nbsp;(no Queens have joined yet)<br>
+    {% endif %}
+  </div>
+</div>
+
+{% if members %}
+<div class="card">
+  <div class="card-header">Members</div>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Type</th>
+        <th>Endpoint</th>
+        <th>Model</th>
+        <th>Workers</th>
+        <th>Avg Response</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for member in members %}
+      <tr>
+        <td>{{ member.user.username }}</td>
+        <td><span class="badge badge-gold">{{ member.member_type }}</span></td>
+        <td><code>{{ member.endpoint }}</code></td>
+        <td>{{ member.model_name or '—' }}</td>
+        <td>{{ member.worker_count }}</td>
+        <td>{% if member.avg_response_time %}{{ "%.1f"|format(member.avg_response_time) }}s{% else %}—{% endif %}</td>
+        <td>
+          {% if member.status == 'active' %}
+            <span class="badge badge-green">Active</span>
+          {% else %}
+            <span class="badge badge-red">{{ member.status }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if recent_jobs %}
+<div class="card">
+  <div class="card-header">Recent Jobs</div>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Task</th>
+        <th>Status</th>
+        <th>Time</th>
+        <th>Depth</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in recent_jobs %}
+      <tr>
+        <td>#{{ job.id }}</td>
+        <td>{{ job.task[:50] }}{% if job.task|length > 50 %}...{% endif %}</td>
+        <td>
+          {% if job.status == 'completed' %}
+            <span class="badge badge-green">Completed</span>
+          {% elif job.status == 'failed' %}
+            <span class="badge badge-red">Failed</span>
+          {% else %}
+            <span class="badge badge-gold">{{ job.status }}</span>
+          {% endif %}
+        </td>
+        <td>{% if job.total_time %}{{ "%.1f"|format(job.total_time) }}s{% else %}—{% endif %}</td>
+        <td>{% if job.depth_used %}{{ job.depth_used }} levels{% else %}—{% endif %}</td>
+        <td><a href="{{ url_for('view_job', job_id=job.id) }}" class="btn btn-red btn-sm">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

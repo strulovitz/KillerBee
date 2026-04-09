@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Queen Dashboard — KillerBee{% endblock %}
+{% block content %}
+<h1 class="mb-2">Queen Bee Dashboard</h1>
+
+{% if memberships %}
+<div class="card">
+  <div class="card-header">Your Swarm Memberships</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Swarm</th>
+        <th>Your Endpoint</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in memberships %}
+      <tr>
+        <td><strong>{{ m.swarm.name }}</strong></td>
+        <td><code>{{ m.endpoint }}</code></td>
+        <td>
+          {% if m.status == 'active' %}
+            <span class="badge badge-green">Active</span>
+          {% else %}
+            <span class="badge badge-red">{{ m.status }}</span>
+          {% endif %}
+        </td>
+        <td><a href="{{ url_for('view_swarm', swarm_id=m.swarm.id) }}" class="btn btn-red btn-sm">View Swarm</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header">Available Swarms to Join</div>
+  {% if available_swarms %}
+  <table>
+    <thead>
+      <tr>
+        <th>Swarm</th>
+        <th>Raja Model</th>
+        <th>Queens</th>
+        <th>Specialty</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for swarm in available_swarms %}
+      <tr>
+        <td><strong>{{ swarm.name }}</strong></td>
+        <td>{{ swarm.raja_model }}</td>
+        <td>{{ swarm.queen_count }} / {{ swarm.max_queens }}</td>
+        <td><span class="badge badge-gold">{{ swarm.specialty }}</span></td>
+        <td>
+          {% if not swarm.is_full %}
+            <a href="{{ url_for('join_swarm', swarm_id=swarm.id) }}" class="btn btn-gold btn-sm">Join</a>
+          {% else %}
+            <span class="badge badge-red">Full</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted">No swarms available yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

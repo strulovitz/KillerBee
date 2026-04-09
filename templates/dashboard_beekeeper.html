@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Beekeeper Dashboard — KillerBee{% endblock %}
+{% block content %}
+<h1 class="mb-2">Beekeeper Dashboard</h1>
+
+<div class="card">
+  <div class="card-header">Submit a Task</div>
+  <p class="text-muted mb-2">Choose a Swarm to send your task to:</p>
+  <div class="grid-3">
+    {% for swarm in swarms %}
+    <div class="card" style="border-top: 3px solid var(--red)">
+      <h3>{{ swarm.name }}</h3>
+      <p class="text-muted">{{ swarm.queen_count }} Queens &bull; {{ swarm.total_workers }} Workers &bull; {{ swarm.specialty }}</p>
+      <a href="{{ url_for('submit_job', swarm_id=swarm.id) }}" class="btn btn-red btn-sm mt-1">Submit Task</a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if jobs %}
+<div class="card">
+  <div class="card-header">Your Jobs</div>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Swarm</th>
+        <th>Task</th>
+        <th>Status</th>
+        <th>Time</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in jobs %}
+      <tr>
+        <td>#{{ job.id }}</td>
+        <td>{{ job.swarm.name }}</td>
+        <td>{{ job.task[:60] }}{% if job.task|length > 60 %}...{% endif %}</td>
+        <td>
+          {% if job.status == 'completed' %}
+            <span class="badge badge-green">Completed</span>
+          {% elif job.status == 'failed' %}
+            <span class="badge badge-red">Failed</span>
+          {% else %}
+            <span class="badge badge-gold">{{ job.status }}</span>
+          {% endif %}
+        </td>
+        <td>{% if job.total_time %}{{ "%.1f"|format(job.total_time) }}s{% else %}&mdash;{% endif %}</td>
+        <td><a href="{{ url_for('view_job', job_id=job.id) }}" class="btn btn-red btn-sm">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

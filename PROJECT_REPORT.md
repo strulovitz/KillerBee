@@ -117,10 +117,23 @@ The next evolution of the distributed AI system. The original project (Honeycomb
 - **New files:** raja_http_wrapper.py (wraps RajaBee as HTTP), demo_n_level.py (3-level demo)
 - **This proves UNLIMITED nesting depth. Stack as many levels as your hardware can handle.**
 
+## What Has Been Done (continued, 2026-04-09)
+- [x] **KillerBee website v1 BUILT** (2026-04-09, Laptop Windows)
+  - Flask app with SQLite, Flask-Login, Flask-WTF, CSRF protection
+  - Models: User (raja/queen/worker/beekeeper), Swarm, SwarmMember, SwarmJob, JobComponent
+  - Full auth (register/login/logout), role-based dashboards
+  - Swarm CRUD: create, view, join, submit jobs
+  - API endpoints: /api/swarm/<id>/members, /api/swarm/<id>/heartbeat, /api/job/<id>/update
+  - Red/black visual theme (darker than BeehiveOfAI's gold/brown)
+  - Hierarchy visualization (ASCII tree showing RajaBee → Queens → Workers)
+  - Seed data script with demo users and Alpha Swarm
+  - Runs on port 8877
+
 ## What Needs To Be Done Next
 1. Phase 2: Test across real LAN (RajaBee on Laptop, Queens on Desktop)
-2. KillerBee website (server for managing hierarchy)
+2. Connect KillerBee website to GiantHoneyBee client (RajaBee reads members from API, reports job results back)
 3. Mad Honey book — start writing
 4. Test with even more Queens (5, 10+)
 5. ~~Test N-level (RajaBee wrapped as HTTP endpoint, another RajaBee on top)~~ **DONE** (2026-04-09)
 6. ~~Test with 3+ Queens~~ **DONE** (2026-04-09)
+7. ~~KillerBee website~~ **DONE v1** (2026-04-09)

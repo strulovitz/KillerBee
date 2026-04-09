@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Raja Dashboard — KillerBee{% endblock %}
+{% block content %}
+<div class="flex-between mb-2">
+  <h1>Raja Bee Dashboard</h1>
+  <a href="{{ url_for('create_swarm') }}" class="btn btn-red">Create New Swarm</a>
+</div>
+
+{% if swarms %}
+<div class="card">
+  <div class="card-header">Your Swarms</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Swarm Name</th>
+        <th>Model</th>
+        <th>Queens</th>
+        <th>Total Workers</th>
+        <th>Jobs Done</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for swarm in swarms %}
+      <tr>
+        <td><strong>{{ swarm.name }}</strong></td>
+        <td>{{ swarm.raja_model }}</td>
+        <td>{{ swarm.queen_count }} / {{ swarm.max_queens }}</td>
+        <td>{{ swarm.total_workers }}</td>
+        <td>{{ swarm.total_jobs_completed }}</td>
+        <td>
+          {% if swarm.status == 'active' %}
+            <span class="badge badge-green">Active</span>
+          {% else %}
+            <span class="badge badge-red">{{ swarm.status }}</span>
+          {% endif %}
+        </td>
+        <td><a href="{{ url_for('view_swarm', swarm_id=swarm.id) }}" class="btn btn-red btn-sm">Manage</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card text-center" style="padding:3rem">
+  <h2>No Swarms Yet</h2>
+  <p class="text-muted mt-1">Create your first Swarm to start commanding hierarchical AI hives.</p>
+  <a href="{{ url_for('create_swarm') }}" class="btn btn-red btn-lg mt-2">Create Your First Swarm</a>
+</div>
+{% endif %}
+{% endblock %}

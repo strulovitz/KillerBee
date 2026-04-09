@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Submit Task to {{ swarm.name }} — KillerBee{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px;margin:2rem auto">
+  <div class="card-header">Submit Task to {{ swarm.name }}</div>
+  <p class="text-muted mb-2">
+    This Swarm has {{ swarm.queen_count }} Queens and {{ swarm.total_workers }} total Workers.
+    The RajaBee will split your task across the hierarchy and combine the results.
+  </p>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      <label>{{ form.task.label.text }}</label>
+      {{ form.task(class="form-control", placeholder="Describe a complex task that benefits from being split across multiple teams...") }}
+      {% for error in form.task.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+    <button type="submit" class="btn btn-red btn-lg" style="width:100%">Submit Task</button>
+  </form>
+</div>
+{% endblock %}

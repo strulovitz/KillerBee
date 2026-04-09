@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Register — KillerBee{% endblock %}
+{% block content %}
+<div class="card" style="max-width:500px;margin:2rem auto">
+  <div class="card-header">Join the Swarm</div>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      <label>{{ form.username.label.text }}</label>
+      {{ form.username(class="form-control") }}
+      {% for error in form.username.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="form-group">
+      <label>{{ form.email.label.text }}</label>
+      {{ form.email(class="form-control") }}
+      {% for error in form.email.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="form-group">
+      <label>{{ form.role.label.text }}</label>
+      {{ form.role(class="form-control") }}
+    </div>
+    <div class="form-group">
+      <label>{{ form.password.label.text }}</label>
+      {{ form.password(class="form-control") }}
+      {% for error in form.password.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="form-group">
+      <label>{{ form.confirm.label.text }}</label>
+      {{ form.confirm(class="form-control") }}
+      {% for error in form.confirm.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+    <button type="submit" class="btn btn-red btn-lg" style="width:100%">Register</button>
+  </form>
+  <p class="text-muted mt-2 text-center">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+</div>
+{% endblock %}

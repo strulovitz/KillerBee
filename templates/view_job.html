@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Job #{{ job.id }} — KillerBee{% endblock %}
+{% block content %}
+<div class="flex-between mb-2">
+  <h1>Job #{{ job.id }}</h1>
+  {% if job.status == 'completed' %}
+    <span class="badge badge-green" style="font-size:1rem;padding:0.4rem 1rem">Completed</span>
+  {% elif job.status == 'failed' %}
+    <span class="badge badge-red" style="font-size:1rem;padding:0.4rem 1rem">Failed</span>
+  {% else %}
+    <span class="badge badge-gold" style="font-size:1rem;padding:0.4rem 1rem">{{ job.status }}</span>
+  {% endif %}
+</div>
+
+<div class="grid-3">
+  <div class="stat-box">
+    <div class="stat-val">{{ job.swarm.name }}</div>
+    <div class="stat-lbl">Swarm</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">{% if job.total_time %}{{ "%.1f"|format(job.total_time) }}s{% else %}—{% endif %}</div>
+    <div class="stat-lbl">Total Time</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">{% if job.depth_used %}{{ job.depth_used }}{% else %}—{% endif %}</div>
+    <div class="stat-lbl">Hierarchy Depth</div>
+  </div>
+</div>
+
+<div class="card mt-2">
+  <div class="card-header">Task</div>
+  <p>{{ job.task }}</p>
+</div>
+
+{% if components %}
+<div class="card">
+  <div class="card-header">Components ({{ job.components_completed }}/{{ job.components_total }})</div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Assigned To</th>
+        <th>Component</th>
+        <th>Status</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for comp in components %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><code>{{ comp.member.endpoint }}</code></td>
+        <td>{{ comp.task_description[:60] }}{% if comp.task_description|length > 60 %}...{% endif %}</td>
+        <td>
+          {% if comp.status == 'completed' %}
+            <span class="badge badge-green">Done</span>
+          {% elif comp.status == 'failed' %}
+            <span class="badge badge-red">Failed</span>
+          {% else %}
+            <span class="badge badge-gold">{{ comp.status }}</span>
+          {% endif %}
+        </td>
+        <td>{% if comp.processing_time %}{{ "%.1f"|format(comp.processing_time) }}s{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if job.result %}
+<div class="card">
+  <div class="card-header">Result (Royal Honey)</div>
+  <div style="white-space:pre-wrap;line-height:1.6">{{ job.result }}</div>
+</div>
+{% endif %}
+{% endblock %}

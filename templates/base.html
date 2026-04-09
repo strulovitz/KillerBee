@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}KillerBee{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:     #DC2626;
+      --red-d:   #B91C1C;
+      --black:   #1A1A1A;
+      --black-l: #2D2D2D;
+      --cream:   #FFF8E7;
+      --cream-d: #F5EDD4;
+      --gold:    #F5A623;
+      --gold-d:  #D4891A;
+      --green:   #4CAF50;
+      --blue:    #1E88E5;
+      --orange:  #FF9800;
+      --shadow:  0 2px 12px rgba(0,0,0,0.18);
+      --radius:  10px;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #F5F0E8;
+      color: var(--black);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    a { color: var(--red); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    header {
+      background: var(--black);
+      color: #fff;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--red);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo:hover { text-decoration: none; color: var(--red); }
+    nav { display: flex; align-items: center; gap: 0.25rem; }
+    nav a {
+      color: #ccc;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      transition: background 0.15s, color 0.15s;
+    }
+    nav a:hover { background: var(--black-l); color: #fff; text-decoration: none; }
+    nav a.btn-nav {
+      background: var(--red);
+      color: #fff;
+      font-weight: 600;
+    }
+    nav a.btn-nav:hover { background: var(--red-d); color: #fff; }
+    .nav-sep { color: #555; margin: 0 0.15rem; }
+
+    .flash-container { max-width: 960px; margin: 1rem auto 0; padding: 0 1rem; width: 100%; }
+    .alert {
+      padding: 0.75rem 1.1rem;
+      border-radius: var(--radius);
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+    .alert-success { background: #E8F5E9; color: #2E7D32; border-left: 4px solid var(--green); }
+    .alert-danger  { background: #FFEBEE; color: #C62828; border-left: 4px solid var(--red); }
+    .alert-warning { background: #FFF8E1; color: #E65100; border-left: 4px solid var(--orange); }
+    .alert-info    { background: #E3F2FD; color: #1565C0; border-left: 4px solid var(--blue); }
+
+    main { flex: 1; padding: 1.5rem 1rem 2rem; max-width: 1000px; margin: 0 auto; width: 100%; }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .card-header {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--cream-d);
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.55rem 1.2rem;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      transition: filter 0.15s, transform 0.1s;
+      text-decoration: none;
+    }
+    .btn:hover { filter: brightness(1.08); transform: translateY(-1px); text-decoration: none; }
+    .btn-red     { background: var(--red); color: #fff; }
+    .btn-black   { background: var(--black); color: #fff; }
+    .btn-gold    { background: var(--gold); color: var(--black); }
+    .btn-green   { background: var(--green); color: #fff; }
+    .btn-outline { background: transparent; border: 2px solid var(--red); color: var(--black); }
+    .btn-sm { padding: 0.35rem 0.85rem; font-size: 0.85rem; }
+    .btn-lg { padding: 0.75rem 1.75rem; font-size: 1.05rem; }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.92rem; }
+    .form-control {
+      width: 100%;
+      padding: 0.6rem 0.85rem;
+      border: 1.5px solid #ccc;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      background: #fff;
+      transition: border-color 0.15s;
+    }
+    .form-control:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(220,38,38,0.15); }
+    textarea.form-control { resize: vertical; min-height: 120px; }
+    .field-error { color: var(--red); font-size: 0.83rem; margin-top: 0.25rem; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .badge-red    { background: #FEE2E2; color: #991B1B; }
+    .badge-green  { background: #D4EDDA; color: #155724; }
+    .badge-gold   { background: #FFF3CD; color: #856404; }
+    .badge-blue   { background: #D1ECF1; color: #0C5460; }
+
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+    @media (max-width: 768px) {
+      .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .stat-box {
+      background: #f3ede4;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-box .stat-val { font-size: 2rem; font-weight: 700; color: var(--black); }
+    .stat-box .stat-lbl { font-size: 0.8rem; color: #666; margin-top: 0.2rem; }
+
+    .hero {
+      background: linear-gradient(135deg, var(--black) 0%, #3D0000 50%, var(--red-d) 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .hero h1 { font-size: 2.4rem; margin-bottom: 0.75rem; line-height: 1.2; }
+    .hero p  { font-size: 1.1rem; color: #ddd; max-width: 650px; margin: 0 auto 1.5rem; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.6rem 0.85rem; text-align: left; border-bottom: 1px solid #eee; }
+    th { font-weight: 700; font-size: 0.85rem; color: #555; background: #f7f3ec; }
+    tr:hover td { background: #faf7f2; }
+
+    .text-center { text-align: center; }
+    .text-muted  { color: #777; font-size: 0.88rem; }
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .mt-3 { margin-top: 1.5rem; }
+    .mb-2 { margin-bottom: 1rem; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-gap { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    .hierarchy-visual {
+      background: var(--black);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    .hierarchy-visual .raja { color: var(--red); font-weight: 700; }
+    .hierarchy-visual .queen { color: var(--gold); }
+    .hierarchy-visual .worker { color: var(--green); }
+
+    footer {
+      background: var(--black);
+      color: #888;
+      text-align: center;
+      padding: 1.1rem;
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--red); }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="{{ url_for('index') }}" class="logo">KillerBee</a>
+  <nav>
+    <a href="{{ url_for('index') }}">Home</a>
+    {% if current_user.is_authenticated %}
+      <span class="nav-sep">|</span>
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="#">{{ current_user.display_role }}</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+      <span class="nav-sep">|</span>
+      <a href="{{ url_for('login') }}">Login</a>
+      <a href="{{ url_for('register') }}" class="btn-nav">Register</a>
+    {% endif %}
+  </nav>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<footer>
+  <p>&copy; 2026 KillerBee &mdash; Hierarchical AI Hive Platform &nbsp;|&nbsp;
+    <a href="https://github.com/strulovitz/KillerBee">GitHub</a> &nbsp;|&nbsp;
+    <a href="https://github.com/strulovitz/GiantHoneyBee">Client Software</a>
+  </p>
+</footer>
+
+</body>
+</html>
