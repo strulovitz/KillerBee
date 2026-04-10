@@ -158,12 +158,37 @@ The next evolution of the distributed AI system. The original project (Honeycomb
 - [x] **PHASE 2 LAN TEST: SUCCESS** (2026-04-10, Laptop→Desktop over LAN)
 - [x] demo_phase2_lan.py WRITTEN — configurable LAN demo script
 
+## What Has Been Done (continued, 2026-04-10 afternoon)
+- [x] **GOLDEN RULE ESTABLISHED**: No shortcuts, no reward hacking. CLAUDE.md in all repos.
+- [x] **Queen → GiantQueen/DwarfQueen RENAME**: All repos updated (GiantHoneyBee, KillerBee, MadHoney)
+- [x] **KillerBee WORKFLOW API BUILT**: 15+ API endpoints for full hierarchical job processing
+  - Auth, job splitting, component claiming, subtask processing, result posting
+  - All bees communicate ONLY through KillerBee — no direct HTTP between bees
+- [x] **GiantHoneyBee CLIENT REWRITE**: All clients rewritten to use KillerBee API
+  - killerbee_client.py, raja_bee.py, giant_queen_client.py, dwarf_queen_client.py, worker_client.py
+  - Every bee is a separate process with its own Ollama
+  - No in-process Workers — no shortcuts
+- [x] **LOCAL INTEGRATION TEST: SUCCESS** (2026-04-10)
+  - 4 separate processes: RajaBee + DwarfQueen + 2 Workers
+  - All communicating through KillerBee website
+  - Job submitted → split → subtasks created → claimed by Workers → processed → combined → Royal Honey delivered
+- [x] **CONTEXT DRIFT FIX**: Original question passed through all hierarchy levels (split AND combine)
+- [x] **LIVE JOB VIEW**: Auto-refreshing job page shows hierarchy, status, and results in real time
+- [x] **BUZZING SYSTEM DESIGNED**: Performance rating system (see BUZZING.md in GiantHoneyBee)
+  - Boss tests employee (not self-reporting) — incentive-aligned, can't be cheated
+  - Buzzing = speed (1-10) × quality (1-10) = 1 to 100
+  - Fractions sum to 1 at every level — LLMs see "0.80 of the work", not raw numbers
+  - Tests generated dynamically by the boss's smarter LLM — can't be gamed
+
 ## What Needs To Be Done Next
 1. ~~Phase 2: Test across real LAN (RajaBee on Laptop, Queens on Desktop)~~ **DONE** (2026-04-10)
-2. Connect KillerBee website to GiantHoneyBee client (RajaBee reads GiantQueen/DwarfQueen members from API, reports job results back)
-3. Mad Honey book — continue writing
-4. Test with even more DwarfQueens (5, 10+)
-5. ~~Test N-level (RajaBee wrapped as HTTP endpoint, another RajaBee on top)~~ **DONE** (2026-04-09)
-6. ~~Test with 3+ DwarfQueens~~ **DONE** (2026-04-09)
-7. ~~KillerBee website~~ **DONE v1** (2026-04-09)
-8. Phase 3: Linux VMs for scale testing
+2. ~~Connect KillerBee website to GiantHoneyBee client~~ **DONE** (2026-04-10)
+3. **Implement Buzzing system** (calibration tests, scoring, fractions, proportional splitting)
+4. **Phase 3: Linux VMs for scale testing** (KVM/QEMU, Debian 13 + Ubuntu Server guests, CPU-only)
+5. **Research LLM models** for each role (different models for RajaBee/GiantQueen/DwarfQueen/Worker)
+6. Mad Honey book — continue writing (update with new architecture)
+7. Test with GiantQueen layer (full 4-level hierarchy)
+8. Fault tolerance: heartbeat + timeout for crashed bees
+9. ~~Test N-level~~ **DONE** (2026-04-09)
+10. ~~Test with 3+ DwarfQueens~~ **DONE** (2026-04-09)
+11. ~~KillerBee website~~ **DONE v1** (2026-04-09)
