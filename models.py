@@ -80,13 +80,20 @@ class Swarm(db.Model):
     jobs = db.relationship('SwarmJob', backref='swarm', lazy=True)
 
     @property
+    def giant_queen_count(self):
+        return SwarmMember.query.filter_by(swarm_id=self.id, member_type='giant_queen', status='active').count()
+
+    @property
+    def dwarf_queen_count(self):
+        return SwarmMember.query.filter_by(swarm_id=self.id, member_type='dwarf_queen', status='active').count()
+
+    @property
     def queen_count(self):
-        return SwarmMember.query.filter_by(swarm_id=self.id, status='active').count()
+        return self.giant_queen_count + self.dwarf_queen_count
 
     @property
     def total_workers(self):
-        """Total workers across all DwarfQueens in this Swarm."""
-        return sum(m.worker_count for m in self.members if m.status == 'active')
+        return SwarmMember.query.filter_by(swarm_id=self.id, member_type='worker', status='active').count()
 
     @property
     def is_full(self):

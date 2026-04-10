@@ -61,8 +61,8 @@ with app.app_context():
         user_id=giant_queen.id,
         endpoint='http://localhost:5000',
         member_type='giant_queen',
-        model_name='qwen2.5:3b',
-        worker_count=5,
+        model_name='llama3.2:3b',
+        worker_count=0,
     )
 
     # Add DwarfQueens to the Swarm
@@ -71,16 +71,16 @@ with app.app_context():
         user_id=dwarf_queen1.id,
         endpoint='http://localhost:5001',
         member_type='dwarf_queen',
-        model_name='qwen2.5:1.5b',
-        worker_count=2,
+        model_name='llama3.2:3b',
+        worker_count=0,
     )
     dq_member2 = SwarmMember(
         swarm_id=swarm.id,
         user_id=dwarf_queen2.id,
         endpoint='http://localhost:5002',
         member_type='dwarf_queen',
-        model_name='qwen2.5:1.5b',
-        worker_count=3,
+        model_name='llama3.2:3b',
+        worker_count=0,
     )
 
     # Add Workers to the Swarm
@@ -89,7 +89,7 @@ with app.app_context():
         user_id=worker1.id,
         endpoint='http://localhost:5003',
         member_type='worker',
-        model_name='qwen2.5:0.5b',
+        model_name='llama3.2:3b',
         worker_count=1,
     )
     w_member2 = SwarmMember(
@@ -97,7 +97,7 @@ with app.app_context():
         user_id=worker2.id,
         endpoint='http://localhost:5004',
         member_type='worker',
-        model_name='qwen2.5:0.5b',
+        model_name='llama3.2:3b',
         worker_count=1,
     )
 
@@ -107,5 +107,5 @@ with app.app_context():
     print("Seed data created:")
     print(f"  Users: raja_nir, queen_giant, queen_alpha, queen_bravo, beekeeper_demo, worker_alpha, worker_bravo")
     print(f"  Password for all: 'password'")
-    print(f"  Swarm: Alpha Swarm (1 GiantQueen, 2 DwarfQueens, 2 Workers)")
+    print(f"  Swarm: Alpha Swarm (1 GiantQueen + 2 DwarfQueens + 2 Workers)")
     print(f"  Website: http://localhost:8877")

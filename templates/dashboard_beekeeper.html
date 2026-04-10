@@ -10,7 +10,7 @@
     {% for swarm in swarms %}
     <div class="card" style="border-top: 3px solid var(--red)">
       <h3>{{ swarm.name }}</h3>
-      <p class="text-muted">{{ swarm.queen_count }} Queens (Giant+Dwarf) &bull; {{ swarm.total_workers }} Workers &bull; {{ swarm.specialty }}</p>
+      <p class="text-muted">{{ swarm.giant_queen_count }} GiantQueens &bull; {{ swarm.dwarf_queen_count }} DwarfQueens &bull; {{ swarm.total_workers }} Workers &bull; {{ swarm.specialty }}</p>
       <a href="{{ url_for('submit_job', swarm_id=swarm.id) }}" class="btn btn-red btn-sm mt-1">Submit Task</a>
     </div>
     {% endfor %}
