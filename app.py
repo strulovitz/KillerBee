@@ -885,6 +885,7 @@ def api_member_recalculate(member_id):
         member.capacity = member.buzzing or 0
 
     # Second: recalculate fractions among this member's SIBLINGS
+    total_capacity = member.capacity or 0
     if member.parent_member_id is not None:
         siblings = SwarmMember.query.filter_by(
             parent_member_id=member.parent_member_id,
@@ -896,6 +897,9 @@ def api_member_recalculate(member_id):
                 sibling.fraction = (sibling.capacity or 0) / total_capacity
             else:
                 sibling.fraction = 1.0 / len(siblings) if siblings else 0
+    else:
+        # Top-level member (no parent) — fraction is 1.0
+        member.fraction = 1.0
 
     db.session.commit()
 
