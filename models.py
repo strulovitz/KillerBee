@@ -113,6 +113,7 @@ class SwarmMember(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     swarm_id = db.Column(db.Integer, db.ForeignKey('swarms.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    parent_member_id = db.Column(db.Integer, db.ForeignKey('swarm_members.id'), nullable=True)
     endpoint = db.Column(db.String(200), nullable=False)  # e.g. 'http://192.168.1.100:5000'
     member_type = db.Column(db.String(20), nullable=False, default='dwarf_queen')  # 'giant_queen', 'dwarf_queen', or 'worker'
     model_name = db.Column(db.String(100), nullable=True)
@@ -122,8 +123,16 @@ class SwarmMember(db.Model):
     last_heartbeat = db.Column(db.DateTime, nullable=True)
     joined_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    # Relationship
+    # Buzzing performance system — boss tests employee, calculates scores
+    buzzing_speed = db.Column(db.Float, nullable=True)    # 1-10, set by boss
+    buzzing_quality = db.Column(db.Float, nullable=True)  # 1-10, set by boss
+    buzzing = db.Column(db.Float, nullable=True)           # speed * quality, 1-100
+    capacity = db.Column(db.Float, nullable=True)          # sum of subordinate buzzings (or own buzzing for workers)
+    fraction = db.Column(db.Float, nullable=True)          # capacity / total among siblings, sums to 1
+
+    # Relationships
     user = db.relationship('User', backref='swarm_memberships')
+    subordinates = db.relationship('SwarmMember', backref=db.backref('parent_member', remote_side=[id]), lazy=True)
 
 
 class SwarmJob(db.Model):

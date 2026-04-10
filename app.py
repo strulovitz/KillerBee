@@ -677,6 +677,7 @@ def api_swarm_register(swarm_id):
         member_type=member_type,
         model_name=model,
         worker_count=data.get('worker_count', 1),
+        parent_member_id=data.get('parent_member_id'),
     )
     db.session.add(member)
     db.session.commit()
@@ -684,6 +685,184 @@ def api_swarm_register(swarm_id):
     token = make_token(user.id)
     return jsonify({
         'ok': True, 'user_id': user.id, 'member_id': member.id, 'token': token,
+    })
+
+
+# ── Buzzing Performance System API ──────────────────────────────────────────
+
+@app.route('/api/member/<int:member_id>/subordinates', methods=['GET'])
+@csrf.exempt
+def api_member_subordinates(member_id):
+    """Return subordinates of this member (members whose parent_member_id = this member)."""
+    member = SwarmMember.query.get_or_404(member_id)
+    subs = SwarmMember.query.filter_by(parent_member_id=member.id).all()
+    return jsonify({
+        'member_id': member.id,
+        'subordinates': [{
+            'id': s.id,
+            'username': s.user.username,
+            'member_type': s.member_type,
+            'model_name': s.model_name,
+            'buzzing': s.buzzing,
+            'fraction': s.fraction,
+            'status': s.status,
+        } for s in subs]
+    })
+
+
+@app.route('/api/swarm/<int:swarm_id>/unassigned', methods=['GET'])
+@csrf.exempt
+def api_swarm_unassigned(swarm_id):
+    """Return members with no parent_member_id (available to be claimed by a boss)."""
+    swarm = Swarm.query.get_or_404(swarm_id)
+    query = SwarmMember.query.filter_by(swarm_id=swarm.id, parent_member_id=None)
+
+    member_type = request.args.get('type')
+    if member_type:
+        query = query.filter_by(member_type=member_type)
+
+    members = query.all()
+    return jsonify({
+        'swarm_id': swarm.id,
+        'unassigned': [{
+            'id': m.id,
+            'username': m.user.username,
+            'member_type': m.member_type,
+            'model_name': m.model_name,
+            'endpoint': m.endpoint,
+            'status': m.status,
+        } for m in members]
+    })
+
+
+@app.route('/api/member/<int:member_id>/claim-subordinate', methods=['POST'])
+@csrf.exempt
+def api_claim_subordinate(member_id):
+    """Boss claims a subordinate — sets subordinate's parent_member_id to this member."""
+    data = request.get_json()
+    if not data or 'subordinate_member_id' not in data:
+        return jsonify({'error': 'subordinate_member_id required'}), 400
+
+    boss = SwarmMember.query.get_or_404(member_id)
+    sub = SwarmMember.query.get_or_404(data['subordinate_member_id'])
+
+    if sub.parent_member_id is not None:
+        return jsonify({'error': 'Subordinate already has a boss', 'current_boss': sub.parent_member_id}), 409
+
+    if sub.swarm_id != boss.swarm_id:
+        return jsonify({'error': 'Subordinate is not in the same swarm'}), 400
+
+    sub.parent_member_id = boss.id
+    db.session.commit()
+
+    return jsonify({
+        'ok': True,
+        'boss_id': boss.id,
+        'subordinate': {
+            'id': sub.id,
+            'username': sub.user.username,
+            'member_type': sub.member_type,
+            'model_name': sub.model_name,
+        }
+    })
+
+
+@app.route('/api/member/<int:member_id>/buzzing', methods=['POST'])
+@csrf.exempt
+def api_member_buzzing(member_id):
+    """Boss reports a subordinate's buzzing score (speed x quality)."""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON body required'}), 400
+
+    required = ['buzzing_speed', 'buzzing_quality', 'reporter_member_id']
+    for field in required:
+        if field not in data:
+            return jsonify({'error': f'{field} required'}), 400
+
+    member = SwarmMember.query.get_or_404(member_id)
+    reporter_id = data['reporter_member_id']
+
+    # Verify the reporter is this member's boss
+    if member.parent_member_id != reporter_id:
+        return jsonify({'error': 'Only the parent (boss) can report buzzing scores'}), 403
+
+    speed = float(data['buzzing_speed'])
+    quality = float(data['buzzing_quality'])
+
+    if not (1 <= speed <= 10) or not (1 <= quality <= 10):
+        return jsonify({'error': 'buzzing_speed and buzzing_quality must be between 1 and 10'}), 400
+
+    member.buzzing_speed = speed
+    member.buzzing_quality = quality
+    member.buzzing = speed * quality
+    db.session.commit()
+
+    return jsonify({
+        'ok': True,
+        'member_id': member.id,
+        'buzzing_speed': member.buzzing_speed,
+        'buzzing_quality': member.buzzing_quality,
+        'buzzing': member.buzzing,
+    })
+
+
+@app.route('/api/member/<int:member_id>/recalculate', methods=['POST'])
+@csrf.exempt
+def api_member_recalculate(member_id):
+    """Recalculate this member's capacity and all sibling fractions."""
+    member = SwarmMember.query.get_or_404(member_id)
+
+    # Calculate capacity: sum of subordinate buzzings, or own buzzing for workers/leaf nodes
+    subs = SwarmMember.query.filter_by(parent_member_id=member.id).all()
+    if subs:
+        member.capacity = sum((s.buzzing or 0) for s in subs)
+    else:
+        member.capacity = member.buzzing or 0
+
+    # Recalculate fractions for ALL siblings (members with the same parent_member_id)
+    siblings = SwarmMember.query.filter_by(parent_member_id=member.parent_member_id, swarm_id=member.swarm_id).all()
+
+    # For top-level members (parent_member_id=None), only include those in the same swarm
+    total_capacity = sum((s.capacity or 0) for s in siblings)
+
+    for sibling in siblings:
+        if total_capacity > 0:
+            sibling.fraction = (sibling.capacity or 0) / total_capacity
+        else:
+            sibling.fraction = 0
+
+    db.session.commit()
+
+    return jsonify({
+        'ok': True,
+        'member_id': member.id,
+        'capacity': member.capacity,
+        'fraction': member.fraction,
+        'total_sibling_capacity': total_capacity,
+    })
+
+
+@app.route('/api/member/<int:member_id>/fractions', methods=['GET'])
+@csrf.exempt
+def api_member_fractions(member_id):
+    """Return this member's subordinates with their fractions — used by boss to split work."""
+    member = SwarmMember.query.get_or_404(member_id)
+    subs = SwarmMember.query.filter_by(parent_member_id=member.id).all()
+
+    total_capacity = sum((s.capacity or 0) for s in subs)
+
+    return jsonify({
+        'member_id': member.id,
+        'total_capacity': total_capacity,
+        'subordinates': [{
+            'member_id': s.id,
+            'username': s.user.username,
+            'member_type': s.member_type,
+            'fraction': s.fraction,
+            'buzzing': s.buzzing,
+            'capacity': s.capacity,
+        } for s in subs]
     })
 
 
