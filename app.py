@@ -519,6 +519,25 @@ def api_component_children(component_id):
     })
 
 
+@app.route('/api/component/<int:component_id>/status', methods=['GET'])
+@csrf.exempt
+def api_component_status(component_id):
+    """Return the status and result of a single component."""
+    comp = JobComponent.query.get_or_404(component_id)
+    return jsonify({
+        'id': comp.id,
+        'job_id': comp.job_id,
+        'task': comp.task_description,
+        'status': comp.status,
+        'result': comp.result,
+        'level': comp.level,
+        'component_type': comp.component_type,
+        'member_id': comp.member_id,
+        'processing_time': comp.processing_time,
+        'parent_id': comp.parent_id,
+    })
+
+
 @app.route('/api/component/<int:component_id>/result', methods=['POST'])
 @csrf.exempt
 def api_component_result(component_id):
@@ -559,6 +578,31 @@ def api_available_subtasks(swarm_id):
             'level': s.level,
             'parent_id': s.parent_id,
         } for s in subtasks]
+    })
+
+
+@app.route('/api/swarm/<int:swarm_id>/components/available', methods=['GET'])
+@csrf.exempt
+def api_available_components(swarm_id):
+    """Return unclaimed non-subtask components for GiantQueens/DwarfQueens to claim."""
+    swarm = Swarm.query.get_or_404(swarm_id)
+    job_ids = [j.id for j in SwarmJob.query.filter_by(swarm_id=swarm.id, status='processing').all()]
+    components = JobComponent.query.filter(
+        JobComponent.job_id.in_(job_ids),
+        JobComponent.component_type == 'component',
+        JobComponent.member_id.is_(None),
+        JobComponent.status == 'pending',
+    ).all() if job_ids else []
+
+    return jsonify({
+        'swarm_id': swarm.id,
+        'components': [{
+            'id': c.id,
+            'job_id': c.job_id,
+            'task': c.task_description,
+            'level': c.level,
+            'parent_id': c.parent_id,
+        } for c in components]
     })
 
 
