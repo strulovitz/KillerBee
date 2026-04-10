@@ -4,10 +4,12 @@ app.py — Main Flask Application for KillerBee
 The hierarchical hive platform. Manages Swarms: RajaBee -> GiantQueens -> DwarfQueens -> Workers.
 GiantQueen = mid-level coordinator (no Workers directly, coordinates DwarfQueens).
 DwarfQueen = lowest-level coordinator (has Workers directly under her).
-DB role 'queen' covers both types; display text distinguishes them.
+Roles: 'raja', 'giant_queen', 'dwarf_queen', 'worker', 'beekeeper'.
 """
 
 import os
+import base64
+import time
 from datetime import datetime, timezone
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -115,7 +117,7 @@ def dashboard():
     if current_user.role == 'raja':
         swarms = Swarm.query.filter_by(raja_id=current_user.id).all()
         return render_template('dashboard_raja.html', swarms=swarms)
-    elif current_user.role == 'queen':
+    elif current_user.role in ('giant_queen', 'dwarf_queen'):
         memberships = SwarmMember.query.filter_by(user_id=current_user.id).all()
         available_swarms = Swarm.query.filter_by(status='active').all()
         return render_template('dashboard_queen.html', memberships=memberships, available_swarms=available_swarms)
@@ -165,7 +167,7 @@ def view_swarm(swarm_id):
 
 @app.route('/swarm/<int:swarm_id>/join', methods=['GET', 'POST'])
 @login_required
-@role_required('queen')
+@role_required('giant_queen', 'dwarf_queen')
 def join_swarm(swarm_id):
     swarm = Swarm.query.get_or_404(swarm_id)
     if swarm.is_full:
@@ -183,7 +185,7 @@ def join_swarm(swarm_id):
             swarm_id=swarm.id,
             user_id=current_user.id,
             endpoint=form.endpoint.data,
-            member_type='queen',
+            member_type=current_user.role,  # 'giant_queen' or 'dwarf_queen'
         )
         db.session.add(member)
         db.session.commit()
@@ -285,6 +287,344 @@ def api_job_update(job_id):
 
     db.session.commit()
     return jsonify({'status': 'ok'})
+
+
+# ── Token helpers ────────────────────────────────────────────────────────────
+
+def make_token(user_id):
+    """Simple base64 token: user_id:timestamp. Good enough for now."""
+    raw = f"{user_id}:{int(time.time())}"
+    return base64.b64encode(raw.encode()).decode()
+
+
+def verify_token(token):
+    """Decode token, return user_id or None."""
+    try:
+        raw = base64.b64decode(token.encode()).decode()
+        user_id_str = raw.split(':')[0]
+        return int(user_id_str)
+    except Exception:
+        return None
+
+
+def get_api_user():
+    """Extract user from Authorization header (Bearer token). Returns User or None."""
+    auth = request.headers.get('Authorization', '')
+    if auth.startswith('Bearer '):
+        token = auth[7:]
+        user_id = verify_token(token)
+        if user_id:
+            return db.session.get(User, user_id)
+    return None
+
+
+# ── Auth API ─────────────────────────────────────────────────────────────────
+
+@app.route('/api/auth/login', methods=['POST'])
+@csrf.exempt
+def api_auth_login():
+    """Authenticate and receive a token for API access."""
+    data = request.get_json()
+    if not data:
+        return jsonify({'ok': False, 'error': 'JSON body required'}), 400
+    username = data.get('username')
+    password = data.get('password')
+    if not username or not password:
+        return jsonify({'ok': False, 'error': 'username and password required'}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if not user or not user.check_password(password):
+        return jsonify({'ok': False, 'error': 'Invalid credentials'}), 401
+
+    token = make_token(user.id)
+    return jsonify({'ok': True, 'user_id': user.id, 'role': user.role, 'token': token})
+
+
+# ── Job Workflow API (RajaBee) ───────────────────────────────────────────────
+
+@app.route('/api/swarm/<int:swarm_id>/jobs/pending', methods=['GET'])
+@csrf.exempt
+def api_pending_jobs(swarm_id):
+    """Return pending jobs for this swarm — used by RajaBee to find work."""
+    swarm = Swarm.query.get_or_404(swarm_id)
+    jobs = SwarmJob.query.filter_by(swarm_id=swarm.id, status='pending').all()
+    return jsonify({
+        'swarm_id': swarm.id,
+        'jobs': [{
+            'id': j.id,
+            'task': j.task,
+            'status': j.status,
+            'created_at': j.created_at.isoformat(),
+        } for j in jobs]
+    })
+
+
+@app.route('/api/job/<int:job_id>/split', methods=['POST'])
+@csrf.exempt
+def api_job_split(job_id):
+    """RajaBee splits a job into top-level components."""
+    data = request.get_json()
+    if not data or 'components' not in data:
+        return jsonify({'error': 'components list required'}), 400
+
+    job = SwarmJob.query.get_or_404(job_id)
+    job.status = 'splitting'
+
+    created = []
+    for comp_data in data['components']:
+        member_id = comp_data.get('assigned_member_id')  # can be None
+        comp = JobComponent(
+            job_id=job.id,
+            member_id=member_id,
+            parent_id=None,  # top-level
+            task_description=comp_data['task'],
+            level=0,
+            component_type='component',
+        )
+        db.session.add(comp)
+        created.append(comp)
+
+    job.components_total = len(created)
+    job.status = 'processing'
+    db.session.commit()
+
+    return jsonify({
+        'ok': True,
+        'job_id': job.id,
+        'components': [{'id': c.id, 'task': c.task_description, 'member_id': c.member_id} for c in created]
+    })
+
+
+@app.route('/api/job/<int:job_id>/result', methods=['POST'])
+@csrf.exempt
+def api_job_result(job_id):
+    """RajaBee posts the final combined result for a job."""
+    data = request.get_json()
+    if not data or 'result' not in data:
+        return jsonify({'error': 'result required'}), 400
+
+    job = SwarmJob.query.get_or_404(job_id)
+    job.result = data['result']
+    job.total_time = data.get('total_time')
+    job.status = 'completed'
+    job.completed_at = datetime.now(timezone.utc)
+
+    swarm = Swarm.query.get(job.swarm_id)
+    swarm.total_jobs_completed += 1
+
+    db.session.commit()
+    return jsonify({'ok': True, 'job_id': job.id})
+
+
+# ── Component Workflow API (GiantQueens, DwarfQueens, Workers) ───────────────
+
+@app.route('/api/member/<int:member_id>/work', methods=['GET'])
+@csrf.exempt
+def api_member_work(member_id):
+    """Return components assigned to this member that need processing."""
+    member = SwarmMember.query.get_or_404(member_id)
+    components = JobComponent.query.filter_by(
+        member_id=member.id, status='pending'
+    ).all()
+    return jsonify({
+        'member_id': member.id,
+        'components': [{
+            'id': c.id,
+            'job_id': c.job_id,
+            'task': c.task_description,
+            'level': c.level,
+            'component_type': c.component_type,
+            'parent_id': c.parent_id,
+            'status': c.status,
+        } for c in components]
+    })
+
+
+@app.route('/api/component/<int:component_id>/claim', methods=['POST'])
+@csrf.exempt
+def api_component_claim(component_id):
+    """Claim an unclaimed component."""
+    data = request.get_json()
+    if not data or 'member_id' not in data:
+        return jsonify({'error': 'member_id required'}), 400
+
+    comp = JobComponent.query.get_or_404(component_id)
+    if comp.member_id is not None:
+        return jsonify({'error': 'Component already claimed', 'claimed_by': comp.member_id}), 409
+
+    member = SwarmMember.query.get_or_404(data['member_id'])
+    comp.member_id = member.id
+    comp.status = 'processing'
+    db.session.commit()
+
+    return jsonify({
+        'ok': True,
+        'component_id': comp.id,
+        'member_id': member.id,
+        'task': comp.task_description,
+    })
+
+
+@app.route('/api/component/<int:component_id>/split', methods=['POST'])
+@csrf.exempt
+def api_component_split(component_id):
+    """Queen splits her component into child components/subtasks."""
+    data = request.get_json()
+    if not data or 'children' not in data:
+        return jsonify({'error': 'children list required'}), 400
+
+    parent = JobComponent.query.get_or_404(component_id)
+    parent.status = 'processing'
+
+    created = []
+    for child_data in data['children']:
+        child = JobComponent(
+            job_id=parent.job_id,
+            member_id=child_data.get('assigned_member_id'),  # can be None (unclaimed)
+            parent_id=parent.id,
+            task_description=child_data['task'],
+            level=parent.level + 1,
+            component_type=child_data.get('component_type', 'component'),
+        )
+        db.session.add(child)
+        created.append(child)
+
+    db.session.commit()
+
+    return jsonify({
+        'ok': True,
+        'parent_id': parent.id,
+        'children': [{'id': c.id, 'task': c.task_description, 'level': c.level, 'component_type': c.component_type} for c in created]
+    })
+
+
+@app.route('/api/component/<int:component_id>/children', methods=['GET'])
+@csrf.exempt
+def api_component_children(component_id):
+    """Return child components and their statuses/results."""
+    parent = JobComponent.query.get_or_404(component_id)
+    children = JobComponent.query.filter_by(parent_id=parent.id).all()
+    return jsonify({
+        'parent_id': parent.id,
+        'children': [{
+            'id': c.id,
+            'task': c.task_description,
+            'status': c.status,
+            'result': c.result,
+            'level': c.level,
+            'component_type': c.component_type,
+            'member_id': c.member_id,
+            'processing_time': c.processing_time,
+        } for c in children]
+    })
+
+
+@app.route('/api/component/<int:component_id>/result', methods=['POST'])
+@csrf.exempt
+def api_component_result(component_id):
+    """Worker posts subtask result, or Queen posts combined result."""
+    data = request.get_json()
+    if not data or 'result' not in data:
+        return jsonify({'error': 'result required'}), 400
+
+    comp = JobComponent.query.get_or_404(component_id)
+    comp.result = data['result']
+    comp.processing_time = data.get('processing_time')
+    comp.status = 'completed'
+    db.session.commit()
+
+    return jsonify({'ok': True, 'component_id': comp.id})
+
+
+@app.route('/api/swarm/<int:swarm_id>/subtasks/available', methods=['GET'])
+@csrf.exempt
+def api_available_subtasks(swarm_id):
+    """Return unclaimed subtask components for Workers to claim."""
+    swarm = Swarm.query.get_or_404(swarm_id)
+    # Get all jobs in this swarm, then find unclaimed subtasks
+    job_ids = [j.id for j in SwarmJob.query.filter_by(swarm_id=swarm.id).all()]
+    subtasks = JobComponent.query.filter(
+        JobComponent.job_id.in_(job_ids),
+        JobComponent.component_type == 'subtask',
+        JobComponent.member_id.is_(None),
+        JobComponent.status == 'pending',
+    ).all() if job_ids else []
+
+    return jsonify({
+        'swarm_id': swarm.id,
+        'subtasks': [{
+            'id': s.id,
+            'job_id': s.job_id,
+            'task': s.task_description,
+            'level': s.level,
+            'parent_id': s.parent_id,
+        } for s in subtasks]
+    })
+
+
+# ── Member Registration API ─────────────────────────────────────────────────
+
+@app.route('/api/swarm/<int:swarm_id>/register', methods=['POST'])
+@csrf.exempt
+def api_swarm_register(swarm_id):
+    """Register a new user and join a swarm programmatically (for CLI clients)."""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON body required'}), 400
+
+    username = data.get('username')
+    password = data.get('password')
+    member_type = data.get('member_type', 'worker')
+    model = data.get('model')
+
+    if not username or not password:
+        return jsonify({'error': 'username and password required'}), 400
+
+    if member_type not in ('giant_queen', 'dwarf_queen', 'worker'):
+        return jsonify({'error': 'member_type must be giant_queen, dwarf_queen, or worker'}), 400
+
+    swarm = Swarm.query.get_or_404(swarm_id)
+
+    # Create or find user
+    user = User.query.filter_by(username=username).first()
+    if user:
+        if not user.check_password(password):
+            return jsonify({'error': 'Invalid credentials for existing user'}), 401
+    else:
+        # Map member_type to user role
+        user = User(
+            username=username,
+            email=f"{username}@killerbee.local",
+            role=member_type,
+        )
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+
+    # Check if already a member
+    existing = SwarmMember.query.filter_by(swarm_id=swarm.id, user_id=user.id).first()
+    if existing:
+        token = make_token(user.id)
+        return jsonify({
+            'ok': True, 'user_id': user.id, 'member_id': existing.id,
+            'token': token, 'message': 'Already a member'
+        })
+
+    member = SwarmMember(
+        swarm_id=swarm.id,
+        user_id=user.id,
+        endpoint=data.get('endpoint', 'http://localhost:0'),
+        member_type=member_type,
+        model_name=model,
+        worker_count=data.get('worker_count', 1),
+    )
+    db.session.add(member)
+    db.session.commit()
+
+    token = make_token(user.id)
+    return jsonify({
+        'ok': True, 'user_id': user.id, 'member_id': member.id, 'token': token,
+    })
 
 
 # ── Init DB ───────────────────────────────────────────────────────────────────

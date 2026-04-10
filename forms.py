@@ -15,7 +15,8 @@ class RegisterForm(FlaskForm):
     confirm = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     role = SelectField('Role', choices=[
         ('raja', 'Raja Bee — I command Swarms of GiantQueens and DwarfQueens'),
-        ('queen', 'Queen Bee — GiantQueen (coordinates DwarfQueens) or DwarfQueen (runs Workers)'),
+        ('giant_queen', 'Giant Queen — I coordinate DwarfQueens'),
+        ('dwarf_queen', 'Dwarf Queen — I coordinate Workers'),
         ('worker', 'Worker Bee — I contribute my computer'),
         ('beekeeper', 'Beekeeper — I submit tasks'),
     ], validators=[DataRequired()])

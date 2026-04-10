@@ -7,7 +7,7 @@
     <p class="text-muted">{{ swarm.description or 'No description' }}</p>
   </div>
   <div class="flex-gap">
-    {% if current_user.is_authenticated and current_user.role == 'queen' and not swarm.is_full %}
+    {% if current_user.is_authenticated and current_user.role in ('giant_queen', 'dwarf_queen') and not swarm.is_full %}
       <a href="{{ url_for('join_swarm', swarm_id=swarm.id) }}" class="btn btn-gold">Join This Swarm</a>
     {% endif %}
     {% if current_user.is_authenticated and current_user.role == 'beekeeper' %}
@@ -41,7 +41,7 @@
     <span class="raja">RajaBee</span> ({{ swarm.raja_model }}) &mdash; {{ swarm.raja.username }}<br>
     {% for member in members %}
     &nbsp;&nbsp;|<br>
-    &nbsp;&nbsp;+-- <span class="queen">{{ member.member_type|capitalize }}</span> @ <code>{{ member.endpoint }}</code>
+    &nbsp;&nbsp;+-- <span class="queen">{{ member.member_type|replace('_', ' ')|title }}</span> @ <code>{{ member.endpoint }}</code>
     {%- if member.model_name %} ({{ member.model_name }}){% endif %}
     &mdash; <span class="worker">{{ member.worker_count }} workers</span>
     {%- if member.status != 'active' %} <span style="color:var(--red)">[{{ member.status }}]</span>{% endif %}<br>

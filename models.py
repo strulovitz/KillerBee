@@ -17,14 +17,14 @@ db = SQLAlchemy()
 
 class User(UserMixin, db.Model):
     """A registered user — can be a Raja Bee, GiantQueen, DwarfQueen, Worker Bee, or Beekeeper.
-    DB role 'queen' covers both GiantQueen and DwarfQueen; display_role distinguishes them."""
+    Roles: 'raja', 'giant_queen', 'dwarf_queen', 'worker', 'beekeeper'."""
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # 'raja', 'queen' (GiantQueen or DwarfQueen), 'worker', 'beekeeper'
+    role = db.Column(db.String(20), nullable=False)  # 'raja', 'giant_queen', 'dwarf_queen', 'worker', 'beekeeper'
     trust_score = db.Column(db.Float, default=5.0)
     total_jobs = db.Column(db.Integer, default=0)
     is_verified = db.Column(db.Boolean, default=False)
@@ -44,7 +44,8 @@ class User(UserMixin, db.Model):
     def display_role(self):
         roles = {
             'raja': 'Raja Bee',
-            'queen': 'Queen Bee (GiantQueen/DwarfQueen)',
+            'giant_queen': 'Giant Queen',
+            'dwarf_queen': 'Dwarf Queen',
             'worker': 'Worker Bee',
             'beekeeper': 'Beekeeper',
         }
@@ -106,7 +107,7 @@ class SwarmMember(db.Model):
     swarm_id = db.Column(db.Integer, db.ForeignKey('swarms.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     endpoint = db.Column(db.String(200), nullable=False)  # e.g. 'http://192.168.1.100:5000'
-    member_type = db.Column(db.String(20), nullable=False, default='queen')  # 'queen' (GiantQueen or DwarfQueen) or 'raja'
+    member_type = db.Column(db.String(20), nullable=False, default='dwarf_queen')  # 'giant_queen', 'dwarf_queen', or 'worker'
     model_name = db.Column(db.String(100), nullable=True)
     worker_count = db.Column(db.Integer, default=1)
     avg_response_time = db.Column(db.Float, default=0.0)
@@ -140,16 +141,27 @@ class SwarmJob(db.Model):
 
 
 class JobComponent(db.Model):
-    """A piece of a job assigned to a specific Swarm member (GiantQueen, DwarfQueen, or nested RajaBee)."""
+    """A piece of a job assigned to a specific Swarm member (GiantQueen, DwarfQueen, or Worker).
+
+    Recursive: components can have child components (parent_id).
+    - RajaBee splits job -> top-level components (parent_id=None, level=0)
+    - GiantQueen splits her component -> child components (level=1)
+    - DwarfQueen splits her component -> subtask components (level=2)
+    - Worker processes a subtask component
+    """
     __tablename__ = 'job_components'
 
     id = db.Column(db.Integer, primary_key=True)
     job_id = db.Column(db.Integer, db.ForeignKey('swarm_jobs.id'), nullable=False)
-    member_id = db.Column(db.Integer, db.ForeignKey('swarm_members.id'), nullable=False)
+    member_id = db.Column(db.Integer, db.ForeignKey('swarm_members.id'), nullable=True)  # nullable: starts unassigned
+    parent_id = db.Column(db.Integer, db.ForeignKey('job_components.id'), nullable=True)  # None = top-level
     task_description = db.Column(db.Text, nullable=False)
     result = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), default='pending')  # 'pending', 'processing', 'completed', 'failed'
+    level = db.Column(db.Integer, default=0)  # 0=from RajaBee, 1=from GiantQueen, 2=from DwarfQueen
+    component_type = db.Column(db.String(20), default='component')  # 'component' or 'subtask'
     processing_time = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     member = db.relationship('SwarmMember', backref='components')
+    children = db.relationship('JobComponent', backref=db.backref('parent', remote_side=[id]), lazy=True)
