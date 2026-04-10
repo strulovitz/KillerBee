@@ -2,7 +2,9 @@
 models.py — Database Models for KillerBee
 ==========================================
 The hierarchical hive platform. Unlike BeehiveOfAI (flat: Queen + Workers),
-KillerBee manages Swarms: RajaBee → Queens → Workers, unlimited depth.
+KillerBee manages Swarms: RajaBee -> GiantQueens -> DwarfQueens -> Workers, unlimited depth.
+GiantQueen = mid-level coordinator (named after Apis dorsata). No Workers directly.
+DwarfQueen = lowest-level coordinator (named after Apis florea). Has Workers directly.
 """
 
 from flask_sqlalchemy import SQLAlchemy
@@ -14,14 +16,15 @@ db = SQLAlchemy()
 
 
 class User(UserMixin, db.Model):
-    """A registered user — can be a Raja Bee, Queen Bee, Worker Bee, or Beekeeper."""
+    """A registered user — can be a Raja Bee, GiantQueen, DwarfQueen, Worker Bee, or Beekeeper.
+    DB role 'queen' covers both GiantQueen and DwarfQueen; display_role distinguishes them."""
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # 'raja', 'queen', 'worker', 'beekeeper'
+    role = db.Column(db.String(20), nullable=False)  # 'raja', 'queen' (GiantQueen or DwarfQueen), 'worker', 'beekeeper'
     trust_score = db.Column(db.Float, default=5.0)
     total_jobs = db.Column(db.Integer, default=0)
     is_verified = db.Column(db.Boolean, default=False)
@@ -41,7 +44,7 @@ class User(UserMixin, db.Model):
     def display_role(self):
         roles = {
             'raja': 'Raja Bee',
-            'queen': 'Queen Bee',
+            'queen': 'Queen Bee (GiantQueen/DwarfQueen)',
             'worker': 'Worker Bee',
             'beekeeper': 'Beekeeper',
         }
@@ -49,11 +52,12 @@ class User(UserMixin, db.Model):
 
 
 class Swarm(db.Model):
-    """A hierarchical hive — led by a RajaBee, containing Queens (each with Workers).
+    """A hierarchical hive — led by a RajaBee, containing GiantQueens and DwarfQueens.
 
     Unlike BeehiveOfAI's Hive (flat: 1 Queen + N Workers), a Swarm has LEVELS.
-    The RajaBee at the top coordinates Queens, who coordinate Workers.
-    For deeper hierarchies, a Swarm member can itself be another Swarm (nested).
+    The RajaBee at the top coordinates GiantQueens, who coordinate DwarfQueens,
+    who coordinate Workers. For deeper hierarchies, a Swarm member can itself be
+    another Swarm (nested). GiantQueens never have Workers directly.
     """
     __tablename__ = 'swarms'
 
@@ -67,7 +71,7 @@ class Swarm(db.Model):
     status = db.Column(db.String(20), default='active')  # 'active', 'inactive', 'full'
     trust_score = db.Column(db.Float, default=5.0)
     total_jobs_completed = db.Column(db.Integer, default=0)
-    depth = db.Column(db.Integer, default=2)  # hierarchy depth: 2 = Raja→Queen→Worker, 3 = Raja→Raja→Queen→Worker
+    depth = db.Column(db.Integer, default=2)  # hierarchy depth: 2 = Raja->DwarfQueen->Worker, 3 = Raja->GiantQueen->DwarfQueen->Worker
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
@@ -80,7 +84,7 @@ class Swarm(db.Model):
 
     @property
     def total_workers(self):
-        """Total workers across all Queens in this Swarm."""
+        """Total workers across all DwarfQueens in this Swarm."""
         return sum(m.worker_count for m in self.members if m.status == 'active')
 
     @property
@@ -89,8 +93,10 @@ class Swarm(db.Model):
 
 
 class SwarmMember(db.Model):
-    """A Queen (or nested RajaBee) that belongs to a Swarm.
+    """A GiantQueen, DwarfQueen, or nested RajaBee that belongs to a Swarm.
 
+    GiantQueens coordinate DwarfQueens (no Workers directly).
+    DwarfQueens coordinate Workers (lowest level).
     Each member reports its capabilities (worker count, model, etc.) via the
     Report Up pattern. The Swarm uses this for proportional work distribution.
     """
@@ -100,7 +106,7 @@ class SwarmMember(db.Model):
     swarm_id = db.Column(db.Integer, db.ForeignKey('swarms.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     endpoint = db.Column(db.String(200), nullable=False)  # e.g. 'http://192.168.1.100:5000'
-    member_type = db.Column(db.String(20), nullable=False, default='queen')  # 'queen' or 'raja'
+    member_type = db.Column(db.String(20), nullable=False, default='queen')  # 'queen' (GiantQueen or DwarfQueen) or 'raja'
     model_name = db.Column(db.String(100), nullable=True)
     worker_count = db.Column(db.Integer, default=1)
     avg_response_time = db.Column(db.Float, default=0.0)
@@ -134,7 +140,7 @@ class SwarmJob(db.Model):
 
 
 class JobComponent(db.Model):
-    """A piece of a job assigned to a specific Swarm member (Queen or nested RajaBee)."""
+    """A piece of a job assigned to a specific Swarm member (GiantQueen, DwarfQueen, or nested RajaBee)."""
     __tablename__ = 'job_components'
 
     id = db.Column(db.Integer, primary_key=True)

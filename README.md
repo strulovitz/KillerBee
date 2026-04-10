@@ -18,7 +18,7 @@
 
 One hive is powerful. A swarm of hives is unstoppable.
 
-[BeehiveOfAI](https://github.com/strulovitz/BeehiveOfAI) proved that many small computers can work together as one AI. KillerBee takes this to the next level: **hierarchical hives** — where a RajaBee (king of the bees) commands multiple Queen Bees, each commanding their own hive of Workers. The result is an AI system that scales to unlimited complexity by adding more levels and more machines.
+[BeehiveOfAI](https://github.com/strulovitz/BeehiveOfAI) proved that many small computers can work together as one AI. KillerBee takes this to the next level: **hierarchical hives** — where a RajaBee (king of the bees) commands GiantQueens (named after *Apis dorsata*), who coordinate DwarfQueens (named after *Apis florea*), each commanding their own hive of Workers. GiantQueens never touch Workers directly — they only coordinate DwarfQueens. DwarfQueens are the only ones with Workers under them. The result is an AI system that scales to unlimited complexity by adding more levels and more machines.
 
 Like the Africanized honey bee it's named after, KillerBee takes over ordinary hives and turns them into something far more powerful than they could be alone.
 
@@ -32,10 +32,10 @@ This project is part of a complete, free, open-source ecosystem:
 
 | Project | What It Does |
 |---------|-------------|
-| [HoneycombOfAI](https://github.com/strulovitz/HoneycombOfAI) | Client software — install on your machine to become a Worker or Queen |
+| [HoneycombOfAI](https://github.com/strulovitz/HoneycombOfAI) | Client software — install on your machine to become a Worker or DwarfQueen |
 | [BeehiveOfAI](https://github.com/strulovitz/BeehiveOfAI) | Level 1 website — marketplace for single hives |
 | [GiantHoneyBee](https://github.com/strulovitz/GiantHoneyBee) | Client software — hierarchical orchestration (RajaBee) |
-| **KillerBee** (this repo) | Level 2+ website — manages hierarchical hives |
+| **KillerBee** (this repo) | Level 2+ website — manages hierarchical hives (RajaBee -> GiantQueens -> DwarfQueens -> Workers) |
 | [TheDistributedAIRevolution](https://github.com/strulovitz/TheDistributedAIRevolution) | Book — documents the Level 1 project |
 | [MadHoney](https://github.com/strulovitz/MadHoney) | Book — documents the hierarchical hive project |
 

@@ -23,7 +23,7 @@
   </div>
   <div class="stat-box">
     <div class="stat-val">{{ members|length }}</div>
-    <div class="stat-lbl">Queens</div>
+    <div class="stat-lbl">Queens (Giant+Dwarf)</div>
   </div>
   <div class="stat-box">
     <div class="stat-val">{{ swarm.total_workers }}</div>
@@ -47,7 +47,7 @@
     {%- if member.status != 'active' %} <span style="color:var(--red)">[{{ member.status }}]</span>{% endif %}<br>
     {% endfor %}
     {% if not members %}
-    &nbsp;&nbsp;(no Queens have joined yet)<br>
+    &nbsp;&nbsp;(no GiantQueens or DwarfQueens have joined yet)<br>
     {% endif %}
   </div>
 </div>

@@ -19,6 +19,7 @@ with app.app_context():
     raja = User(username='raja_nir', email='raja@example.com', role='raja')
     raja.set_password('password')
 
+    # DwarfQueens — lowest-level coordinators with Workers directly under them
     queen1 = User(username='queen_alpha', email='queen1@example.com', role='queen')
     queen1.set_password('password')
 
@@ -46,12 +47,12 @@ with app.app_context():
     db.session.add(swarm)
     db.session.commit()
 
-    # Add Queens to the Swarm
+    # Add DwarfQueens to the Swarm (they have Workers directly under them)
     member1 = SwarmMember(
         swarm_id=swarm.id,
         user_id=queen1.id,
         endpoint='http://localhost:5000',
-        member_type='queen',
+        member_type='queen',  # DB value stays 'queen'; this is a DwarfQueen (has Workers)
         model_name='qwen2.5:1.5b',
         worker_count=2,
     )
@@ -59,7 +60,7 @@ with app.app_context():
         swarm_id=swarm.id,
         user_id=queen2.id,
         endpoint='http://localhost:5001',
-        member_type='queen',
+        member_type='queen',  # DB value stays 'queen'; this is a DwarfQueen (has Workers)
         model_name='qwen2.5:1.5b',
         worker_count=3,
     )
@@ -69,5 +70,5 @@ with app.app_context():
     print("Seed data created:")
     print(f"  Users: raja_nir, queen_alpha, queen_bravo, beekeeper_demo, worker_demo")
     print(f"  Password for all: 'password'")
-    print(f"  Swarm: Alpha Swarm (2 Queens, 5 Workers)")
+    print(f"  Swarm: Alpha Swarm (2 DwarfQueens, 5 Workers)")
     print(f"  Website: http://localhost:8877")

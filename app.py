@@ -1,7 +1,10 @@
 """
 app.py — Main Flask Application for KillerBee
 ===============================================
-The hierarchical hive platform. Manages Swarms: RajaBee → Queens → Workers.
+The hierarchical hive platform. Manages Swarms: RajaBee -> GiantQueens -> DwarfQueens -> Workers.
+GiantQueen = mid-level coordinator (no Workers directly, coordinates DwarfQueens).
+DwarfQueen = lowest-level coordinator (has Workers directly under her).
+DB role 'queen' covers both types; display text distinguishes them.
 """
 
 import os
@@ -57,7 +60,7 @@ def index():
         'total_swarms': Swarm.query.count(),
         'total_users': User.query.count(),
         'total_jobs': SwarmJob.query.count(),
-        'total_queens': SwarmMember.query.filter_by(status='active').count(),
+        'total_queens': SwarmMember.query.filter_by(status='active').count(),  # GiantQueens + DwarfQueens
     }
     return render_template('index.html', swarms=swarms, stats=stats)
 
@@ -158,7 +161,7 @@ def view_swarm(swarm_id):
     return render_template('view_swarm.html', swarm=swarm, members=members, recent_jobs=recent_jobs)
 
 
-# ── Join Swarm (Queen Bee) ────────────────────────────────────────────────────
+# ── Join Swarm (GiantQueen / DwarfQueen) ─────────────────────────────────────
 
 @app.route('/swarm/<int:swarm_id>/join', methods=['GET', 'POST'])
 @login_required
@@ -223,7 +226,7 @@ def view_job(job_id):
 @app.route('/api/swarm/<int:swarm_id>/members', methods=['GET'])
 @csrf.exempt
 def api_swarm_members(swarm_id):
-    """Return all active members of a Swarm — used by RajaBee client."""
+    """Return all active members (GiantQueens/DwarfQueens) of a Swarm — used by RajaBee client."""
     swarm = Swarm.query.get_or_404(swarm_id)
     members = SwarmMember.query.filter_by(swarm_id=swarm.id, status='active').all()
     return jsonify({
@@ -243,7 +246,7 @@ def api_swarm_members(swarm_id):
 @app.route('/api/swarm/<int:swarm_id>/heartbeat', methods=['POST'])
 @csrf.exempt
 def api_heartbeat(swarm_id):
-    """Queen reports she's still alive + updated capabilities."""
+    """GiantQueen/DwarfQueen reports she's still alive + updated capabilities."""
     data = request.get_json()
     endpoint = data.get('endpoint')
     member = SwarmMember.query.filter_by(swarm_id=swarm_id, endpoint=endpoint).first()

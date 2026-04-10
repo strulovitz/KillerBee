@@ -14,8 +14,8 @@ class RegisterForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
     confirm = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     role = SelectField('Role', choices=[
-        ('raja', 'Raja Bee — I command Swarms of Queens'),
-        ('queen', 'Queen Bee — I run a hive of Workers'),
+        ('raja', 'Raja Bee — I command Swarms of GiantQueens and DwarfQueens'),
+        ('queen', 'Queen Bee — GiantQueen (coordinates DwarfQueens) or DwarfQueen (runs Workers)'),
         ('worker', 'Worker Bee — I contribute my computer'),
         ('beekeeper', 'Beekeeper — I submit tasks'),
     ], validators=[DataRequired()])
@@ -38,7 +38,7 @@ class CreateSwarmForm(FlaskForm):
         ('creative', 'Creative Writing'),
         ('translation', 'Translation'),
     ], validators=[DataRequired()])
-    max_queens = IntegerField('Max Queens', validators=[DataRequired(), NumberRange(min=2, max=100)],
+    max_queens = IntegerField('Max Queens (GiantQueens + DwarfQueens)', validators=[DataRequired(), NumberRange(min=2, max=100)],
                               default=10)
 
 

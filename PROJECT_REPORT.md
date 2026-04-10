@@ -16,7 +16,12 @@
 
 ## What Is This Project?
 
-The next evolution of the distributed AI system. The original project (HoneycombOfAI + BeehiveOfAI) built Level 1: one Queen Bee coordinating Worker Bees. This project builds Level 2+: a RajaBee coordinating multiple Queen Bees, each with their own Workers. Unlimited nesting depth.
+The next evolution of the distributed AI system. The original project (HoneycombOfAI + BeehiveOfAI) built Level 1: one DwarfQueen coordinating Worker Bees. This project builds Level 2+: a RajaBee coordinating GiantQueens, who coordinate DwarfQueens, each with their own Workers. Unlimited nesting depth.
+
+### Queen Terminology
+- **GiantQueen** = mid/upper level coordinator. Splits tasks and combines results. Does NOT have Workers directly. Coordinates DwarfQueens (or other GiantQueens for deeper hierarchies). Named after *Apis dorsata* (Giant Honey Bee).
+- **DwarfQueen** = lowest level coordinator. The ONLY queen that has Workers directly under her. Named after *Apis florea* (Red Dwarf Honey Bee).
+- In the hierarchy: RajaBee -> GiantQueens -> DwarfQueens -> Workers
 
 ## Three Repositories
 
@@ -39,13 +44,13 @@ The next evolution of the distributed AI system. The original project (Honeycomb
 
 ### Phase 1: Localhost (NEXT)
 - Everything on Laptop, different ports
-- Port 5000: Queen 1 + workers (small model)
-- Port 5001: Queen 2 + workers (small model)
+- Port 5000: DwarfQueen 1 + workers (small model)
+- Port 5001: DwarfQueen 2 + workers (small model)
 - Port 5002: RajaBee (slightly bigger model)
 - Tests the LOGIC, no networking complexity
 
 ### Phase 2: Real LAN
-- RajaBee on Laptop, Queens on Desktop
+- RajaBee on Laptop, DwarfQueens on Desktop
 - Tests real network communication
 
 ### Phase 3: Linux VMs for scale
@@ -55,7 +60,7 @@ The next evolution of the distributed AI system. The original project (Honeycomb
 
 ## Key Design Principles
 1. Existing HoneycombOfAI code stays UNTOUCHED
-2. Queens don't know they're being orchestrated by a RajaBee
+2. DwarfQueens don't know they're being orchestrated by a GiantQueen or RajaBee
 3. Design for N levels, test on 2 levels
 4. The limit is always HARDWARE, never SOFTWARE
 5. Small models for testing (tinyllama, qwen2.5:1.5b, llama3.2:3b)
@@ -73,78 +78,79 @@ The next evolution of the distributed AI system. The original project (Honeycomb
 - [x] Architecture design (ARCHITECTURE.md in GiantHoneyBee) — includes Report Up pattern
 - [x] GiantHoneyBee Phase 1 code WRITTEN AND TESTED
 - [x] **PHASE 1 TEST: SUCCESS** (2026-04-08 late evening, Laptop Windows)
-- [x] **3-QUEEN TEST: SUCCESS** (2026-04-09, Laptop Windows) — 3 Queens in parallel
-- [x] **N-LEVEL TEST: SUCCESS** (2026-04-09, Laptop Windows) — 3 levels deep, 4 Queens, 4 Workers
+- [x] **3-DWARFQUEEN TEST: SUCCESS** (2026-04-09, Laptop Windows) — 3 DwarfQueens in parallel
+- [x] **N-LEVEL TEST: SUCCESS** (2026-04-09, Laptop Windows) — 3 levels deep, 2 GiantQueens + 4 DwarfQueens, 4 Workers
 - [x] raja_http_wrapper.py WRITTEN — wraps RajaBee as HTTP endpoint for N-level nesting
 - [x] demo_n_level.py WRITTEN — 3-level hierarchy demo script
 
 ## Phase 1 Test Results (2026-04-08):
 - **Setup:** 3 terminals on Laptop Windows
-  - Terminal 1: Queen on port 5000 (qwen2.5:1.5b, 1 worker)
-  - Terminal 2: Queen on port 5001 (qwen2.5:1.5b, 1 worker)
+  - Terminal 1: DwarfQueen on port 5000 (qwen2.5:1.5b, 1 worker)
+  - Terminal 2: DwarfQueen on port 5001 (qwen2.5:1.5b, 1 worker)
   - Terminal 3: RajaBee (llama3.2:3b)
 - **Task:** "Write a comprehensive guide about the history and culture of ancient Rome"
 - **What happened:**
   1. RajaBee split into 2 major components: "historical Rome" and "archaeological Rome"
-  2. Both Queens received their component at the same time (parallel delegation)
-  3. Each Queen split her component into subtasks for her worker
+  2. Both DwarfQueens received their component at the same time (parallel delegation)
+  3. Each DwarfQueen split her component into subtasks for her worker
   4. Workers processed subtasks quickly
-  5. Each Queen said "Honey is ready" and sent results back
-  6. RajaBee combined both Queens' answers into one Royal Honey
+  5. Each DwarfQueen said "Honey is ready" and sent results back
+  6. RajaBee combined both DwarfQueens' answers into one Royal Honey
 - **Result:** COMPLETE SUCCESS on first try. Hierarchical hive WORKS.
 - **This is the first time in history a hierarchical distributed AI system has been demonstrated.**
 
-## 3-Queen Test Results (2026-04-09):
-- **Setup:** 3 Queens on ports 5000-5002 (qwen2.5:1.5b, 1 worker each), RajaBee (llama3.2:3b)
+## 3-DwarfQueen Test Results (2026-04-09):
+- **Setup:** 3 DwarfQueens on ports 5000-5002 (qwen2.5:1.5b, 1 worker each), RajaBee (llama3.2:3b)
 - **Task:** "Write a comprehensive guide about the history, culture, and modern influence of ancient Egypt"
-- **Result:** RajaBee split into 3 components (dynasties, art/architecture, modern influence), all 3 Queens processed in parallel (17-21s each, 23s total wall time), combined in 43.4s total. SUCCESS.
+- **Result:** RajaBee split into 3 components (dynasties, art/architecture, modern influence), all 3 DwarfQueens processed in parallel (17-21s each, 23s total wall time), combined in 43.4s total. SUCCESS.
 
 ## N-Level Test Results (2026-04-09) — THE BIG ONE:
 - **Setup:** 3-level hierarchy, ALL on Laptop Windows:
-  - Level 1: 4 Queens on ports 5000-5003 (qwen2.5:1.5b, 1 worker each)
-  - Level 2: 2 RajaBees on ports 6000-6001 (llama3.2:3b), each wrapping 2 Queens
-  - Level 3: Top RajaBee (llama3.2:3b), wrapping 2 mid-level RajaBees
+  - Level 1: 4 DwarfQueens on ports 5000-5003 (qwen2.5:1.5b, 1 worker each)
+  - Level 2: 2 GiantQueens on ports 6000-6001 (llama3.2:3b), each wrapping 2 DwarfQueens
+  - Level 3: Top RajaBee (llama3.2:3b), wrapping 2 GiantQueens
 - **Task:** "Explain the major differences between democracy, monarchy, and dictatorship"
 - **What happened:**
   1. Top RajaBee split into 2 mega-components (democracy analysis + monarchy study)
-  2. Each mega-component delegated to a mid-level RajaBee (IN PARALLEL)
-  3. Each mid-level RajaBee split its component across 2 Queens (IN PARALLEL)
-  4. Each Queen split into subtasks for her worker
-  5. Results bubbled up: Workers → Queens → Mid-level RajaBees → Top RajaBee
+  2. Each mega-component delegated to a GiantQueen (IN PARALLEL)
+  3. Each GiantQueen split its component across 2 DwarfQueens (IN PARALLEL)
+  4. Each DwarfQueen split into subtasks for her worker
+  5. Results bubbled up: Workers -> DwarfQueens -> GiantQueens -> RajaBee
   6. Top RajaBee combined everything into one comprehensive document
-- **Total time:** 58.9 seconds (mid-level RajaBees ran in parallel: 31s and 37s)
-- **Key proof:** The top RajaBee saw mid-level RajaBees as "Queens with 2 workers" — it had NO IDEA there was an entire hierarchy inside. The abstraction is perfect.
+- **Total time:** 58.9 seconds (GiantQueens ran in parallel: 31s and 37s)
+- **Key proof:** The top RajaBee saw GiantQueens as "DwarfQueens with 2 workers" — it had NO IDEA there was an entire hierarchy inside. The abstraction is perfect.
 - **New files:** raja_http_wrapper.py (wraps RajaBee as HTTP), demo_n_level.py (3-level demo)
 - **This proves UNLIMITED nesting depth. Stack as many levels as your hardware can handle.**
 
 ## Phase 2 LAN Test Results (2026-04-10) — CROSS-MACHINE SUCCESS:
-- **Setup:** RajaBee on Laptop (llama3.2:3b), 2 Queens on Desktop (10.0.0.5)
-  - Queen 1: port 5000 (llama3.2:3b, 1 worker)
-  - Queen 2: port 5001 (llama3.2:3b, 1 worker)
+- **Setup:** RajaBee on Laptop (llama3.2:3b), 2 DwarfQueens on Desktop (10.0.0.5)
+  - DwarfQueen 1: port 5000 (llama3.2:3b, 1 worker)
+  - DwarfQueen 2: port 5001 (llama3.2:3b, 1 worker)
   - Communication: HTTP over LAN (10.0.0.x network)
-  - Desktop Queens started via WaggleDance autonomous coordination!
+  - Desktop DwarfQueens started via WaggleDance autonomous coordination!
 - **Task:** "Explain the key differences between renewable energy and fossil fuels, including economic and environmental impacts"
 - **What happened:**
   1. RajaBee on Laptop split into 2 major components (economic analysis + environmental impacts)
-  2. Both components sent over LAN to Desktop Queens IN PARALLEL
-  3. Queen on :5000 completed in 51.25s, Queen on :5001 completed in 54.84s
+  2. Both components sent over LAN to Desktop DwarfQueens IN PARALLEL
+  3. DwarfQueen on :5000 completed in 51.25s, DwarfQueen on :5001 completed in 54.84s
   4. Wall time for parallel delegation: 54.9s (both ran simultaneously)
-  5. RajaBee combined both Queens' results into comprehensive Royal Honey
+  5. RajaBee combined both DwarfQueens' results into comprehensive Royal Honey
 - **Total time:** 63.5 seconds
 - **Key proof:** Real network communication between two physical machines. RajaBee on Laptop had NO code changes — just pointed to Desktop IPs instead of localhost. The abstraction works across the network!
 - **New files:** demo_phase2_lan.py (LAN demo with configurable Desktop IP)
 - **This is the first cross-machine hierarchical distributed AI test.**
-- **Bonus:** The entire test was coordinated autonomously via WaggleDance — Laptop Claude told Desktop Claude to start Queens, Desktop confirmed, Laptop ran the test. AI coordinating AI!
+- **Bonus:** The entire test was coordinated autonomously via WaggleDance — Laptop Claude told Desktop Claude to start DwarfQueens, Desktop confirmed, Laptop ran the test. AI coordinating AI!
 
 ## What Has Been Done (continued, 2026-04-09)
 - [x] **KillerBee website v1 BUILT** (2026-04-09, Laptop Windows)
   - Flask app with SQLite, Flask-Login, Flask-WTF, CSRF protection
   - Models: User (raja/queen/worker/beekeeper), Swarm, SwarmMember, SwarmJob, JobComponent
+  - Queen role in DB covers both GiantQueen and DwarfQueen (display text distinguishes them)
   - Full auth (register/login/logout), role-based dashboards
   - Swarm CRUD: create, view, join, submit jobs
   - API endpoints: /api/swarm/<id>/members, /api/swarm/<id>/heartbeat, /api/job/<id>/update
   - Red/black visual theme (darker than BeehiveOfAI's gold/brown)
-  - Hierarchy visualization (ASCII tree showing RajaBee → Queens → Workers)
+  - Hierarchy visualization (ASCII tree showing RajaBee -> GiantQueens -> DwarfQueens -> Workers)
   - Seed data script with demo users and Alpha Swarm
   - Runs on port 8877
 
@@ -154,10 +160,10 @@ The next evolution of the distributed AI system. The original project (Honeycomb
 
 ## What Needs To Be Done Next
 1. ~~Phase 2: Test across real LAN (RajaBee on Laptop, Queens on Desktop)~~ **DONE** (2026-04-10)
-2. Connect KillerBee website to GiantHoneyBee client (RajaBee reads members from API, reports job results back)
+2. Connect KillerBee website to GiantHoneyBee client (RajaBee reads GiantQueen/DwarfQueen members from API, reports job results back)
 3. Mad Honey book — continue writing
-4. Test with even more Queens (5, 10+)
+4. Test with even more DwarfQueens (5, 10+)
 5. ~~Test N-level (RajaBee wrapped as HTTP endpoint, another RajaBee on top)~~ **DONE** (2026-04-09)
-6. ~~Test with 3+ Queens~~ **DONE** (2026-04-09)
+6. ~~Test with 3+ DwarfQueens~~ **DONE** (2026-04-09)
 7. ~~KillerBee website~~ **DONE v1** (2026-04-09)
 8. Phase 3: Linux VMs for scale testing
