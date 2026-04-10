@@ -860,24 +860,42 @@ def api_member_recalculate(member_id):
     """Recalculate this member's capacity and all sibling fractions."""
     member = SwarmMember.query.get_or_404(member_id)
 
-    # Calculate capacity: sum of subordinate buzzings, or own buzzing for workers/leaf nodes
+    # First: recalculate fractions among this member's SUBORDINATES
     subs = SwarmMember.query.filter_by(parent_member_id=member.id).all()
     if subs:
+        # Set each subordinate's capacity (for workers it's their buzzing)
+        for sub in subs:
+            sub_children = SwarmMember.query.filter_by(parent_member_id=sub.id).all()
+            if sub_children:
+                sub.capacity = sum((c.buzzing or 0) for c in sub_children)
+            else:
+                sub.capacity = sub.buzzing or 0
+
+        # Calculate fractions among subordinates
+        total_sub_capacity = sum((s.capacity or 0) for s in subs)
+        for sub in subs:
+            if total_sub_capacity > 0:
+                sub.fraction = (sub.capacity or 0) / total_sub_capacity
+            else:
+                sub.fraction = 1.0 / len(subs) if subs else 0
+
+        # This member's capacity = sum of subordinate buzzings
         member.capacity = sum((s.buzzing or 0) for s in subs)
     else:
         member.capacity = member.buzzing or 0
 
-    # Recalculate fractions for ALL siblings (members with the same parent_member_id)
-    siblings = SwarmMember.query.filter_by(parent_member_id=member.parent_member_id, swarm_id=member.swarm_id).all()
-
-    # For top-level members (parent_member_id=None), only include those in the same swarm
-    total_capacity = sum((s.capacity or 0) for s in siblings)
-
-    for sibling in siblings:
-        if total_capacity > 0:
-            sibling.fraction = (sibling.capacity or 0) / total_capacity
-        else:
-            sibling.fraction = 0
+    # Second: recalculate fractions among this member's SIBLINGS
+    if member.parent_member_id is not None:
+        siblings = SwarmMember.query.filter_by(
+            parent_member_id=member.parent_member_id,
+            swarm_id=member.swarm_id
+        ).all()
+        total_capacity = sum((s.capacity or 0) for s in siblings)
+        for sibling in siblings:
+            if total_capacity > 0:
+                sibling.fraction = (sibling.capacity or 0) / total_capacity
+            else:
+                sibling.fraction = 1.0 / len(siblings) if siblings else 0
 
     db.session.commit()
 
