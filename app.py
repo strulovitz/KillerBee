@@ -445,6 +445,7 @@ def api_member_work(member_id):
             'id': c.id,
             'job_id': c.job_id,
             'task': c.task_description,
+            'original_task': c.job.task,
             'level': c.level,
             'component_type': c.component_type,
             'parent_id': c.parent_id,
@@ -588,6 +589,7 @@ def api_available_subtasks(swarm_id):
             'id': s.id,
             'job_id': s.job_id,
             'task': s.task_description,
+            'original_task': s.job.task,
             'level': s.level,
             'parent_id': s.parent_id,
         } for s in subtasks]
@@ -613,6 +615,7 @@ def api_available_components(swarm_id):
             'id': c.id,
             'job_id': c.job_id,
             'task': c.task_description,
+            'original_task': c.job.task,
             'level': c.level,
             'parent_id': c.parent_id,
         } for c in components]
