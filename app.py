@@ -622,6 +622,53 @@ def api_available_components(swarm_id):
     })
 
 
+# ── Calibration API ─────────────────────────────────────────────────────────
+
+@app.route('/api/member/<int:member_id>/calibration', methods=['POST'])
+@csrf.exempt
+def api_member_calibration(member_id):
+    """Boss sends a calibration task to a subordinate. Creates a special component assigned to them."""
+    data = request.get_json()
+    if not data or 'task' not in data:
+        return jsonify({'error': 'task required'}), 400
+
+    member = SwarmMember.query.get_or_404(member_id)
+
+    # Find any active job in this swarm to attach the calibration to,
+    # or create a special calibration job
+    swarm = Swarm.query.get(member.swarm_id)
+    cal_job = SwarmJob.query.filter_by(swarm_id=swarm.id, status='calibration').first()
+    if not cal_job:
+        cal_job = SwarmJob(
+            swarm_id=swarm.id,
+            beekeeper_id=swarm.raja_id,
+            task='[CALIBRATION] Buzzing performance test',
+            status='calibration'
+        )
+        db.session.add(cal_job)
+        db.session.commit()
+
+    # Create a calibration component assigned to this member
+    comp = JobComponent(
+        job_id=cal_job.id,
+        member_id=member.id,
+        parent_id=None,
+        task_description=data['task'],
+        level=0,
+        component_type=data.get('component_type', 'calibration'),
+        status='pending',
+    )
+    db.session.add(comp)
+    db.session.commit()
+
+    return jsonify({
+        'ok': True,
+        'component_id': comp.id,
+        'member_id': member.id,
+        'task': comp.task_description,
+    })
+
+
 # ── Member Registration API ─────────────────────────────────────────────────
 
 @app.route('/api/swarm/<int:swarm_id>/register', methods=['POST'])
@@ -640,8 +687,8 @@ def api_swarm_register(swarm_id):
     if not username or not password:
         return jsonify({'error': 'username and password required'}), 400
 
-    if member_type not in ('giant_queen', 'dwarf_queen', 'worker'):
-        return jsonify({'error': 'member_type must be giant_queen, dwarf_queen, or worker'}), 400
+    if member_type not in ('raja', 'giant_queen', 'dwarf_queen', 'worker'):
+        return jsonify({'error': 'member_type must be raja, giant_queen, dwarf_queen, or worker'}), 400
 
     swarm = Swarm.query.get_or_404(swarm_id)
 
