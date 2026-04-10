@@ -219,7 +219,20 @@ def submit_job(swarm_id):
 @login_required
 def view_job(job_id):
     job = SwarmJob.query.get_or_404(job_id)
-    components = JobComponent.query.filter_by(job_id=job.id).all()
+    # Get ALL components including nested subtasks, ordered by level then ID
+    components = JobComponent.query.filter_by(job_id=job.id).order_by(
+        JobComponent.parent_id.nullsfirst(), JobComponent.level, JobComponent.id
+    ).all()
+    return render_template('view_job.html', job=job, components=components)
+
+
+@app.route('/job/<int:job_id>/live')
+def view_job_live(job_id):
+    """Public live view of a job — no login required, auto-refreshes."""
+    job = SwarmJob.query.get_or_404(job_id)
+    components = JobComponent.query.filter_by(job_id=job.id).order_by(
+        JobComponent.parent_id.nullsfirst(), JobComponent.level, JobComponent.id
+    ).all()
     return render_template('view_job.html', job=job, components=components)
 
 

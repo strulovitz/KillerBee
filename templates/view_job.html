@@ -1,14 +1,25 @@
 {% extends "base.html" %}
 {% block title %}Job #{{ job.id }} — KillerBee{% endblock %}
 {% block content %}
+<!-- Auto-refresh every 3 seconds while job is in progress -->
+{% if job.status not in ('completed', 'failed') %}
+<meta http-equiv="refresh" content="3">
+{% endif %}
+
 <div class="flex-between mb-2">
   <h1>Job #{{ job.id }}</h1>
   {% if job.status == 'completed' %}
-    <span class="badge badge-green" style="font-size:1rem;padding:0.4rem 1rem">Completed</span>
+    <span class="badge badge-green" style="font-size:1rem;padding:0.4rem 1rem">COMPLETED</span>
   {% elif job.status == 'failed' %}
-    <span class="badge badge-red" style="font-size:1rem;padding:0.4rem 1rem">Failed</span>
+    <span class="badge badge-red" style="font-size:1rem;padding:0.4rem 1rem">FAILED</span>
+  {% elif job.status == 'pending' %}
+    <span class="badge badge-gold" style="font-size:1rem;padding:0.4rem 1rem">PENDING — Waiting for RajaBee...</span>
+  {% elif job.status == 'splitting' %}
+    <span class="badge badge-gold" style="font-size:1rem;padding:0.4rem 1rem">SPLITTING — RajaBee is analyzing...</span>
+  {% elif job.status == 'processing' %}
+    <span class="badge badge-gold" style="font-size:1rem;padding:0.4rem 1rem">PROCESSING — Bees are working...</span>
   {% else %}
-    <span class="badge badge-gold" style="font-size:1rem;padding:0.4rem 1rem">{{ job.status }}</span>
+    <span class="badge badge-gold" style="font-size:1rem;padding:0.4rem 1rem">{{ job.status|upper }}</span>
   {% endif %}
 </div>
 
@@ -22,42 +33,68 @@
     <div class="stat-lbl">Total Time</div>
   </div>
   <div class="stat-box">
-    <div class="stat-val">{% if job.depth_used %}{{ job.depth_used }}{% else %}—{% endif %}</div>
-    <div class="stat-lbl">Hierarchy Depth</div>
+    <div class="stat-val">{{ components|length }}</div>
+    <div class="stat-lbl">Total Components</div>
   </div>
 </div>
 
 <div class="card mt-2">
-  <div class="card-header">Task</div>
-  <p>{{ job.task }}</p>
+  <div class="card-header">Original Task</div>
+  <p style="font-size:1.1rem;line-height:1.6">{{ job.task }}</p>
 </div>
 
 {% if components %}
 <div class="card">
-  <div class="card-header">Components ({{ job.components_completed }}/{{ job.components_total }})</div>
+  <div class="card-header">Hierarchy — All Components &amp; Subtasks</div>
   <table>
     <thead>
       <tr>
-        <th>#</th>
+        <th>ID</th>
+        <th>Level</th>
+        <th>Type</th>
+        <th>Task Description</th>
         <th>Assigned To</th>
-        <th>Component</th>
         <th>Status</th>
         <th>Time</th>
       </tr>
     </thead>
     <tbody>
       {% for comp in components %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td><code>{{ comp.member.endpoint }}</code></td>
-        <td>{{ comp.task_description[:60] }}{% if comp.task_description|length > 60 %}...{% endif %}</td>
+      <tr style="{% if comp.component_type == 'subtask' %}background: rgba(255,255,255,0.03);{% endif %}{% if comp.status == 'completed' %}opacity:0.8;{% endif %}">
+        <td>#{{ comp.id }}</td>
+        <td>
+          {% if comp.level == 0 %}
+            <span style="color:var(--red)">L0 (RajaBee)</span>
+          {% elif comp.level == 1 %}
+            <span style="color:#e8a735">L1 (GiantQueen)</span>
+          {% elif comp.level == 2 %}
+            <span style="color:#4a9eff">L2 (DwarfQueen)</span>
+          {% else %}
+            L{{ comp.level }}
+          {% endif %}
+        </td>
+        <td>
+          {% if comp.component_type == 'subtask' %}
+            <span class="badge" style="background:#4a9eff;color:#000">Subtask</span>
+          {% else %}
+            <span class="badge" style="background:var(--red);color:#fff">Component</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if comp.level > 0 %}<span style="margin-left:{{ comp.level * 20 }}px">{% endif %}
+          {{ comp.task_description[:80] }}{% if comp.task_description|length > 80 %}...{% endif %}
+          {% if comp.level > 0 %}</span>{% endif %}
+        </td>
+        <td>{% if comp.member %}{{ comp.member.user.username }}{% else %}<em style="color:#666">unclaimed</em>{% endif %}</td>
         <td>
           {% if comp.status == 'completed' %}
             <span class="badge badge-green">Done</span>
+          {% elif comp.status == 'processing' %}
+            <span class="badge badge-gold">Working...</span>
           {% elif comp.status == 'failed' %}
             <span class="badge badge-red">Failed</span>
           {% else %}
-            <span class="badge badge-gold">{{ comp.status }}</span>
+            <span class="badge" style="background:#333;color:#999">{{ comp.status }}</span>
           {% endif %}
         </td>
         <td>{% if comp.processing_time %}{{ "%.1f"|format(comp.processing_time) }}s{% else %}—{% endif %}</td>
@@ -70,8 +107,8 @@
 
 {% if job.result %}
 <div class="card">
-  <div class="card-header">Result (Royal Honey)</div>
-  <div style="white-space:pre-wrap;line-height:1.6">{{ job.result }}</div>
+  <div class="card-header" style="background:var(--red);color:#fff;font-size:1.1rem">Royal Honey — Final Result</div>
+  <div style="white-space:pre-wrap;line-height:1.8;padding:1rem;font-size:1rem">{{ job.result }}</div>
 </div>
 {% endif %}
 {% endblock %}
