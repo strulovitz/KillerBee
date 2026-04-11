@@ -129,22 +129,16 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
   - Worker Alpha (member_id=1): connected to KillerBee on Laptop, Ollama OK
   - Worker Bravo (member_id=2): connected to KillerBee on Laptop, Ollama OK
   - DwarfQueen queen_alpha (member_id=3): discovered both Workers, ran Buzzing calibration
-- [x] **Buzzing calibration ran — but exposed 2 bugs** (see GiantHoneyBee/BUZZING_BUGS.md):
-  - BUG 1: Simultaneous calibration — both workers hit same Ollama at once, queue wait corrupts speed measurement
-  - BUG 2: Speed scoring formula — linear interpolation destroys actual speed ratios (2x real difference → 10x score difference)
-  - Fractions were 0.909 vs 0.091 for IDENTICAL workers — should be ~0.50 vs 0.50
+- [x] **Buzzing calibration ran — but exposed 3 bugs** (see GiantHoneyBee/BUZZING_BUGS.md):
+  - BUG 1: Simultaneous calibration — FIXED (sequential calibration)
+  - BUG 2: Speed scoring formula — FIXED (proportional: `10 * fastest/elapsed`)
+  - BUG 3: Timing inconsistency — ROOT CAUSE FOUND, fix proven, implementation pending
+  - Fractions progressed: 0.909/0.091 → 0.333/0.667 → 0.277/0.723 → 0.429/0.571 (should be ~0.50/0.50)
+  - Warmup attempt FAILED. Two-round reversed order partially helped but inconsistent.
 
-### Buzzing Bug Investigation (2026-04-11)
+### Buzzing Bug 3 — Root Cause Found (2026-04-11)
 
-**3 bugs found and investigated during Phase 2 setup:**
-
-| Bug | Problem | Status |
-|-----|---------|--------|
-| Bug 1: Simultaneous calibration | All workers hit same Ollama at once, queue wait corrupts timing | FIXED — sequential calibration |
-| Bug 2: Speed formula | Linear interpolation destroys actual speed ratios | FIXED — proportional formula: `10 * (fastest/elapsed)` |
-| Bug 3: Timing inconsistency | Identical workers get ~2x different times even sequentially | ROOT CAUSE FOUND, fix proven, implementation pending |
-
-**Bug 3 root cause:** LLM backends (Ollama, LM Studio, llama.cpp, vLLM) cache prompt token evaluations internally. When the same prompt arrives twice, the second request skips most evaluation work — partial eval instead of full eval, ~2-3x faster. This is NOT model loading, NOT GPU warmup. It's prompt-level caching.
+**Root cause:** LLM backends (Ollama, LM Studio, llama.cpp, vLLM) cache prompt token evaluations internally. When the same prompt arrives twice, the second request skips most evaluation work — partial eval instead of full eval, ~2-3x faster. This is NOT model loading, NOT GPU warmup. It's prompt-level caching.
 
 **Proven fix (tested on Laptop, 2026-04-11):** Send a short dummy question on a DIFFERENT topic before each real calibration measurement. The dummy overwrites the backend's cached prompt state. The real question then gets a full, fair evaluation. Tested: without dummy = 3.90s then 1.36s (2.8x difference). With dummy = 1.38s, 1.30s, 1.53s (consistent).
 
