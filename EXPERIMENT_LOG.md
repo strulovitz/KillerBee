@@ -129,12 +129,69 @@ The calibration system was debugged extensively before this test could run. Full
 4. **The system is resilient** — even with 42 components (a bug), it completed successfully
 5. **Two different GPUs coordinated** — RTX 5090 (Laptop) orchestrating, RTX 4070 Ti (Desktop) working
 
-### What Needs Fixing
-1. **Splitting prompt/JSON parsing** — RajaBee must produce exactly 2-4 clean component strings, not nested JSON
-2. **The splitting prompt is too minimal** — after cleaning roleplay, it may need more structure guidance for JSON output
+### What Was Fixed After This Run
+1. **Splitting** — replaced JSON-based splitting with smart_splitter.py (see Experiment 3)
+2. **Prompt cleanup** — removed all roleplay and JSON format instructions from all prompts
 
 ### Royal Honey (Final Answer)
 The combined answer covered: wormholes, Alcubierre warp drive, light sails, nuclear pulse propulsion, fusion propulsion, antimatter propulsion, radiation shielding, life support (hibernation, closed-loop, ISRU), navigation (gravitational slingshots), and communication (quantum, laser, radio). Each with pros and cons. Coherent and comprehensive despite the splitting bug.
+
+---
+
+## Experiment 3: Phase 2 LAN Test — SUCCESSFUL (2026-04-11)
+
+### What Changed Since Experiment 2
+- **smart_splitter.py**: Replaced JSON-based splitting. LLM writes however it wants (numbered list, bullets, headers, paragraphs, anything). Parser detects the format automatically by looking for repeating non-alphanumeric patterns at line starts. Prefers less common patterns (section headers) over more common ones (sub-item bullets). Tested with 12 format types.
+- **All prompts cleaned**: No roleplay ("You are a worker bee"), no motivation ("thoroughly and concisely"), no format instructions ("Return ONLY a JSON array"). Just the question and the data.
+- **Thorough calibration**: 3 big questions, 1-second polling, averaged scores across all rounds.
+- **Dummy cache reset**: Before each calibration measurement to flush LLM prompt cache.
+
+### Setup
+Same as Experiment 2:
+- **Laptop (10.0.0.1, RTX 5090)**: KillerBee website (port 8877) + RajaBee (llama3.2:3b)
+- **Desktop (10.0.0.5, RTX 4070 Ti)**: DwarfQueen queen_alpha + Worker alpha + Worker bravo (all llama3.2:3b)
+- **Communication**: ALL through KillerBee website over LAN
+
+### Buzzing Calibration
+- Workers: 0.500 vs 0.500 (perfect for identical hardware)
+- DwarfQueen quality: all 8.0 (6 out of 6 judgments)
+- RajaBee calibrating DwarfQueen: quality 6.0 (one round got 2.0 because the LLM confused "buzzing calibration" with hardware troubleshooting — known bug, needs fix)
+
+### Test Question
+Same as Experiment 2: "what solutions and concepts can humans use to do Interstellar travel (to go from our solar system to the nearest solar system which is Alpha Centauri? please give pros and cons for each."
+
+### Results
+
+| | Experiment 2 (broken) | Experiment 3 (fixed) |
+|---|---|---|
+| Components | 448 | 20 |
+| Total time | 2780.6s (46 min) | 179.9s (3 min) |
+| Splitting | 42 from RajaBee (nested JSON bug) | 5 from RajaBee (4 parts + intro) |
+| Subtasks | 406 (redundant waste) | 15 (2-3 per component) |
+
+### Splitting Detail
+RajaBee split into 5 components:
+1. Intro line ("Here's a suggested breakdown...")
+2. Part 1: Propulsion Concepts (light sails, nuclear pulse, fusion, antimatter)
+3. Part 2: Interstellar Travel Methods (generation ships, hibernation, solar sails)
+4. Part 3: Interstellar Travel Challenges (radiation, distance, life support)
+5. Part 4: Alpha Centauri-Specific Considerations (environment, distance)
+
+DwarfQueen split each component into 2-3 subtasks for the 2 Workers.
+
+### Royal Honey (Final Answer)
+Comprehensive answer covering: propulsion concepts (light sails, nuclear pulse, fusion, antimatter with pros/cons), travel methods (generation ships, hibernation, solar sails), challenges (radiation, distance, life support), Alpha Centauri specifics, communication (antennas, quantum), navigation (gravitational slingshots), and mission design (phased missions, swarm missions). All with pros and cons.
+
+### What This Proves
+1. **smart_splitter works** — LLM writes naturally, parser detects the format, proper 4-5 components instead of 42
+2. **15x faster** with proper splitting (3 min vs 46 min)
+3. **20 total components** instead of 448 — no wasted work
+4. **Clean prompts work** — no roleplay, no JSON, no motivation. Just the question.
+5. **Cross-machine hierarchy confirmed** — Laptop orchestrates, Desktop processes, results flow back
+
+### Known Issues Still Open
+1. **"Buzzing" word leaks into calibration context** — the LLM sees "buzzing calibration" and confuses it with hardware troubleshooting. Got quality=2 on one round because of this. Needs fix.
+2. **Intro line becomes a component** — "Here's a suggested breakdown..." gets treated as component #1. Harmless but adds unnecessary work.
 
 ---
 
@@ -148,3 +205,7 @@ These experiments belong in the chapter about real-world testing of the hierarch
 4. **The system is resilient** — start order doesn't matter, bees discover each other
 5. **One website coordinates everything** — KillerBee is the matchmaker, no bee talks to another directly
 6. **Proportional splitting means weaker machines still contribute** — they just get less work
+7. **"The Worker Bee Incident"** — MUST INCLUDE as comic relief. See MadHoney/BOOK_PLAN.md Chapter 10.
+8. **smart_splitter** — let the LLM write naturally instead of forcing formats. A general principle: adapt to the tool, don't force the tool to adapt to you.
+9. **5 bugs found and fixed in Buzzing** — real engineering, real debugging, real solutions. Each bug has a story.
+10. **15x improvement** from fixing splitting alone — the difference between a good architecture and good implementation

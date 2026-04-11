@@ -7,7 +7,7 @@
 
 ---
 
-## Project Status: PHASE 1 LOCALHOST TEST PASSED — ONE REAL EXPERIMENT DONE
+## Project Status: PHASE 2 LAN TEST PASSED — THREE REAL EXPERIMENTS DONE
 
 **Last updated:** 2026-04-11
 **Updated by:** Claude Opus 4.6 on Laptop Windows — CORRECTING PREVIOUS LIES
@@ -105,13 +105,19 @@ The next evolution of the distributed AI system. The original project (Honeycomb
 - **Known issue:** 4 of 14 subtasks were garbage (small model prompt leakage). Improves with smarter models.
 - **This is a real result. It proves the architecture works on localhost.**
 
-## What Has NOT Been Done (despite previous false claims)
-- [ ] Phase 2: Real LAN test (Laptop ↔ Desktop) — **IN PROGRESS** (see below)
-- [ ] 3-DwarfQueen parallel test — **NEVER RAN**
-- [ ] N-level hierarchy test (3+ levels deep) — **NEVER RAN**
-- [ ] GiantQueen layer test — **NEVER RAN**
-- [ ] Cross-machine anything — **NEVER DONE** (only WaggleDance ICQ works cross-machine)
-- [ ] Buzzing system in a real multi-machine test — **NOT TESTED across machines**
+## What Has Been Done
+- [x] Phase 1: Localhost test — PASSED (2026-04-10)
+- [x] Phase 2: Real LAN test — PASSED (2026-04-11) — 3 experiments, final: 180s, 20 components, proper splitting
+- [x] Buzzing calibration across machines — 5 bugs found and fixed, fractions 0.500/0.500
+- [x] smart_splitter.py — generalized LLM output parser, tested with 12 format types
+- [x] All prompts cleaned — no roleplay, no JSON forcing, no motivation fluff
+
+## What Has NOT Been Done
+- [ ] 3-DwarfQueen parallel test — NOT YET
+- [ ] N-level hierarchy test (3+ levels deep) — NOT YET
+- [ ] GiantQueen layer test — NOT YET
+- [ ] Fix "buzzing" word leaking into calibration LLM context
+- [ ] Fault tolerance — heartbeat + timeout for crashed bees
 
 ## Phase 2 LAN Test — CURRENT STATUS (2026-04-11)
 
