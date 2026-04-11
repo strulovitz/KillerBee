@@ -106,20 +106,48 @@ The next evolution of the distributed AI system. The original project (Honeycomb
 - **This is a real result. It proves the architecture works on localhost.**
 
 ## What Has NOT Been Done (despite previous false claims)
-- [ ] Phase 2: Real LAN test (Laptop ↔ Desktop) — **NOT STARTED**
+- [ ] Phase 2: Real LAN test (Laptop ↔ Desktop) — **IN PROGRESS** (see below)
 - [ ] 3-DwarfQueen parallel test — **NEVER RAN**
 - [ ] N-level hierarchy test (3+ levels deep) — **NEVER RAN**
 - [ ] GiantQueen layer test — **NEVER RAN**
 - [ ] Cross-machine anything — **NEVER DONE** (only WaggleDance ICQ works cross-machine)
 - [ ] Buzzing system in a real multi-machine test — **NOT TESTED across machines**
 
-## What Actually Needs To Be Done Next
-1. **Phase 2: Real LAN test** — RajaBee on Laptop, DwarfQueens on Desktop (10.0.0.5)
-2. **Test with multiple DwarfQueens** — localhost first, then LAN
-3. **Test GiantQueen layer** — 3+ level hierarchy
-4. **Research LLM models** for each role
-5. **MadHoney book** — continue writing (with HONEST results only)
-6. **Fault tolerance** — heartbeat + timeout for crashed bees
+## Phase 2 LAN Test — CURRENT STATUS (2026-04-11)
+
+We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly where we stopped:
+
+### What has been done for Phase 2:
+- [x] Firewall rule added on Laptop for port 8877 (KillerBee website)
+- [x] Fresh KillerBee database created and seeded (seed_data.py)
+- [x] PHASE2_LAN_INSTRUCTIONS.md written and pushed — detailed instructions for Desktop Claude
+- [x] Desktop Claude confirmed prerequisites: Ollama OK, repos OK, Python OK
+- [x] Desktop Claude confirmed port 8877 connection refused (because website wasn't started yet)
+- [x] WaggleDance ICQ updated: REPLY messages now auto-typed into Claude Code terminal
+- [x] WaggleDance README updated: git pull added to daily startup, prefix changed to [WAGGLEDANCE ICQ AUTO-MESSAGE]
+
+### What still needs to happen (in order):
+1. Nir restarts WaggleDance + Claude Code on BOTH machines (fresh start with updated ICQ)
+2. **LAPTOP Window 1:** Start KillerBee website: `cd C:\Users\nir_s\Projects\KillerBee && python app.py` (binds to 0.0.0.0:8877)
+3. **DESKTOP:** Desktop Claude guides Nir to open 3 command prompts and start:
+   - DwarfQueen queen_alpha pointing at http://10.0.0.1:8877
+   - Worker worker_alpha pointing at http://10.0.0.1:8877
+   - Worker worker_bravo pointing at http://10.0.0.1:8877
+   - (exact commands are in PHASE2_LAN_INSTRUCTIONS.md)
+4. **LAPTOP Window 2:** Start RajaBee: `cd C:\Users\nir_s\Projects\GiantHoneyBee && python raja_bee.py --server http://localhost:8877 --swarm-id 1 --username raja_nir --password password --model llama3.2:3b`
+5. **LAPTOP:** Submit a job via KillerBee website (http://localhost:8877) or via beekeeper API
+6. Watch it work (or debug what breaks)
+
+### Seed data users (all password: "password"):
+- raja_nir, queen_giant, queen_alpha, queen_bravo, beekeeper_demo, worker_alpha, worker_bravo
+- Swarm: "Alpha Swarm" (swarm_id=1)
+
+## What Actually Needs To Be Done After Phase 2
+1. **Test with multiple DwarfQueens** — localhost first, then LAN
+2. **Test GiantQueen layer** — 3+ level hierarchy
+3. **Research LLM models** for each role
+4. **MadHoney book** — continue writing (with HONEST results only)
+5. **Fault tolerance** — heartbeat + timeout for crashed bees
 
 ## What Works Cross-Machine (for real)
 - **WaggleDance ICQ** — Laptop Claude Code and Desktop Claude Code can communicate via messages
