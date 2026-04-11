@@ -132,14 +132,16 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
 - [x] **Buzzing calibration ran — but exposed 3 bugs** (see GiantHoneyBee/BUZZING_BUGS.md):
   - BUG 1: Simultaneous calibration — both workers hit same Ollama at once, queue wait corrupts speed measurement — **FIXED**
   - BUG 2: Speed scoring formula — linear interpolation destroys actual speed ratios (2x real → 10x score) — **FIXED**
-  - BUG 3: Ollama warmup/caching — first worker tested always slower (cold Ollama), second always faster (hot Ollama) — **NOT FIXED**
+  - BUG 3: Sequential order bias — second worker always 2x faster due to Ollama internal caching — **NOT FIXED**
+  - Warmup fix attempted and FAILED — times unchanged (10.1s vs 5.1s) even after warmup
   - Round 1 fractions (bugs 1+2): 0.909 vs 0.091 for IDENTICAL workers
-  - Round 2 fractions (bug 3 only): 0.333 vs 0.667 for IDENTICAL workers — better but still wrong, should be ~0.50 vs 0.50
+  - Round 2 fractions (after bug 1+2 fix): 0.333 vs 0.667 for IDENTICAL workers
+  - Round 3 fractions (after warmup): 0.277 vs 0.723 for IDENTICAL workers — WORSE due to quality score divergence
 
-### BLOCKED: Bug 3 (warmup) must be fixed before submitting a real job
+### BLOCKED: Bug 3 (order bias) must be fixed before submitting a real job
 - Detailed bug report and fix instructions: **GiantHoneyBee/BUZZING_BUGS.md** (Bug 3 section)
 - Fix needed in: `GiantHoneyBee/dwarf_queen_client.py` and `GiantHoneyBee/raja_bee.py`
-- Fix: add warmup round before real calibration so all workers start from hot Ollama state
+- Fix: two-round calibration with reversed order, average times across rounds to cancel position effect
 - After fix: re-seed database, restart all bees, rerun test
 
 ### What still needs to happen (in order):
