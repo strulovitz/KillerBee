@@ -132,9 +132,10 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
 - [x] **Buzzing calibration ran — exposed 4 bugs, ALL FIXED** (see GiantHoneyBee/BUZZING_BUGS.md):
   - BUG 1: Simultaneous calibration — FIXED (sequential calibration)
   - BUG 2: Speed scoring formula — FIXED (proportional: `10 * fastest/elapsed`)
-  - BUG 3: Timing inconsistency — FIXED (dummy reset before each calibration measurement)
+  - BUG 3: Timing/cache inconsistency — FIXED (dummy cache reset before each calibration)
   - BUG 4: Quality score noise — FIXED (worker prompt said "You are a worker bee", LLM role-played as insect)
   - All LLM prompts cleaned: removed roleplay, motivation fluff across GiantHoneyBee AND HoneycombOfAI
+  - Speed confirmed perfect: alpha=3.4s, bravo=3.5s actual, both scored 10.0
 
 ### Buzzing Bug Investigation Summary (2026-04-11)
 
@@ -142,15 +143,13 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
 
 **Bug 4 — "The Worker Bee Incident":** The worker prompt said "You are a worker bee." The 3B model literally role-played as an insect, apologizing that bees don't know about ancient Pompeii. The judge correctly scored these apologetic answers lower. Hours of cache/GPU/ordering investigation — the answer was one line in the prompt. **MUST go in the MadHoney book (Chapter 10) as comic relief.** See MadHoney/BOOK_PLAN.md.
 
-Full details: **GiantHoneyBee/BUZZING_BUGS.md**
-
 ### What still needs to happen (in order):
 1. **LAPTOP:** Stop website, re-seed database, restart website
 2. **LAPTOP:** Log in as beekeeper_demo in browser
 3. **DESKTOP:** Start 3 bees (2 Workers + 1 DwarfQueen) — commands in PHASE2_LAN_INSTRUCTIONS.md
 4. **LAPTOP:** Start RajaBee: `cd C:\Users\nir_s\Projects\GiantHoneyBee && python raja_bee.py --server http://localhost:8877 --swarm-id 1 --username raja_nir --password password --model llama3.2:3b`
 5. **LAPTOP:** Submit a job via KillerBee website (http://localhost:8877)
-8. Watch it work (or debug what breaks)
+6. Watch it work (or debug what breaks)
 
 ### Seed data users (all password: "password"):
 - raja_nir, queen_giant, queen_alpha, queen_bravo, beekeeper_demo, worker_alpha, worker_bravo
