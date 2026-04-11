@@ -138,11 +138,11 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
   - Round 2 fractions (after bug 1+2 fix): 0.333 vs 0.667 for IDENTICAL workers
   - Round 3 fractions (after warmup): 0.277 vs 0.723 for IDENTICAL workers — WORSE due to quality score divergence
 
-### BLOCKED: Bug 3 (order bias) must be fixed before submitting a real job
-- Detailed bug report and fix instructions: **GiantHoneyBee/BUZZING_BUGS.md** (Bug 3 section)
-- Fix needed in: `GiantHoneyBee/dwarf_queen_client.py` and `GiantHoneyBee/raja_bee.py`
-- Fix: two-round calibration with reversed order, average times across rounds to cancel position effect
-- After fix: re-seed database, restart all bees, rerun test
+### Bug 3 status: two-round calibration IMPROVED fractions but Ollama timing is noisy
+- Round 4 fractions: **0.429 vs 0.571** (was 0.277 vs 0.723, should be ~0.50 vs 0.50)
+- Round 1 was perfect (both 10.2s), Round 2 had Ollama timing noise (5.1s vs 10.1s)
+- See **GiantHoneyBee/BUZZING_BUGS.md** for full Round 4 analysis and options
+- **Decision needed:** keep refining calibration, or proceed with Phase 2 job test at current fractions?
 
 ### What still needs to happen (in order):
 1. Nir restarts WaggleDance + Claude Code on BOTH machines (fresh start with updated ICQ)
