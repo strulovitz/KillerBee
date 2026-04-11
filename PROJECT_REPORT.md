@@ -134,7 +134,7 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
   - BUG 2: Speed scoring formula — FIXED (proportional: `10 * fastest/elapsed`)
   - BUG 3: Timing/cache inconsistency — FIXED (dummy cache reset before each calibration)
   - BUG 4: Quality score noise — FIXED (worker prompt said "You are a worker bee", LLM role-played as insect)
-  - BUG 5: Polling interval corrupts speed measurement — **NOT FIXED**
+  - BUG 5: Polling interval corrupts speed measurement — **FIXED** (1s polling + 3 rounds averaged)
   - All LLM prompts cleaned: removed roleplay, motivation fluff across GiantHoneyBee AND HoneycombOfAI
 
 ### Buzzing Bug Investigation Summary (2026-04-11)
@@ -143,7 +143,13 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
 
 **Bug 4 — "The Worker Bee Incident":** The worker prompt said "You are a worker bee." The 3B model literally role-played as an insect, apologizing that bees don't know about ancient Pompeii. The judge correctly scored these apologetic answers lower. Hours of cache/GPU/ordering investigation — the answer was one line in the prompt. **MUST go in the MadHoney book (Chapter 10) as comic relief.** See MadHoney/BOOK_PLAN.md.
 
-**Bug 5 — Polling interval corrupts speed:** DwarfQueen polls every 5s, processing takes 3-4s. Measured time = processing + random 0-5s wait for next poll. Round 7: actual times 3.3s vs 4.0s (alpha faster), DwarfQueen saw 10.1s vs 5.1s (thinks bravo 2x faster). Quality is perfect (both 8.0) but speed is lottery. Fix: use worker's self-reported processing_time instead of boss wall-clock.
+**Bug 5 — Polling interval corrupts speed:** Fixed with thorough calibration: 1-second polling during calibration (not 5s), 3 rounds of big questions, averaged times and quality. Round 8 result: 0.523 vs 0.477 for identical workers — close enough to 0.50/0.50. All 5 bugs fixed.
+
+### Round 8 Calibration Results (2026-04-11) — ALL BUGS FIXED
+- Speed: alpha avg 9.5s, bravo avg 9.4s → both speed=10.0
+- Quality: alpha avg 8.0 [8,8,8], bravo avg 7.3 [8,6,8]
+- Fractions: **0.523 vs 0.477** — best result yet, ready for real test
+- Bees are running on Desktop. Ready for RajaBee and job submission.
 
 ### What still needs to happen (in order):
 1. **LAPTOP:** Stop website, re-seed database, restart website
