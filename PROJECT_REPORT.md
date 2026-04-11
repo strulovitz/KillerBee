@@ -129,19 +129,21 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
   - Worker Alpha (member_id=1): connected to KillerBee on Laptop, Ollama OK
   - Worker Bravo (member_id=2): connected to KillerBee on Laptop, Ollama OK
   - DwarfQueen queen_alpha (member_id=3): discovered both Workers, ran Buzzing calibration
-- [x] **Buzzing calibration ran — exposed 4 bugs, ALL FIXED** (see GiantHoneyBee/BUZZING_BUGS.md):
+- [x] **Buzzing calibration ran — exposed 5 bugs, 4 FIXED, 1 remaining** (see GiantHoneyBee/BUZZING_BUGS.md):
   - BUG 1: Simultaneous calibration — FIXED (sequential calibration)
   - BUG 2: Speed scoring formula — FIXED (proportional: `10 * fastest/elapsed`)
   - BUG 3: Timing/cache inconsistency — FIXED (dummy cache reset before each calibration)
   - BUG 4: Quality score noise — FIXED (worker prompt said "You are a worker bee", LLM role-played as insect)
+  - BUG 5: Polling interval corrupts speed measurement — **NOT FIXED**
   - All LLM prompts cleaned: removed roleplay, motivation fluff across GiantHoneyBee AND HoneycombOfAI
-  - Speed confirmed perfect: alpha=3.4s, bravo=3.5s actual, both scored 10.0
 
 ### Buzzing Bug Investigation Summary (2026-04-11)
 
 **Bug 3 — LLM prompt caching:** Backends cache prompt token evaluations. Second request to same prompt is 2-3x faster. Fix: dummy reset question before each calibration. Proven locally. Design decision: dummy in calibration only, not real work (cache is a feature during production).
 
 **Bug 4 — "The Worker Bee Incident":** The worker prompt said "You are a worker bee." The 3B model literally role-played as an insect, apologizing that bees don't know about ancient Pompeii. The judge correctly scored these apologetic answers lower. Hours of cache/GPU/ordering investigation — the answer was one line in the prompt. **MUST go in the MadHoney book (Chapter 10) as comic relief.** See MadHoney/BOOK_PLAN.md.
+
+**Bug 5 — Polling interval corrupts speed:** DwarfQueen polls every 5s, processing takes 3-4s. Measured time = processing + random 0-5s wait for next poll. Round 7: actual times 3.3s vs 4.0s (alpha faster), DwarfQueen saw 10.1s vs 5.1s (thinks bravo 2x faster). Quality is perfect (both 8.0) but speed is lottery. Fix: use worker's self-reported processing_time instead of boss wall-clock.
 
 ### What still needs to happen (in order):
 1. **LAPTOP:** Stop website, re-seed database, restart website
