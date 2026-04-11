@@ -132,23 +132,29 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
 - [x] **Buzzing calibration ran — but exposed 3 bugs** (see GiantHoneyBee/BUZZING_BUGS.md):
   - BUG 1: Simultaneous calibration — FIXED (sequential calibration)
   - BUG 2: Speed scoring formula — FIXED (proportional: `10 * fastest/elapsed`)
-  - BUG 3: Timing inconsistency — ROOT CAUSE FOUND, fix proven, implementation pending
-  - Fractions progressed: 0.909/0.091 → 0.333/0.667 → 0.277/0.723 → 0.429/0.571 (should be ~0.50/0.50)
-  - Warmup attempt FAILED. Two-round reversed order partially helped but inconsistent.
+  - BUG 3: Timing/cache inconsistency — **FIXED AND CONFIRMED** (dummy cache reset)
+  - BUG 4: Quality score noise — **NEW, NOT FIXED** (small LLM judge gives random scores)
+  - Fractions progressed: 0.909/0.091 → 0.333/0.667 → 0.277/0.723 → 0.429/0.571 → 0.250/0.750
+  - Speed is now perfect (both 10.1s, both speed=10.0). Remaining unfairness is 100% quality noise.
 
-### Buzzing Bug 3 — Root Cause Found (2026-04-11)
+### Buzzing Bug 3 — FIXED AND CONFIRMED (2026-04-11)
 
-**Root cause:** LLM backends (Ollama, LM Studio, llama.cpp, vLLM) cache prompt token evaluations internally. When the same prompt arrives twice, the second request skips most evaluation work — partial eval instead of full eval, ~2-3x faster. This is NOT model loading, NOT GPU warmup. It's prompt-level caching.
+**Root cause:** LLM prompt evaluation caching. Dummy reset before each measurement solves it.
 
-**Proven fix (tested on Laptop, 2026-04-11):** Send a short dummy question on a DIFFERENT topic before each real calibration measurement. The dummy overwrites the backend's cached prompt state. The real question then gets a full, fair evaluation. Tested: without dummy = 3.90s then 1.36s (2.8x difference). With dummy = 1.38s, 1.30s, 1.53s (consistent).
+**Round 5 confirmation (Desktop, 2026-04-11):**
+- Actual worker processing: alpha=3.4s, bravo=3.5s (from worker terminal logs)
+- DwarfQueen measured: both 10.1s (includes polling + network, relative is fair)
+- Speed scores: both 10.0 — perfect
 
-**Critical design decision:** Dummy reset in CALIBRATION ONLY, NOT in real work. Calibration needs fairness (comparing workers). Real work needs performance (cache helps — e.g., robot simulation with incremental parameters benefits from cached context).
+### Buzzing Bug 4 — Quality Score Noise (2026-04-11)
 
-Full details: **GiantHoneyBee/BUZZING_BUGS.md**
+**Problem:** DwarfQueen (llama3.2:3b) judging workers (also llama3.2:3b) gave quality=2.0 vs quality=6.0 for identical workers. Random noise from a small model creates a 3:1 work split (0.250 vs 0.750).
+
+**Decision needed:** See **GiantHoneyBee/BUZZING_BUGS.md** Bug 4 for options.
 
 ### What still needs to happen (in order):
-1. Implement dummy reset fix in `_run_calibration()` in all 3 GiantHoneyBee files
-2. Push to GitHub, Desktop pulls
+1. Decide how to handle quality score noise (Bug 4)
+2. Implement fix, push to GitHub, Desktop pulls
 3. **LAPTOP:** Stop website, re-seed database, restart website
 4. **LAPTOP:** Log in as beekeeper_demo in browser
 5. **DESKTOP:** Start 3 bees (2 Workers + 1 DwarfQueen) — commands in PHASE2_LAN_INSTRUCTIONS.md
