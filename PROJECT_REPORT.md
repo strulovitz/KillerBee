@@ -134,22 +134,33 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
   - BUG 2: Speed scoring formula — linear interpolation destroys actual speed ratios (2x real difference → 10x score difference)
   - Fractions were 0.909 vs 0.091 for IDENTICAL workers — should be ~0.50 vs 0.50
 
-### BLOCKED: Buzzing bugs must be fixed before submitting a real job
-- Detailed bug report and fix instructions: **GiantHoneyBee/BUZZING_BUGS.md**
-- Fix needed in: `GiantHoneyBee/dwarf_queen_client.py` and `GiantHoneyBee/raja_bee.py`
-- After fix: re-seed database, restart all bees, rerun test
+### Buzzing Bug Investigation (2026-04-11)
+
+**3 bugs found and investigated during Phase 2 setup:**
+
+| Bug | Problem | Status |
+|-----|---------|--------|
+| Bug 1: Simultaneous calibration | All workers hit same Ollama at once, queue wait corrupts timing | FIXED — sequential calibration |
+| Bug 2: Speed formula | Linear interpolation destroys actual speed ratios | FIXED — proportional formula: `10 * (fastest/elapsed)` |
+| Bug 3: Timing inconsistency | Identical workers get ~2x different times even sequentially | ROOT CAUSE FOUND, fix proven, implementation pending |
+
+**Bug 3 root cause:** LLM backends (Ollama, LM Studio, llama.cpp, vLLM) cache prompt token evaluations internally. When the same prompt arrives twice, the second request skips most evaluation work — partial eval instead of full eval, ~2-3x faster. This is NOT model loading, NOT GPU warmup. It's prompt-level caching.
+
+**Proven fix (tested on Laptop, 2026-04-11):** Send a short dummy question on a DIFFERENT topic before each real calibration measurement. The dummy overwrites the backend's cached prompt state. The real question then gets a full, fair evaluation. Tested: without dummy = 3.90s then 1.36s (2.8x difference). With dummy = 1.38s, 1.30s, 1.53s (consistent).
+
+**Critical design decision:** Dummy reset in CALIBRATION ONLY, NOT in real work. Calibration needs fairness (comparing workers). Real work needs performance (cache helps — e.g., robot simulation with incremental parameters benefits from cached context).
+
+Full details: **GiantHoneyBee/BUZZING_BUGS.md**
 
 ### What still needs to happen (in order):
-1. Nir restarts WaggleDance + Claude Code on BOTH machines (fresh start with updated ICQ)
-2. **LAPTOP Window 1:** Start KillerBee website: `cd C:\Users\nir_s\Projects\KillerBee && python app.py` (binds to 0.0.0.0:8877)
-3. **DESKTOP:** Desktop Claude guides Nir to open 3 command prompts and start:
-   - DwarfQueen queen_alpha pointing at http://10.0.0.1:8877
-   - Worker worker_alpha pointing at http://10.0.0.1:8877
-   - Worker worker_bravo pointing at http://10.0.0.1:8877
-   - (exact commands are in PHASE2_LAN_INSTRUCTIONS.md)
-4. **LAPTOP Window 2:** Start RajaBee: `cd C:\Users\nir_s\Projects\GiantHoneyBee && python raja_bee.py --server http://localhost:8877 --swarm-id 1 --username raja_nir --password password --model llama3.2:3b`
-5. **LAPTOP:** Submit a job via KillerBee website (http://localhost:8877) or via beekeeper API
-6. Watch it work (or debug what breaks)
+1. Implement dummy reset fix in `_run_calibration()` in all 3 GiantHoneyBee files
+2. Push to GitHub, Desktop pulls
+3. **LAPTOP:** Stop website, re-seed database, restart website
+4. **LAPTOP:** Log in as beekeeper_demo in browser
+5. **DESKTOP:** Start 3 bees (2 Workers + 1 DwarfQueen) — commands in PHASE2_LAN_INSTRUCTIONS.md
+6. **LAPTOP:** Start RajaBee: `cd C:\Users\nir_s\Projects\GiantHoneyBee && python raja_bee.py --server http://localhost:8877 --swarm-id 1 --username raja_nir --password password --model llama3.2:3b`
+7. **LAPTOP:** Submit a job via KillerBee website (http://localhost:8877)
+8. Watch it work (or debug what breaks)
 
 ### Seed data users (all password: "password"):
 - raja_nir, queen_giant, queen_alpha, queen_bravo, beekeeper_demo, worker_alpha, worker_bravo
