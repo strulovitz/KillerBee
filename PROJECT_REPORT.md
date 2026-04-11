@@ -125,6 +125,19 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
 - [x] Desktop Claude confirmed port 8877 connection refused (because website wasn't started yet)
 - [x] WaggleDance ICQ updated: REPLY messages now auto-typed into Claude Code terminal
 - [x] WaggleDance README updated: git pull added to daily startup, prefix changed to [WAGGLEDANCE ICQ AUTO-MESSAGE]
+- [x] **All 3 Desktop bees started successfully over LAN** (2026-04-11):
+  - Worker Alpha (member_id=1): connected to KillerBee on Laptop, Ollama OK
+  - Worker Bravo (member_id=2): connected to KillerBee on Laptop, Ollama OK
+  - DwarfQueen queen_alpha (member_id=3): discovered both Workers, ran Buzzing calibration
+- [x] **Buzzing calibration ran — but exposed 2 bugs** (see GiantHoneyBee/BUZZING_BUGS.md):
+  - BUG 1: Simultaneous calibration — both workers hit same Ollama at once, queue wait corrupts speed measurement
+  - BUG 2: Speed scoring formula — linear interpolation destroys actual speed ratios (2x real difference → 10x score difference)
+  - Fractions were 0.909 vs 0.091 for IDENTICAL workers — should be ~0.50 vs 0.50
+
+### BLOCKED: Buzzing bugs must be fixed before submitting a real job
+- Detailed bug report and fix instructions: **GiantHoneyBee/BUZZING_BUGS.md**
+- Fix needed in: `GiantHoneyBee/dwarf_queen_client.py` and `GiantHoneyBee/raja_bee.py`
+- After fix: re-seed database, restart all bees, rerun test
 
 ### What still needs to happen (in order):
 1. Nir restarts WaggleDance + Claude Code on BOTH machines (fresh start with updated ICQ)
