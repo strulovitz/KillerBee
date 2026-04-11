@@ -129,14 +129,17 @@ We are IN THE MIDDLE of setting up the real Phase 2 LAN test. Here is exactly wh
   - Worker Alpha (member_id=1): connected to KillerBee on Laptop, Ollama OK
   - Worker Bravo (member_id=2): connected to KillerBee on Laptop, Ollama OK
   - DwarfQueen queen_alpha (member_id=3): discovered both Workers, ran Buzzing calibration
-- [x] **Buzzing calibration ran — but exposed 2 bugs** (see GiantHoneyBee/BUZZING_BUGS.md):
-  - BUG 1: Simultaneous calibration — both workers hit same Ollama at once, queue wait corrupts speed measurement
-  - BUG 2: Speed scoring formula — linear interpolation destroys actual speed ratios (2x real difference → 10x score difference)
-  - Fractions were 0.909 vs 0.091 for IDENTICAL workers — should be ~0.50 vs 0.50
+- [x] **Buzzing calibration ran — but exposed 3 bugs** (see GiantHoneyBee/BUZZING_BUGS.md):
+  - BUG 1: Simultaneous calibration — both workers hit same Ollama at once, queue wait corrupts speed measurement — **FIXED**
+  - BUG 2: Speed scoring formula — linear interpolation destroys actual speed ratios (2x real → 10x score) — **FIXED**
+  - BUG 3: Ollama warmup/caching — first worker tested always slower (cold Ollama), second always faster (hot Ollama) — **NOT FIXED**
+  - Round 1 fractions (bugs 1+2): 0.909 vs 0.091 for IDENTICAL workers
+  - Round 2 fractions (bug 3 only): 0.333 vs 0.667 for IDENTICAL workers — better but still wrong, should be ~0.50 vs 0.50
 
-### BLOCKED: Buzzing bugs must be fixed before submitting a real job
-- Detailed bug report and fix instructions: **GiantHoneyBee/BUZZING_BUGS.md**
+### BLOCKED: Bug 3 (warmup) must be fixed before submitting a real job
+- Detailed bug report and fix instructions: **GiantHoneyBee/BUZZING_BUGS.md** (Bug 3 section)
 - Fix needed in: `GiantHoneyBee/dwarf_queen_client.py` and `GiantHoneyBee/raja_bee.py`
+- Fix: add warmup round before real calibration so all workers start from hot Ollama state
 - After fix: re-seed database, restart all bees, rerun test
 
 ### What still needs to happen (in order):
