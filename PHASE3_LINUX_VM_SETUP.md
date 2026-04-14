@@ -297,38 +297,38 @@ This breaks two things:
 #### Round 1 — Dense
 | VM | Tier | Model | Locked |
 |---|---|---|---|
-| RajaBee | RB | `gemma4:31b` (256K context decisive for orchestrator, freshest Google dense flagship) | 2026-04-14 by Nir |
-| GiantQueen-A | GQ | `qwen3:14b` (Qwen flagship 14B, strongest small-dense for instruction-following + decomposition) | 2026-04-14 by Nir |
-| GiantQueen-B | GQ | `qwen3:14b` (same — Nir picked all #1s) | 2026-04-14 by Nir |
-| DwarfQueen-A1 | DQ | `qwen3:7b` (Qwen 7B flagship, best reasoning+structured-output for delegation) | 2026-04-14 by Nir |
-| DwarfQueen-A2 | DQ | `qwen3:7b` (same #1) | 2026-04-14 by Nir |
-| DwarfQueen-B1 | DQ | `qwen3:7b` (same #1) | 2026-04-14 by Nir |
-| DwarfQueen-B2 | DQ | `qwen3:7b` (same #1) | 2026-04-14 by Nir |
-| Worker × 8 | W | `phi-4-mini:3.8b` (Microsoft, ~78% MMLU, highest quality in sub-4B class) | 2026-04-14 by Nir |
+| RajaBee | RB | `qwen3.5:27b` (Option Z substitute for gemma4:31b — ~16 GB at q4, 2 GB headroom, Qwen 3.5 flagship dense) | 2026-04-14 by Nir |
+| GiantQueen-A | GQ | `qwen3:14b` (~9 GB at q4) | 2026-04-14 by Nir |
+| GiantQueen-B | GQ | `qwen3:14b` | 2026-04-14 by Nir |
+| DwarfQueen-A1 | DQ | `qwen3:8b` (qwen3:7b doesn't exist on Ollama — 8b is the closest size, ~5 GB at q4) | 2026-04-14 by Nir |
+| DwarfQueen-A2 | DQ | `qwen3:8b` | 2026-04-14 by Nir |
+| DwarfQueen-B1 | DQ | `qwen3:8b` | 2026-04-14 by Nir |
+| DwarfQueen-B2 | DQ | `qwen3:8b` | 2026-04-14 by Nir |
+| Worker × 8 | W | `phi4-mini:3.8b` (rename: no hyphen; ~2.5 GB at q4, ~78% MMLU, highest quality in sub-4B class) | 2026-04-14 by Nir |
 
 #### Round 2 — MoE
 | VM | Tier | Model | Locked |
 |---|---|---|---|
-| RajaBee | RB | `qwen3:30b-a3b-thinking` (explicit CoT thinking + 262K context, ideal for orchestration planning) | 2026-04-14 by Nir |
-| GiantQueen-A | GQ | `qwen3.5:35b-a3b` (newer "gold standard" 35B/3B-active small-MoE) | 2026-04-14 by Nir |
-| GiantQueen-B | GQ | `qwen3.5:35b-a3b` (same — Nir picked all #1s) | 2026-04-14 by Nir |
-| DwarfQueen-A1 | DQ | `granite-3.1-moe:3b` (IBM, only MoE that fits 8 GB tier; M2 candidates too big at 30-35B) | 2026-04-14 by Nir |
-| DwarfQueen-A2 | DQ | `granite-3.1-moe:3b` (same #1) | 2026-04-14 by Nir |
-| DwarfQueen-B1 | DQ | `granite-3.1-moe:3b` (same #1) | 2026-04-14 by Nir |
-| DwarfQueen-B2 | DQ | `granite-3.1-moe:3b` (same #1) | 2026-04-14 by Nir |
-| Worker × 8 | W | `granite-3.1-moe:3b` (same as DQ — only 2 small-MoE options exist; #1 is the more capable) | 2026-04-14 by Nir |
+| RajaBee | RB | `gemma4:26b-moe` (Option Z substitute for qwen3:30b-a3b-thinking — ~15 GB at q4, 3 GB headroom, 88.3% AIME math, only M3 MoE meaningfully smaller than tier ceiling) | 2026-04-14 by Nir |
+| GiantQueen-A | GQ | `granite3.1-moe:3b` (Option Z substitute for qwen3.5:35b-a3b — only MoE in pool that fits 12 GB tier at q4, M2 candidates 30-35B all too big) | 2026-04-14 by Nir |
+| GiantQueen-B | GQ | `granite3.1-moe:3b` | 2026-04-14 by Nir |
+| DwarfQueen-A1 | DQ | `granite3.1-moe:3b` (rename: no hyphen; IBM, only MoE that fits 8 GB tier) | 2026-04-14 by Nir |
+| DwarfQueen-A2 | DQ | `granite3.1-moe:3b` | 2026-04-14 by Nir |
+| DwarfQueen-B1 | DQ | `granite3.1-moe:3b` | 2026-04-14 by Nir |
+| DwarfQueen-B2 | DQ | `granite3.1-moe:3b` | 2026-04-14 by Nir |
+| Worker × 8 | W | `granite3.1-moe:3b` (same across every non-RajaBee VM in MoE round — honest collapse of variety, the small/mid MoE ecosystem simply has no other published entries) | 2026-04-14 by Nir |
 
 #### Round 3 — Vision/Multi-modal
 | VM | Tier | Model | Locked |
 |---|---|---|---|
-| RajaBee | RB | `qwen3-vl:32b` (top dense VLM, 81.8 MMLU-Pro, highest raw multi-modal reasoning) | 2026-04-14 by Nir |
-| GiantQueen-A | GQ | `qwen3-vl:9b` (Qwen-VL is strongest small-VLM family, fits tier with headroom) | 2026-04-14 by Nir |
-| GiantQueen-B | GQ | `qwen3-vl:9b` (same — Nir picked all #1s) | 2026-04-14 by Nir |
-| DwarfQueen-A1 | DQ | `llama3.2-vision:11b` (Meta production-tested vision, full use of tier) | 2026-04-14 by Nir |
-| DwarfQueen-A2 | DQ | `llama3.2-vision:11b` (same #1) | 2026-04-14 by Nir |
-| DwarfQueen-B1 | DQ | `llama3.2-vision:11b` (same #1) | 2026-04-14 by Nir |
-| DwarfQueen-B2 | DQ | `llama3.2-vision:11b` (same #1) | 2026-04-14 by Nir |
-| Worker × 8 | W | `gemma3:4b` (Google native multimodal for edge, well-tested, full use of tier) | 2026-04-14 by Nir |
+| RajaBee | RB | `mistral-small-3.1:24b` (Option Z substitute for qwen3-vl:32b — ~14 GB at q4, 4 GB headroom, purpose-built multimodal, third-lab heterogeneity) | 2026-04-14 by Nir |
+| GiantQueen-A | GQ | `qwen3-vl:8b` (qwen3-vl:9b doesn't exist — 8b is the closest size, ~5 GB at q4) | 2026-04-14 by Nir |
+| GiantQueen-B | GQ | `qwen3-vl:8b` | 2026-04-14 by Nir |
+| DwarfQueen-A1 | DQ | `llama3.2-vision:11b` (~7 GB at q4, Meta production-tested) | 2026-04-14 by Nir |
+| DwarfQueen-A2 | DQ | `llama3.2-vision:11b` | 2026-04-14 by Nir |
+| DwarfQueen-B1 | DQ | `llama3.2-vision:11b` | 2026-04-14 by Nir |
+| DwarfQueen-B2 | DQ | `llama3.2-vision:11b` | 2026-04-14 by Nir |
+| Worker × 8 | W | `gemma3:4b` (~2.5 GB at q4, Google native multimodal) | 2026-04-14 by Nir |
 
 ### 6.6 ALL THREE rounds — variety rule fully relaxed (locked by Nir 2026-04-14)
 
