@@ -409,6 +409,14 @@ Dense pool:
 
 Same reasoning as MoE and vision relaxations: the 1-3B small dense ecosystem published on Ollama in 2026 is wider than MoE/vision but still does not contain 8 distinct families that would cleanly fit a 4 GB Worker tier without forcing artificial picks.
 
+## 7.0 Build log — Desktop host
+
+- **2026-04-14 afternoon** — KVM stack verified installed (qemu-kvm, libvirt-daemon-system, libvirt-clients, bridge-utils, virtinst, virt-manager). `libvirtd` started + enabled. `nir` added to `libvirt` and `kvm` groups (takes effect next login).
+- **2026-04-14 afternoon** — `br0` bridge created on Mint 22.2 Desktop via `nmcli`, with `ethernet.cloned-mac-address` set to the `enp2s0` MAC (`88:ae:dd:90:0b:0e`) so DHCP hands back the same `10.0.0.5` lease. Atomic flip with auto-rollback, no manual console recovery needed. `br0` now UP with `10.0.0.5/24`, gateway `10.0.0.1`, GitHub + ICQ reachable. STP off.
+- **2026-04-14 afternoon** — libvirt network `br0` defined from `/tmp/br0.xml` (forward mode=bridge, bridge name=br0). `virsh net-list --all` shows `br0 active autostart persistent`.
+- **2026-04-14 afternoon** — `/etc/sudoers.d/claude-kvm` installed to grant `nir` NOPASSWD on `apt`, `apt-get`, `systemctl`, `usermod`, `nmcli`, `virsh`, `virt-install`, `tee`, `cp`, `mv`, `mkdir`, `brctl`, so Desktop Linux Claude can run the full Phase 3 build autonomously while Nir works on BeeSting on the Laptop. `sudo rm /etc/sudoers.d/claude-kvm` to revoke when Phase 3 is done.
+- **2026-04-14 afternoon** — Ubuntu Server 24.04.4 LTS live-server ISO download started in background to `~/isos/ubuntu-24.04.4-live-server-amd64.iso`.
+
 ## 7. Build order
 
 1. **Confirm CPU virt enabled on Desktop:** `grep -E 'vmx|svm' /proc/cpuinfo` — done in this Mint session before installing KVM.
