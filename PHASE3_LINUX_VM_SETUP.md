@@ -1,9 +1,12 @@
-# Phase 3: Linux VM Setup for the 3-DwarfQueen Parallel Test
+# Phase 3: Linux VM Setup for the Full 15-VM KillerBee Cluster
 
-**Audience:** Nir + the Claude Code session that is guiding him through this (Desktop Linux Claude or Laptop Linux Claude).
-**Host OS:** Linux Mint 22.2 (Desktop) or Debian 13 (Laptop). Same instructions work on both; filesystem paths and package names are identical.
-**Status:** Not started as of 2026-04-14. This doc is the step-by-step plan.
+**Audience:** Nir + the Claude Code session guiding him through this (Desktop Linux Claude on Mint, Laptop Linux Claude on Debian 13).
+**Host OS — Desktop:** Linux Mint 22.2 "Zara" (Ubuntu 24.04 / `noble` base), kernel 6.14.0-37-generic, 64 GB RAM, RTX 4070 Ti, 10.0.0.5.
+**Host OS — Laptop:** Debian 13 "Trixie", 64 GB RAM, RTX 5090, 10.0.0.1.
+**Status:** Plan locked 2026-04-14 by Nir + Desktop Linux Claude. Models PROVISIONAL — must be verified via Google before pulling. Build not started.
 **Precondition:** Phase 2 LAN test PASSED on 2026-04-11 (see `EXPERIMENT_LOG.md` Experiment 3).
+
+> **WARNING TO ANY CLAUDE READING THIS DOC:** an earlier version of this file (committed 2026-04-14 08:47 UTC by Desktop Windows Claude) was wrong. It said Debian 12 netinst for the VMs and `llama3.2:3b` for the model. **That was never the plan.** The real plan is in this file. Do not revert to the earlier version. If you find yourself about to recommend Debian 12, llama3.2, or "same model on every VM," stop and re-read this file from the top.
 
 ---
 
@@ -11,150 +14,201 @@
 
 `KillerBee/CLAUDE.md` Rule #1: if the architecture says a bee is a separate machine, it must BE a separate machine — its own OS, own IP, own processes — **or a real VM with the same properties.** No in-process fakes. No threads pretending to be distributed.
 
-The next test on the roadmap is the **3-DwarfQueen parallel test**, which needs **at least three DwarfQueen machines running at the same time**. We only have two physical machines (Desktop + Laptop). Math is short by at least one. VMs are how the math closes.
+The full KillerBee hierarchy is **RajaBee → GiantQueens → DwarfQueens → Workers**. The smallest non-trivial topology that exercises every layer is **1 RajaBee + 2 GiantQueens + 4 DwarfQueens + 8 Workers = 15 separate machines**. We have two physical hosts. Math is short by 13. VMs are how the math closes.
 
-Each physical machine running Linux can host multiple lightweight Linux VMs, each with its own IP on the LAN, each running its own Ollama + its own KillerBee bee process. Once both machines are on Linux and each has 2-3 VMs, the cluster has enough "machines" for 3-DwarfQueen (and eventually the full GiantQueen 3-level hierarchy test).
+We are building all 15 VMs **now**, in one go, so we never have to scramble for "one more box" mid-experiment.
 
-## 2. The target topology
-
-Target for the end of Phase 3 setup (both machines, eventually):
+## 2. The target topology (15 VMs, both hosts)
 
 ```
-Laptop (Debian 13 host, 10.0.0.1)
-  |-- KillerBee website (Flask, port 8877)     [runs on host]
-  |-- WaggleDance server (Flask, port 8765)    [runs on host]
-  |-- RajaBee (Python, host Ollama)            [runs on host]
-  |-- VM laptop-vm1 (bridged, e.g. 10.0.0.11)  [DwarfQueen + Workers]
-  |-- VM laptop-vm2 (bridged, e.g. 10.0.0.12)  [DwarfQueen + Workers]
-
-Desktop (Linux Mint 22.2 host, 10.0.0.5)
-  |-- (host can run one DwarfQueen directly to save a VM)
-  |-- VM desktop-vm1 (bridged, e.g. 10.0.0.21) [DwarfQueen + Workers]
-  |-- VM desktop-vm2 (bridged, e.g. 10.0.0.22) [DwarfQueen + Workers]
+RajaBee (Laptop, 10.0.0.11)
+|
++-- GiantQueen-A (Laptop, 10.0.0.12)
+|     |
+|     +-- DwarfQueen-A1 (Laptop, 10.0.0.13)
+|     |     +-- Worker-A1a (Laptop, 10.0.0.15)
+|     |     +-- Worker-A1b (Laptop, 10.0.0.16)
+|     |
+|     +-- DwarfQueen-A2 (Desktop, 10.0.0.21)
+|           +-- Worker-A2a (Desktop, 10.0.0.22)
+|           +-- Worker-A2b (Desktop, 10.0.0.23)
+|
++-- GiantQueen-B (Desktop, 10.0.0.24)
+      |
+      +-- DwarfQueen-B1 (Laptop, 10.0.0.14)
+      |     +-- Worker-B1a (Laptop, 10.0.0.17)
+      |     +-- Worker-B1b (Laptop, 10.0.0.18)
+      |
+      +-- DwarfQueen-B2 (Desktop, 10.0.0.25)
+            +-- Worker-B2a (Desktop, 10.0.0.26)
+            +-- Worker-B2b (Desktop, 10.0.0.27)
 ```
 
-Minimum for the **3-DwarfQueen parallel test** specifically: any three of those DwarfQueen rows above, each on a different OS instance with its own IP, all registering to the same KillerBee website on Laptop.
+**Why RajaBee on Laptop:** the KillerBee website (Flask, port 8877) and the WaggleDance server (Flask, port 8765) both run on the Laptop host. RajaBee talks to the website most. Keep it close.
 
-## 3. Why KVM/QEMU + virt-manager (not VirtualBox)
+**Why GiantQueens split across hosts:** Rule #1 — different physical machines really should be in the picture for a 3-level hierarchy test, not "all queens on one box."
 
-On Linux we recommend **KVM/QEMU with virt-manager** instead of VirtualBox, because:
+## 3. Per-host VM count and OS
 
-1. **Native to the Linux kernel.** No third-party kernel modules. No "VirtualBox won't build on this kernel" surprises after an update.
-2. **No licensing questions.** KVM is GPL.
-3. **Bridged networking is straightforward** with `virt-manager` — one dropdown.
-4. **Headless-friendly.** We do not need a GUI inside the guest; KVM handles that gracefully.
-5. **Performance.** KVM uses hardware virtualization (VT-x/AMD-V) directly through the kernel. VirtualBox does too but with extra translation layers.
+| Host | Host OS | Guest OS for ALL its VMs | VM count |
+|---|---|---|---|
+| **Laptop** (10.0.0.1, Debian 13, 64 GB) | Debian 13 Trixie | **Debian 13 Trixie netinst (minimal, no DE)** | **8** |
+| **Desktop** (10.0.0.5, Linux Mint 22.2, 64 GB) | Linux Mint 22.2 (Ubuntu 24.04 base) | **Ubuntu Server 24.04 LTS (minimal, no DE)** | **7** |
 
-VirtualBox is a fallback if KVM has a problem on a given machine. Both are acceptable under Rule #1 because both give the VM its own kernel, IP, and processes.
+**Why match guest to host family:** Same package manager, same kernel line, same muscle memory for the human guiding the install. We considered cross-mixing for "more heterogeneity," Nir chose match-host for simplicity. Decision is locked.
 
-## 4. Prerequisites — install on the Linux host (one-time)
+**Why "Server" / "netinst" and not Desktop flavors:** these are the headless minimal flavors. No GUI inside the VM. The VMs only run Ollama + a Python bee process and answer over the network — nobody will ever sit in front of one. Headless flavors save 2-3 GB disk and ~500 MB RAM per VM compared to their desktop siblings. With 15 VMs that compounds.
 
-**Step 4.1 — Confirm CPU virtualization is enabled in BIOS.**
+## 4. RAM budget (CPU-only Ollama, no GPU passthrough)
 
-Run:
+We are **not** doing PCIe GPU passthrough into the VMs. GPU passthrough on KVM is doable but fragile (IOMMU groups, vfio binding, host driver blacklisting), and it monopolizes the GPU — only one VM gets it. For a 15-VM cluster it doesn't scale. Inference inside each VM is **CPU-only** via Ollama. The host GPUs are still useful for non-VM workloads (host-side experiments, Honeymation, etc.) — we just don't expose them to the guests.
+
+| Role | RAM per VM | Why |
+|---|---|---|
+| RajaBee | 8 GB | runs the largest reasoning model in the cluster |
+| GiantQueen | 6 GB | planning model, mid-size |
+| DwarfQueen | 6 GB | delegation model, mid-size |
+| Worker | 4 GB | small executor, smallest models |
+
+**Laptop usage:** RajaBee(8) + GiantQueen-A(6) + 2×DwarfQueen(6+6) + 4×Worker(4×4) = **42 GB**. Free for host: 22 GB. KillerBee website + WaggleDance server + host Ollama + headroom — comfortable.
+
+**Desktop usage:** GiantQueen-B(6) + 2×DwarfQueen(6+6) + 4×Worker(4×4) = **34 GB**. Free for host: 30 GB. Very comfortable.
+
+Neither host should swap.
+
+## 5. IP plan (bridged networking on br0)
+
+| Range | Used by |
+|---|---|
+| 10.0.0.1 | Laptop host |
+| 10.0.0.5 | Desktop host |
+| 10.0.0.11 – 10.0.0.18 | Laptop VMs (8 slots) |
+| 10.0.0.21 – 10.0.0.27 | Desktop VMs (7 slots) |
+
+All VMs on the real LAN via `br0`, **not** the libvirt default NAT (`192.168.122.x`). NAT would isolate VMs from the Laptop's KillerBee website at `10.0.0.1:8877` and break the test. See §7 for bridge setup.
+
+## 6. Model assignment — PROVISIONAL, MUST BE GOOGLE-VERIFIED
+
+> **STATUS: UNVERIFIED.** The model tags below are Desktop Claude's best guess at what's currently published on `ollama.com/library`. Claude does **not** have live web access in this session and the Ollama library changes constantly. Before pulling any of these, Nir will run a Google search per row (Claude will write the exact search string), paste the answer back, and we will replace the row with a real, currently-available tag. Rows still marked `?` after that pass do not get pulled.
+>
+> **Hard rule:** all 15 models must be from **Chinese labs** (Alibaba/Qwen, DeepSeek, Shanghai AI Lab/InternLM, Zhipu/GLM, 01.AI/Yi, Baichuan, etc.). If a row's verification turns up only non-Chinese alternatives, the row stays empty until we find a Chinese substitute. **No silent substitution with Llama, Gemma, Phi, Mistral, etc.**
+
+| # | VM | Role | Host | RAM | Provisional model (UNVERIFIED) |
+|---|---|---|---|---|---|
+| 1 | RajaBee | orchestrator | Laptop | 8 GB | `deepseek-r1:7b` ? |
+| 2 | GiantQueen-A | planner | Laptop | 6 GB | `qwen3:4b` ? |
+| 3 | GiantQueen-B | planner | Desktop | 6 GB | `qwen2.5:7b` ? |
+| 4 | DwarfQueen-A1 | delegator | Laptop | 6 GB | `qwen2.5:3b` ? |
+| 5 | DwarfQueen-A2 | delegator | Desktop | 6 GB | `qwen2.5-coder:3b` ? |
+| 6 | DwarfQueen-B1 | delegator | Laptop | 6 GB | `qwen3:1.7b` ? |
+| 7 | DwarfQueen-B2 | delegator | Desktop | 6 GB | `deepseek-coder:6.7b` ? |
+| 8 | Worker-A1a | executor | Laptop | 4 GB | `qwen2.5:1.5b` ? |
+| 9 | Worker-A1b | executor | Laptop | 4 GB | `qwen2.5:0.5b` ? |
+| 10 | Worker-A2a | executor | Desktop | 4 GB | `qwen2.5-coder:1.5b` ? |
+| 11 | Worker-A2b | executor | Desktop | 4 GB | `qwen2.5-coder:0.5b` ? |
+| 12 | Worker-B1a | executor | Laptop | 4 GB | `qwen3:0.6b` ? |
+| 13 | Worker-B1b | executor | Laptop | 4 GB | `deepseek-r1:1.5b` ? |
+| 14 | Worker-B2a | executor | Desktop | 4 GB | `deepseek-coder:1.3b` ? |
+| 15 | Worker-B2b | executor | Desktop | 4 GB | `internlm2:1.8b` ? |
+
+Each `?` means: not verified against `ollama.com/library` yet. Verification protocol is in §6.1.
+
+### 6.1 Verification protocol (Google + Nir + Claude loop)
+
+Claude does not have live internet here. To verify each row, Claude will hand Nir an exact Google search string. Nir pastes it into Google, pastes the AI Overview / first result back into the chat, Claude updates the row in this doc, repeat for the next row.
+
+Example for row 1:
+
+> **Claude tells Nir to paste into Google:** `ollama library deepseek-r1 7b tag site:ollama.com`
+>
+> **Nir pastes the result back.**
+>
+> **Claude updates row 1:** removes the `?`, locks the exact tag (e.g. `deepseek-r1:7b` confirmed, or replaces with whatever is actually there).
+
+Run this loop 15 times before any `ollama pull` happens. The verified table replaces this provisional one.
+
+## 7. Build order
+
+1. **Confirm CPU virt enabled on Desktop:** `grep -E 'vmx|svm' /proc/cpuinfo` — done in this Mint session before installing KVM.
+2. **Install KVM stack on Desktop:** `qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virtinst virt-manager`. Add user to `libvirt` and `kvm` groups, log out/in.
+3. **Build `br0` bridge on Desktop** (§5 — bridged, not NAT).
+4. **Download Ubuntu Server 24.04 LTS minimal ISO** to `~/isos/ubuntu-24.04-server-amd64.iso`.
+5. **Build template VM `desktop-template`:**
+   - 2 vCPU, 4 GB RAM, 15 GB disk (template specs; clones get resized later).
+   - Install Ubuntu Server 24.04 minimal, no extra packages, OpenSSH only.
+   - Hostname: `desktop-template`. User: `nir`.
+   - Inside the VM: install `curl python3 python3-pip git`, install Ollama, set `OLLAMA_HOST=0.0.0.0` via `systemctl edit ollama` (not `.bashrc` — service does not inherit user env), `systemctl restart ollama`.
+   - Verify from Desktop host: `curl http://<vm-ip>:11434/api/tags` returns JSON.
+6. **Shut down `desktop-template`** and clone with `virt-clone --original desktop-template --name desktop-vm-N --auto-clone` for N = 1..7. Each clone:
+   - Boot, SSH in, `hostnamectl set-hostname <role-name>` (e.g. `giantqueen-b`), reboot, verify new IP via DHCP, `ollama pull <verified model from §6>`.
+7. **Run §6.1 verification loop FIRST** before any `ollama pull` happens on any VM. Pulling 15 hallucinated tags would fail loudly but waste hours.
+8. **Hand off to Laptop Linux Claude** over WaggleDance ICQ to do the same with **Debian 13 Trixie netinst** as the guest OS on the Laptop host. Same template+clone pattern, same verification loop, same RAM budget.
+9. **Run the Rule #1 compliance checklist (§9 below) across all 15 VMs.**
+10. **Run the 3-DwarfQueen test first** (§10) as the warm-up — only 3 of the 4 DwarfQueens active, RajaBee plus one GiantQueen. Then scale to the full 1+2+4+8 GiantQueen 3-level test.
+
+## 8. KVM/QEMU + virt-manager prerequisites — Desktop side
+
+(This section was correct in the previous version and is unchanged in spirit; preserved here so the doc is self-contained.)
+
+**8.1 — Confirm CPU virt:**
 ```
 grep -E --color 'vmx|svm' /proc/cpuinfo
 ```
-If this returns several highlighted lines, virtualization is on. If it returns nothing, reboot into BIOS and enable Intel VT-x (Intel CPUs) or AMD-V / SVM (AMD CPUs), save, reboot back.
+Several highlighted lines = on. Empty = reboot into BIOS, enable Intel VT-x or AMD-V, save.
 
-**Step 4.2 — Install KVM + virt-manager + bridge tools.**
-
-On Linux Mint 22.2 / Debian 13:
+**8.2 — Install KVM + tools** (Mint 22.2, apt-based, identical command on Debian 13):
 ```
 sudo apt update
-```
-```
 sudo apt install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virtinst virt-manager
 ```
 
-**Step 4.3 — Add your user to the libvirt and kvm groups.**
+**8.3 — Group membership:**
 ```
 sudo usermod -aG libvirt $USER
-```
-```
 sudo usermod -aG kvm $USER
 ```
-Then **log out and log back in** so the group change takes effect. Confirm with `groups` — you should see `libvirt` and `kvm` in the list.
+Log out and back in. Confirm with `groups`.
 
-**Step 4.4 — Verify KVM is working.**
+**8.4 — libvirtd running:**
 ```
 sudo systemctl status libvirtd
-```
-You should see `active (running)`. If not:
-```
 sudo systemctl enable --now libvirtd
 ```
 
-**Step 4.5 — Install Ollama on the host too (for RajaBee and for testing).**
+**8.5 — Host-side dev stack** (host-side Ollama is for non-VM experiments; the VMs each run their own):
 ```
+sudo apt install -y git python3 python3-pip python3-venv curl
 curl -fsSL https://ollama.com/install.sh | sh
-```
-```
-ollama pull llama3.2:3b
-```
-
-Set `OLLAMA_HOST=0.0.0.0` so Ollama accepts LAN connections. Add this line to `~/.bashrc`:
-```
 echo 'export OLLAMA_HOST=0.0.0.0' >> ~/.bashrc
-```
-Then restart Ollama:
-```
 sudo systemctl restart ollama
 ```
 
-**Step 4.6 — Install the rest of the dev stack.**
-```
-sudo apt install -y git python3 python3-pip python3-venv curl
-```
-```
-pip install flask flask-login flask-wtf requests
-```
+## 9. The bridge (br0) — both hosts, identical procedure
 
-**Step 4.7 — Clone all the repos (per `feedback_full_context`: full context everywhere).**
-```
-mkdir -p ~/Projects && cd ~/Projects
-```
-```
-for r in HoneycombOfAI GiantHoneyBee KillerBee BeehiveOfAI WaggleDance BeeSting Honeymation MadHoney TheDistributedAIRevolution; do git clone https://github.com/strulovitz/$r.git; done
-```
+NAT default is wrong for us. We need bridged so VMs get real `10.0.0.x` IPs reachable from the other host.
 
-## 5. Create the bridged network (one-time)
-
-By default, `libvirt` creates a NAT network called `default` on `192.168.122.x`. That network is **isolated from the LAN** — VMs on it cannot be reached from Laptop at `10.0.0.1`, which breaks the whole test. We need **bridged networking** so each VM gets an IP on the real `10.0.0.0/24` LAN.
-
-**Step 5.1 — Identify the host's real network interface.**
+**9.1 — Identify the host's LAN interface:**
 ```
 ip -br link
 ```
-Look for the interface that is `UP` and has the LAN MAC address. It will typically be `enp3s0`, `eno1`, `eth0`, or similar. **Write that name down** — you will use it in the next step. Call it `<IFACE>` below.
+Pick the UP interface with the LAN MAC (`enp3s0`, `eno1`, `eth0`, etc.). Call it `<IFACE>`.
 
-**Step 5.2 — Create the bridge with NetworkManager (Mint default) or systemd-networkd.**
-
-Easiest on Mint / modern Debian is `nmcli`:
+**9.2 — Create the bridge** (NetworkManager / nmcli, the Mint default):
 ```
 sudo nmcli connection add type bridge ifname br0 con-name br0
-```
-```
 sudo nmcli connection add type bridge-slave ifname <IFACE> master br0
-```
-```
 sudo nmcli connection modify br0 bridge.stp no
-```
-```
 sudo nmcli connection up br0
 ```
+**Warning:** the host briefly drops LAN. Do this from the local console, not SSH.
 
-**Warning:** this will briefly drop the host's network connection (seconds). If you are remoting in, do it from the local console.
-
-Verify:
+**9.3 — Verify:**
 ```
 ip -br addr show br0
 ```
 `br0` should have the host's LAN IP.
 
-**Step 5.3 — Tell libvirt about the bridge.**
-
-Create a file `/tmp/br0.xml` with this content (save via text editor):
+**9.4 — Tell libvirt about it.** Save `/tmp/br0.xml`:
 ```
 <network>
   <name>br0</name>
@@ -165,181 +219,53 @@ Create a file `/tmp/br0.xml` with this content (save via text editor):
 Then:
 ```
 sudo virsh net-define /tmp/br0.xml
-```
-```
 sudo virsh net-start br0
-```
-```
 sudo virsh net-autostart br0
-```
-Verify:
-```
 sudo virsh net-list --all
 ```
-You should see `br0` as `active` and `autostart yes`.
+Should show `br0 active autostart`.
 
-## 6. Create the first VM (template)
+## 10. Rule #1 compliance checklist (run before declaring the cluster ready)
 
-Use a **minimal** guest — no GUI. Two good choices:
+Per VM:
+- [ ] Own IP on `10.0.0.0/24` (verify with `ip -br addr show` inside).
+- [ ] Own kernel (`uname -r` matches the guest OS, not the host).
+- [ ] Own Ollama process (`ps aux | grep ollama` inside; `curl http://<vm-ip>:11434/api/tags` from a different machine).
+- [ ] Reachable from the Laptop's KillerBee website host (ping + curl on 8877).
+- [ ] The model assigned in §6 is the one actually loaded (`ollama list` matches the verified table).
+- [ ] No bee process on the VM was spawned as a host subprocess. Each bee is a separately launched process inside the VM, registered to the KillerBee website as a distinct user.
 
-- **Debian 12 netinst** (~400 MB ISO) — familiar apt, easy Ollama install.
-- **Alpine Linux standard** (~200 MB ISO) — tiniest, but musl libc means Ollama sometimes fights back. Prefer Debian unless disk is tight.
+If ANY box is unchecked: **stop**. Fix before running tests. No papering over.
 
-**Step 6.1 — Download the ISO.**
-```
-mkdir -p ~/isos && cd ~/isos
-```
-```
-curl -L -o debian-12-netinst.iso https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.7.0-amd64-netinst.iso
-```
-(URL may advance — check https://www.debian.org/download for the current filename if this 404s.)
+## 11. Running the tests
 
-**Step 6.2 — Launch `virt-manager`.**
-```
-virt-manager
-```
-A GUI window opens. **File → New Virtual Machine.**
-- **Step 1:** Local install media → Forward.
-- **Step 2:** Browse → Browse Local → pick `~/isos/debian-12-netinst.iso`. Let it auto-detect OS.
-- **Step 3:** Memory **2048 MiB**, CPUs **2**. (Adjust up if you have lots of RAM — more helps Ollama inference.)
-- **Step 4:** Create a disk image, **15 GiB**.
-- **Step 5:** Name the VM `desktop-vm1` (or `laptop-vm1` etc — use the pattern in §2). **Important:** click "Customize configuration before install" and then Forward.
-- **Customization screen:** select the **NIC** entry on the left. In the dropdown, change "Network source" to **Bridge device: br0** (or select `br0` from the virtual network list). Apply. Begin Installation.
+**Warm-up (3-DwarfQueen parallel test):**
+1. Laptop host: KillerBee website running on `:8877`.
+2. Laptop host: WaggleDance running on `:8765`.
+3. Three DwarfQueen VMs (any 3 of the 4): start `dwarf_queen_client.py --server http://10.0.0.1:8877 --swarm-id 1 --username queen_<X> --password password --model <verified model from §6>`.
+4. Two Workers per DwarfQueen: start `worker_client.py` similarly.
+5. RajaBee VM (10.0.0.11): start `raja_bee.py --server http://10.0.0.1:8877 --swarm-id 1 --username raja_nir --password password --model <verified model>`.
+6. Laptop host: submit a job via the website UI.
+7. Log to `EXPERIMENT_LOG.md` as Experiment 4.
 
-**Step 6.3 — Run the Debian installer inside the VM.**
-- Language, locale, keyboard — defaults are fine.
-- Hostname: same as the VM name (`desktop-vm1`).
-- Create user `nir` with a memorable password.
-- Disk: guided, use entire disk, single partition.
-- **Software selection:** UNCHECK desktop environment. CHECK "SSH server" and "standard system utilities". That is all. No GUI.
-- Install GRUB to `/dev/vda`. Reboot.
+**Expected hiccup:** `seed_data.py` currently seeds `queen_alpha` and `queen_bravo` only. Add `queen_charlie` (and a third Worker pair, plus a `raja_nir` user if not present) to the seed before running. Commit the seed change.
 
-**Step 6.4 — First-boot inside the VM.**
+**Full GiantQueen 3-level test (after warm-up passes):** all 15 VMs, full hierarchy from §2. Same script pattern, scaled. Expect this to be the first time the cluster has ever run with two GiantQueens above four DwarfQueens above eight Workers all on heterogeneous Chinese models.
 
-Log in as `nir`. Confirm LAN IP:
-```
-ip -br addr show
-```
-You should see an address like `10.0.0.11/24` on the main interface (not `192.168.122.x`). If you see the 192 range, the bridge did not take — go back to §5.
+## 12. Troubleshooting
 
-From the **host**, confirm you can ping the VM:
-```
-ping -c 3 10.0.0.11
-```
+- **VM gets `192.168.122.x` not `10.0.0.x`** → bridge not wired. `sudo virsh edit <vm>`, set `<source bridge='br0'/>` on the NIC.
+- **Host loses network when bringing up `br0`** → distro wasn't using NetworkManager. Fall back to `/etc/network/interfaces` or `systemd-networkd`. Stop and ask Nir to describe the network state before guessing.
+- **`virt-manager` cannot see your VMs** → user not in `libvirt` group, or you ran `sudo virt-manager` (which sees a different libvirt connection). Fix groups, log out/in, run as normal user.
+- **Ollama in VM refuses LAN connections** → `OLLAMA_HOST=0.0.0.0` not picked up by the systemd unit. `systemctl edit ollama` (not `.bashrc`), add `Environment="OLLAMA_HOST=0.0.0.0"`, `systemctl restart ollama`.
+- **Host swaps under load** → too many VMs running with too-large models. Pause some VMs (`virsh suspend <vm>`) until you find the working set that fits 64 GB. Update §4 budget.
+- **Ollama tag from §6 doesn't pull** → it was hallucinated. Re-run §6.1 Google verification for that row before retrying.
 
-**Step 6.5 — Install Ollama + a small model in the VM.**
-
-SSH into the VM from the host:
-```
-ssh nir@10.0.0.11
-```
-Inside the VM:
-```
-sudo apt update && sudo apt install -y curl python3 python3-pip git
-```
-```
-curl -fsSL https://ollama.com/install.sh | sh
-```
-```
-echo 'export OLLAMA_HOST=0.0.0.0' >> ~/.bashrc && source ~/.bashrc
-```
-```
-sudo systemctl edit ollama
-```
-In the editor that opens, add:
-```
-[Service]
-Environment="OLLAMA_HOST=0.0.0.0"
-```
-Save and exit (`Ctrl+O`, Enter, `Ctrl+X` in nano, or `:wq` in vim), then:
-```
-sudo systemctl restart ollama
-```
-Pull a tiny model (per `KillerBee/PROJECT_REPORT.md` Design Principle #5 — small models for testing):
-```
-ollama pull llama3.2:3b
-```
-
-**Step 6.6 — Open Ollama to the LAN from the VM.**
-```
-sudo ufw allow 11434/tcp 2>/dev/null || true
-```
-(Debian minimal often has no ufw installed — the `|| true` makes it a no-op if so. iptables is open by default on a bare Debian install.)
-
-**Step 6.7 — Verify from the host.**
-
-Back on the host:
-```
-curl http://10.0.0.11:11434/api/tags
-```
-You should get JSON listing `llama3.2:3b`. That means the VM is reachable from the LAN and its Ollama is answering — the VM is now a real distributed AI node for Rule #1 purposes.
-
-## 7. Clone the template VM for the other nodes
-
-Instead of redoing §6 for each VM, clone the first one.
-
-From the host, with `desktop-vm1` powered off (`sudo virsh shutdown desktop-vm1`):
-```
-sudo virt-clone --original desktop-vm1 --name desktop-vm2 --auto-clone
-```
-
-Start the clone:
-```
-sudo virsh start desktop-vm2
-```
-
-Then SSH into it once to change its hostname and let DHCP give it a fresh IP:
-```
-ssh nir@<new-ip>
-```
-```
-sudo hostnamectl set-hostname desktop-vm2
-```
-```
-sudo reboot
-```
-
-Repeat for `desktop-vm3` if you want three VMs on one host. For the 3-DwarfQueen parallel test we need a total of **three DwarfQueen-capable machines across the cluster**, so one possible layout is: 1 on Laptop host + 1 on Desktop host + 1 in a single VM — minimum three. Having more VMs on each host lets us graduate to the 5- or 6-DwarfQueen test and eventually the 3-level GiantQueen hierarchy without redoing this infrastructure.
-
-## 8. Rule #1 compliance checklist (do before declaring the test ready)
-
-Before running any KillerBee test on this infra, confirm every item:
-
-- [ ] Each VM has its **own IP** on `10.0.0.0/24` (verify with `ip -br addr show` inside each VM).
-- [ ] Each VM runs its **own kernel** (verify with `uname -r` — should match the guest OS, not the host).
-- [ ] Each VM has its **own Ollama process** (verify with `ps aux | grep ollama` inside the VM, and `curl http://<vm-ip>:11434/api/tags` from a different machine).
-- [ ] Each VM can be reached from Laptop's KillerBee website host (ping + curl).
-- [ ] The KillerBee website firewall on Laptop accepts connections from each VM's IP on port 8877.
-- [ ] No bee process on a VM is running as a subprocess spawned from the host — each bee is a separately-launched process inside the VM's OS, logged into the KillerBee website as a distinct user.
-- [ ] If any item above fails, **stop** and fix before running the test. Do not paper over it.
-
-## 9. Running the 3-DwarfQueen parallel test
-
-Once §8 is green, the test itself is a straight extension of Phase 2 (`PHASE2_LAN_INSTRUCTIONS.md`):
-
-1. Laptop host: start KillerBee website (`python app.py` in `KillerBee/`).
-2. Laptop host: start WaggleDance server if not already running.
-3. On each DwarfQueen VM (three of them): `python dwarf_queen_client.py --server http://10.0.0.1:8877 --swarm-id 1 --username queen_<X> --password password --model llama3.2:3b` — where `<X>` is `alpha`, `bravo`, `charlie`.
-4. On each Worker VM (two per DwarfQueen is the minimum for the calibration pass): `python worker_client.py --server http://10.0.0.1:8877 --swarm-id 1 --username worker_<Y> --password password --model llama3.2:3b`.
-5. Laptop host: start RajaBee: `python raja_bee.py --server http://10.0.0.1:8877 --swarm-id 1 --username raja_nir --password password --model llama3.2:3b`.
-6. Laptop host: submit a job via the KillerBee website UI.
-7. Watch. Log. Commit results to `EXPERIMENT_LOG.md` as "Experiment 4: 3-DwarfQueen parallel test".
-
-Expected hiccups: the KillerBee `seed_data.py` currently seeds `queen_alpha` and `queen_bravo` but not `queen_charlie`. Add a third DwarfQueen user (and additional Workers) to the seed before running this test. Commit the seed change.
-
-## 10. Troubleshooting
-
-- **VM gets `192.168.122.x` not `10.0.0.x`** → bridge is not wired. Check that the NIC in the VM's XML is set to `source network='br0'` or `source bridge='br0'`. Edit with `sudo virsh edit <vm-name>`.
-- **Host loses network when bringing up `br0`** → `nmcli` was not the right tool for this distro's network stack. Fall back to editing `/etc/network/interfaces` or using `systemd-networkd`. Ask Nir to pause and describe the distro state before guessing.
-- **`virt-manager` cannot see the user's VMs** → user is not in `libvirt` group, or used `sudo virt-manager` (which runs as root and sees a different connection). Log out/in after `usermod`, then run `virt-manager` as the normal user.
-- **Ollama in the VM refuses LAN connections** → `OLLAMA_HOST=0.0.0.0` was not picked up. Check with `systemctl show ollama | grep Environment`. Use `systemctl edit ollama` (not just `.bashrc` — the service does not inherit user env).
-- **Test runs but some DwarfQueen reports 0 Workers** → that VM's bee process is connecting to KillerBee but its Workers are not. Check that the Worker processes are actually alive inside that specific VM (not accidentally launched on the host).
-
-## 11. What goes in the session handshake for this mission
+## 13. Session handshake for any future Claude on this mission
 
 When Desktop Linux Claude or Laptop Linux Claude wakes up and is told "your mission is Phase 3 VM setup," the handshake REPLY on ICQ should say, in one message:
 
-> *"Role: <desktop-linux-claude | laptop-linux-claude>. Track: testing / Phase 3 VM setup. Repos synced. Read: FRESH_CLAUDE_START_HERE, PARALLEL_VIBING, WHEN_TO_USE_WAGGLEDANCE, LESSONS, KillerBee/PROJECT_REPORT, KillerBee/CLAUDE, KillerBee/PHASE3_LINUX_VM_SETUP. Ready to guide Nir through §4 prerequisites. Over."*
+> *"Role: <desktop-linux-claude | laptop-linux-claude>. Track: testing / Phase 3 VM setup. Repos synced. Read: FRESH_CLAUDE_START_HERE, PARALLEL_VIBING, WHEN_TO_USE_WAGGLEDANCE, LESSONS, KillerBee/PROJECT_REPORT, KillerBee/CLAUDE, KillerBee/PHASE3_LINUX_VM_SETUP. I understand: 15 VMs total, Ubuntu Server 24.04 minimal on Desktop host, Debian 13 Trixie netinst on Laptop host, CPU-only Ollama, different Chinese model per VM, model list in §6 is PROVISIONAL and must be Google-verified before any pull. Ready to guide Nir through §8 prerequisites. Over."*
 
 Then stop. Wait for Nir to say go.
 
@@ -347,4 +273,5 @@ Then stop. Wait for Nir to say go.
 
 ## Changelog
 
-- **2026-04-14** — Initial version written by Desktop Windows Claude (Opus 4.6) during the first parallel-vibing day, as a handoff document for the Linux Claude session that will take over the testing track after Nir reboots Desktop into Linux Mint.
+- **2026-04-14 08:47 UTC** — Initial version by Desktop Windows Claude (Opus 4.6) before reboot to Linux. **Wrong on key points** (Debian 12 netinst guests, llama3.2:3b, same model on every VM). Superseded.
+- **2026-04-14 (afternoon, Linux session)** — Full rewrite by Desktop Linux Claude (Opus 4.6, on Mint 22.2 after reboot) under direct correction from Nir. Locked: Ubuntu Server 24.04 minimal on Desktop VMs, Debian 13 Trixie netinst on Laptop VMs, full 15-VM topology (1 RajaBee + 2 GiantQueens + 4 DwarfQueens + 8 Workers), CPU-only Ollama, different Chinese model per VM. Model table is PROVISIONAL pending §6.1 Google verification — Claude has no live web access and Nir does not memorise current Ollama tags, so all 15 rows must be checked against `ollama.com/library` via Google before any `ollama pull`.
