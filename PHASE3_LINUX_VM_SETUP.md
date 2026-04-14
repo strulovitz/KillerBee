@@ -249,7 +249,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | DwarfQueen-A2 | DQ | `qwen3:7b` (same #1) | 2026-04-14 by Nir |
 | DwarfQueen-B1 | DQ | `qwen3:7b` (same #1) | 2026-04-14 by Nir |
 | DwarfQueen-B2 | DQ | `qwen3:7b` (same #1) | 2026-04-14 by Nir |
-| Worker × 8 | W | _pending_ | |
+| Worker × 8 | W | `phi-4-mini:3.8b` (Microsoft, ~78% MMLU, highest quality in sub-4B class) | 2026-04-14 by Nir |
 
 #### Round 2 — MoE
 | VM | Tier | Model | Locked |
@@ -261,7 +261,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | DwarfQueen-A2 | DQ | `granite-3.1-moe:3b` (same #1) | 2026-04-14 by Nir |
 | DwarfQueen-B1 | DQ | `granite-3.1-moe:3b` (same #1) | 2026-04-14 by Nir |
 | DwarfQueen-B2 | DQ | `granite-3.1-moe:3b` (same #1) | 2026-04-14 by Nir |
-| Worker × 8 | W | _pending_ | |
+| Worker × 8 | W | `granite-3.1-moe:3b` (same as DQ — only 2 small-MoE options exist; #1 is the more capable) | 2026-04-14 by Nir |
 
 #### Round 3 — Vision/Multi-modal
 | VM | Tier | Model | Locked |
@@ -273,7 +273,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | DwarfQueen-A2 | DQ | `llama3.2-vision:11b` (same #1) | 2026-04-14 by Nir |
 | DwarfQueen-B1 | DQ | `llama3.2-vision:11b` (same #1) | 2026-04-14 by Nir |
 | DwarfQueen-B2 | DQ | `llama3.2-vision:11b` (same #1) | 2026-04-14 by Nir |
-| Worker × 8 | W | _pending_ | |
+| Worker × 8 | W | `gemma3:4b` (Google native multimodal for edge, well-tested, full use of tier) | 2026-04-14 by Nir |
 
 ### 6.6 ALL THREE rounds — variety rule fully relaxed (locked by Nir 2026-04-14)
 
