@@ -243,6 +243,55 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | V2 | DQ/GQ | tier-DQ/GQ | `gemma3:12b` (also in D3 dense), `qwen3-vl:9b`, `llama4:8b-vision`, `llama3.2-vision:11b`, `gemma4:e4b` (8.5B, native vision, 128K context, all-rounder, from "medium-small V/MM"), `ministral-3:14b` (dense reasoning + vision, dual-classified with D3, from "medium-small V/MM") | _pending_ |
 | V3 | RajaBee | tier-RB | `mistral-small-3.1:24b`, `glm-4.6v-flash` (size TBD), `qwen3-vl:32b` (81.8 MMLU-Pro), `gemma4:26b-moe` (dual M3, 181 t/s), `qwen3-vl:30b-a3b-instruct` (MoE vision, 84.7% math, dual M3), **`gemma4:31b`** (dense, 256K context, native variable aspect ratios, dual D4, from "medium-big V/MM"). Out-of-budget: `llama4:scout` 109B, `qwen3.5:397b-a17b`, `llama3.2-vision:90b`, `kimi-k2.5` 1T. | _pending_ |
 
+### 6.4.1 Tag verification results (run 2026-04-14 against ollama.com/library)
+
+Direct HTTP check of every locked pick against `https://ollama.com/library/<name>/tags`. Findings:
+
+**Renames (Ollama drops the hyphen between letters and digits):**
+- `phi-4-mini` → **`phi4-mini`** ✓
+- `granite-3.1-moe` → **`granite3.1-moe`** ✓
+
+**Substitutions required (size doesn't exist):**
+- `qwen3:7b` → **`qwen3:8b`** (qwen3 sizes published: 0.6b, 1.7b, 4b, **8b**, 14b, 30b, 32b, 235b — no 7b)
+- `qwen3-vl:9b` → **`qwen3-vl:8b`** (qwen3-vl sizes: 2b, 4b, **8b**, 30b, 32b, 235b — no 9b)
+
+**MoE thinking suffix verified:** `qwen3:30b-a3b-thinking-2507-q4_K_M` exists (with date suffix).
+
+**Quantization tag reality (BIG finding):**
+Almost no model on the Ollama library publishes q3 quants. Only `granite3.1-moe` ships q3 variants. Everything else only publishes `fp16`, `q4_K_M`, `q8_0` (sometimes `bf16` / `mlx` / `nvfp4` variants). **Our Option C-quant assumption that q3 would be available at the top tier is wrong against the real library.**
+
+This breaks two things:
+1. **`qwen3.5:35b-a3b` (MoE GiantQueen pick) is ~21 GB at q4_K_M.** GiantQueen tier is 12 GB. **Doesn't fit.**
+2. **`gemma4:31b` and `qwen3-vl:32b` (RajaBee picks) are ~19 GB at q4_K_M.** RajaBee tier is 18 GB. **Just over the cap.**
+
+### 6.4.2 Resolution plan
+
+**Three ways to fix this:**
+
+- **Option X — Bigger VMs.** Bump RajaBee VM 18→22 GB and GiantQueen 12→18 GB to fit q4. Costs total host RAM. Laptop math becomes 22+18+8+8+4×4 = 72 GB on a 64 GB host. **Doesn't fit** without also shrinking Workers to 3 GB and accepting near-zero host headroom.
+
+- **Option Y — Self-quantize.** `ollama pull <model>:q8_0` (the largest reasonable source), then `ollama create my-<model>-q3 -f Modelfile --quantize q3_K_M`. Result: a custom q3 tag we made locally. Disk cost: 33 GB per top-tier model temporarily, can delete the q8 source after the q3 version is created. Bandwidth cost: 33 GB download per model. Quality cost: small (q3_K_M is well-tested).
+
+- **Option Z — Substitute.** Replace any pick that doesn't fit at q4 with the next-best published model that does fit.
+
+**Recommended hybrid (locked 2026-04-14 by Desktop Linux Claude, pending Nir confirmation):**
+
+- **RajaBee tier** (18 GB) — use **Option Y (self-quantize)** for all three picks. `gemma4:31b`, `qwen3:30b-a3b-thinking-2507`, `qwen3-vl:32b` are all worth keeping. Pull each at `q8_0`, locally quantize to `q3_K_M`, end-state file ≈ 14 GB, fits 18 GB VM with 4 GB headroom.
+
+- **MoE GiantQueen tier** (12 GB) — use **Option Z (substitute)**. Both M2 candidates (`qwen3.5:35b-a3b`, `qwen3:30b-a3b`) are ≥18 GB at q4 and don't fit even with self-quantization to q3 (still ~12-14 GB, no headroom). Honest substitute: **`granite3.1-moe:3b`** — the only published MoE that comfortably fits 12 GB. Variety in the MoE GiantQueen tier collapses to one model (same as DwarfQueen and Worker MoE picks). Acceptable per §6.6 relaxation.
+
+- **All other tiers** — use **published q4_K_M tags as-is**. They fit cleanly:
+  - `qwen3:14b-q4_K_M` ~9 GB (GiantQueen Dense, fits 12 GB ✓)
+  - `qwen3-vl:8b-q4_K_M` ~5 GB (GiantQueen Vision, fits 12 GB ✓)
+  - `qwen3:8b-q4_K_M` ~5 GB (DwarfQueen Dense, fits 8 GB ✓)
+  - `granite3.1-moe:3b-q4_K_M` ~2 GB (DwarfQueen MoE, fits 8 GB ✓)
+  - `llama3.2-vision:11b-q4_K_M` ~7 GB (DwarfQueen Vision, fits 8 GB ✓)
+  - `phi4-mini:3.8b-q4_K_M` ~2.5 GB (Worker Dense, fits 4 GB ✓)
+  - `granite3.1-moe:3b-q4_K_M` ~2 GB (Worker MoE, fits 4 GB ✓)
+  - `gemma3:4b-q4_K_M` ~2.5 GB (Worker Vision, fits 4 GB ✓)
+
+**Pending Nir's nod**, the final assignment table in §6.5 will be updated with verified tags + the MoE GiantQueen substitution.
+
 ### 6.5 Final per-VM assignments (filled as Nir picks each tier per round)
 
 #### Round 1 — Dense
