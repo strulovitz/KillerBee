@@ -237,9 +237,31 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | V2 | DQ/GQ | tier-DQ/GQ | `gemma3:12b` (also in D3 dense), `qwen3-vl:9b`, `llama4:8b-vision`, `llama3.2-vision:11b`, `gemma4:e4b` (8.5B, native vision, 128K context, all-rounder, from "medium-small V/MM"), `ministral-3:14b` (dense reasoning + vision, dual-classified with D3, from "medium-small V/MM") | _pending_ |
 | V3 | RajaBee | tier-RB | `mistral-small-3.1:24b`, `glm-4.6v-flash` (size TBD), `qwen3-vl:32b` (81.8 MMLU-Pro), `gemma4:26b-moe` (dual M3, 181 t/s), `qwen3-vl:30b-a3b-instruct` (MoE vision, 84.7% math, dual M3), **`gemma4:31b`** (dense, 256K context, native variable aspect ratios, dual D4, from "medium-big V/MM"). Out-of-budget: `llama4:scout` 109B, `qwen3.5:397b-a17b`, `llama3.2-vision:90b`, `kimi-k2.5` 1T. | _pending_ |
 
-### 6.5 Final per-VM assignments (filled at the end of each round)
+### 6.5 Final per-VM assignments (filled as Nir picks each tier per round)
 
-Same shape three times — one table per round — once Nir has chosen from the candidates above. Until §4 (RAM tier) and §6.4 (candidates) are filled, no `ollama pull` and no `virt-install` happens.
+#### Round 1 — Dense
+| VM | Tier | Model | Locked |
+|---|---|---|---|
+| RajaBee | RB | `gemma4:31b` (256K context decisive for orchestrator, freshest Google dense flagship) | 2026-04-14 by Nir |
+| GiantQueen-A | GQ | _pending_ | |
+| GiantQueen-B | GQ | _pending_ | |
+| DwarfQueen-A1 | DQ | _pending_ | |
+| DwarfQueen-A2 | DQ | _pending_ | |
+| DwarfQueen-B1 | DQ | _pending_ | |
+| DwarfQueen-B2 | DQ | _pending_ | |
+| Worker × 8 | W | _pending_ | |
+
+#### Round 2 — MoE
+| VM | Tier | Model | Locked |
+|---|---|---|---|
+| RajaBee | RB | `qwen3:30b-a3b-thinking` (explicit CoT thinking + 262K context, ideal for orchestration planning) | 2026-04-14 by Nir |
+| (rest pending) | | | |
+
+#### Round 3 — Vision/Multi-modal
+| VM | Tier | Model | Locked |
+|---|---|---|---|
+| RajaBee | RB | `qwen3-vl:32b` (top dense VLM, 81.8 MMLU-Pro, highest raw multi-modal reasoning) | 2026-04-14 by Nir |
+| (rest pending) | | | |
 
 ### 6.6 ALL THREE rounds — variety rule fully relaxed (locked by Nir 2026-04-14)
 
