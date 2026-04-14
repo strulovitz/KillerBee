@@ -416,6 +416,8 @@ Same reasoning as MoE and vision relaxations: the 1-3B small dense ecosystem pub
 - **2026-04-14 afternoon** — libvirt network `br0` defined from `/tmp/br0.xml` (forward mode=bridge, bridge name=br0). `virsh net-list --all` shows `br0 active autostart persistent`.
 - **2026-04-14 afternoon** — `/etc/sudoers.d/claude-kvm` installed to grant `nir` NOPASSWD on `apt`, `apt-get`, `systemctl`, `usermod`, `nmcli`, `virsh`, `virt-install`, `tee`, `cp`, `mv`, `mkdir`, `brctl`, so Desktop Linux Claude can run the full Phase 3 build autonomously while Nir works on BeeSting on the Laptop. `sudo rm /etc/sudoers.d/claude-kvm` to revoke when Phase 3 is done.
 - **2026-04-14 afternoon** — Ubuntu Server 24.04.4 LTS live-server ISO download started in background to `~/isos/ubuntu-24.04.4-live-server-amd64.iso`.
+- **2026-04-14 afternoon** — ISO download finished (3.2 GB). SSH keypair generated at `~/.ssh/phase3_ed25519` for passwordless VM access. Cloud-init autoinstall `user-data` + `meta-data` written to `~/vm/desktop-template/seed/`, seed ISO built as `seed.iso` with `CIDATA` volume label. VM files copied to `/var/lib/libvirt/images/phase3/` so `libvirt-qemu` can read them (home dir mode 700 blocks default pool access).
+- **2026-04-14 afternoon** — `desktop-template` VM started via `virt-install`, 4 GB RAM / 2 vCPU / 15 GB qcow2 disk, bridged to `br0`, serial console, Ubuntu Server 24.04.4 autoinstall running headless. Watcher will detect shutdown and proceed to Ollama install + clone phase.
 
 ## 7. Build order
 
