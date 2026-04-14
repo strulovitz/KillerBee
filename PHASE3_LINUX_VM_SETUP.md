@@ -218,8 +218,8 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 |---|---|---|---|---|
 | D1 | Worker | tier-W | `phi-4-mini:3.8b` (Microsoft, reasoning king under 4B), `qwen3:1.7b` (efficiency breakthrough), `deepseek-r1-distill-qwen:1.5b` (CoT thinking tiny), `smollm3:3b` (HF, balanced) — from "small" search | _pending_ |
 | D2 | DwarfQueen | tier-DQ | `qwen3:7b` (coding specialist), `mistral-small-3:7b` (structured outputs, fast), `qwen2.5-coder:7b` (agentic coding) — from "small" search | _pending_ |
-| D3 | GiantQueen | tier-GQ | `gemma3:12b` (from "small"), `qwen3:14b` (coding, from "medium") | _pending_ |
-| D4 | RajaBee | tier-RB | `qwen3.5:27b` (speed, from "medium"), `exaone-4:32b` (LG, efficient, from "medium"). "big" search returned nothing new in C-quant range — DeepSeek-V3.2 671B, Qwen3.5-397B-A17B, GLM-5, Kimi-K2.5 1T, Qwen3-235B-A22B all need 96-256+ GB even at q3, do not fit our 64 GB hosts. | _pending_ |
+| D3 | GiantQueen | tier-GQ | `gemma3:12b` (from "small"), `qwen3:14b` (from "medium"), `ministral-3:14b` (Mistral, balanced, from "medium-small"), `mistral-small-3.2:24b` (high-quality reasoning, fits at q3, from "medium-small") | _pending_ |
+| D4 | RajaBee | tier-RB | `qwen3.5:27b` (from "medium"), `exaone-4:32b` (from "medium"), `gpt-oss:20b` (speed champion, fits 18 GB tier easily, from "medium-small"). "big" search returned only out-of-budget flagships (DeepSeek-V3.2 671B, Qwen3.5-397B-A17B, GLM-5, Kimi-K2.5 1T, Qwen3-235B-A22B — all need 96-256+ GB even at q3). | _pending_ |
 
 #### Round 2 — MoE
 
@@ -227,7 +227,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 |---|---|---|---|---|
 | M1 | Worker | tier-W | _pending search M1_ | _pending_ |
 | M2 | Queens | tier-DQ/GQ | `qwen3.5:35b-a3b` (35B total / 3B active, MoE — fits ~16 GB at q3) — bonus from "medium" dense search | _pending_ |
-| M3 | RajaBee | tier-RB | `mixtral:8x22b` (176B total — too big), `deepseek-v3.2:671b` (~250 GB at q3, too big), `qwen3.5:397b-a17b` (~150 GB, too big), `glm-5` (128GB+ requirement, too big), `kimi-k2.5:1t` (1T params, too big), `qwen3:235b-a22b` (96GB+, too big), `minimax-m2.5` (~64-128 GB, borderline). **NOTE:** the entire "big" search returned almost nothing that fits our 64 GB hosts. The only realistic MoE RajaBee candidate so far is `qwen3.5:35b-a3b` (already in M2). | _pending_ |
+| M3 | RajaBee | tier-RB | `glm-4.7-flash` (30B MoE / 3B active, "thinking" mode, from "medium-small" — fits ~16 GB at q3). Earlier flagship MoEs (deepseek-v3.2 671B, qwen3.5 397B-A17B, glm-5, kimi-k2.5 1T, qwen3 235B-A22B, mixtral 8x22B) all too big for 64 GB host. | _pending_ |
 
 #### Round 3 — Vision
 
