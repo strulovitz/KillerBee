@@ -217,14 +217,14 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | D1 | Worker | tier-W | _pending search D1_ | _pending_ |
 | D2 | DwarfQueen | tier-DQ | _pending search D2_ | _pending_ |
 | D3 | GiantQueen | tier-GQ | _pending search D3_ | _pending_ |
-| D4 | RajaBee | tier-RB | _pending search D4_ | _pending_ |
+| D4 | RajaBee | tier-RB | `deepseek-r1:32b` (reasoning, CoT thinking tokens), `qwen3-coder:32b` (agentic coding), `glm-4.7-flash` (fast, 32k context), `nemotron-3-nano:30b` (math, 91% MATH-500) | _pending Nir confirm_ |
 
 #### Round 2 — MoE
 
 | Cat | Tier | RAM target | Candidates from Google | Chosen |
 |---|---|---|---|---|
 | M1 | Worker | tier-W | _pending search M1_ | _pending_ |
-| M2 | Queens | tier-DQ/GQ | _pending search M2_ | _pending_ |
+| M2 | Queens | tier-DQ/GQ | `gemma4:27b-moe` (general purpose, ~30B-class efficient) — bonus from D4 search | _pending_ |
 | M3 | RajaBee | tier-RB | _pending search M3_ | _pending_ |
 
 #### Round 3 — Vision
@@ -233,7 +233,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 |---|---|---|---|---|
 | V1 | Worker | tier-W | _pending search V1_ | _pending_ |
 | V2 | DQ/GQ | tier-DQ/GQ | _pending search V2_ | _pending_ |
-| V3 | RajaBee | tier-RB | _pending search V3_ | _pending_ |
+| V3 | RajaBee | tier-RB | `qwen3-vl:32b` (native multimodal, charts/diagrams) — bonus from D4 search | _pending_ |
 
 ### 6.5 Final per-VM assignments (filled at the end of each round)
 
