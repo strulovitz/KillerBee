@@ -3,7 +3,7 @@
 **Audience:** Nir + the Claude Code session guiding him through this (Desktop Linux Claude on Mint, Laptop Linux Claude on Debian 13).
 **Host OS — Desktop:** Linux Mint 22.2 "Zara" (Ubuntu 24.04 / `noble` base), kernel 6.14.0-37-generic, 64 GB RAM, RTX 4070 Ti, 10.0.0.5.
 **Host OS — Laptop:** Debian 13 "Trixie", 64 GB RAM, RTX 5090, 10.0.0.1.
-**Status:** Plan locked 2026-04-14 by Nir + Desktop Linux Claude. Models PROVISIONAL — must be verified via Google before pulling. Build not started.
+**Status:** Topology locked 2026-04-14. RAM budget per tier is **NOT YET LOCKED** — Nir is choosing between Options A/B/C in §4. Models are **NOT YET CHOSEN** — to be discovered via open-ended Google searches by category (§6), in three rounds: Dense → MoE → Vision. Build has not started.
 **Precondition:** Phase 2 LAN test PASSED on 2026-04-11 (see `EXPERIMENT_LOG.md` Experiment 3).
 
 > **WARNING TO ANY CLAUDE READING THIS DOC:** an earlier version of this file (committed 2026-04-14 08:47 UTC by Desktop Windows Claude) was wrong. It said Debian 12 netinst for the VMs and `llama3.2:3b` for the model. **That was never the plan.** The real plan is in this file. Do not revert to the earlier version. If you find yourself about to recommend Debian 12, llama3.2, or "same model on every VM," stop and re-read this file from the top.
@@ -59,22 +59,57 @@ RajaBee (Laptop, 10.0.0.11)
 
 **Why "Server" / "netinst" and not Desktop flavors:** these are the headless minimal flavors. No GUI inside the VM. The VMs only run Ollama + a Python bee process and answer over the network — nobody will ever sit in front of one. Headless flavors save 2-3 GB disk and ~500 MB RAM per VM compared to their desktop siblings. With 15 VMs that compounds.
 
-## 4. RAM budget (CPU-only Ollama, no GPU passthrough)
+## 4. RAM budget — NOT YET LOCKED, three options on the table
 
-We are **not** doing PCIe GPU passthrough into the VMs. GPU passthrough on KVM is doable but fragile (IOMMU groups, vfio binding, host driver blacklisting), and it monopolizes the GPU — only one VM gets it. For a 15-VM cluster it doesn't scale. Inference inside each VM is **CPU-only** via Ollama. The host GPUs are still useful for non-VM workloads (host-side experiments, Honeymation, etc.) — we just don't expose them to the guests.
+We are **not** doing PCIe GPU passthrough into the VMs. GPU passthrough on KVM is doable but fragile (IOMMU groups, vfio binding, host driver blacklisting), and it monopolizes the GPU — only one VM gets it. For a 15-VM cluster it doesn't scale. Inference inside each VM is **CPU-only** via Ollama. The host GPUs are still useful for non-VM workloads — we just don't expose them to the guests.
 
-| Role | RAM per VM | Why |
+**Design constraints from Nir (2026-04-14):**
+1. Quality > speed. Long inference waits are acceptable.
+2. Each layer of the hierarchy uses bigger models than the layer below. Workers small, DwarfQueens bigger, GiantQueens bigger still, RajaBee biggest.
+3. Workers are **small, not tiny**. No 0.5B / 1B microcrumbs.
+4. RajaBee and GiantQueens should be the **largest the hardware allows**.
+5. 64 GB RAM per host. Two hosts. CPU-only inference.
+
+**The squeeze:** at ~`params × 0.6 GB` per q4 model, "biggest at the top" + 15 simultaneous VMs + 64 GB hosts pulls in opposite directions. We have to pick a tradeoff. Three honest options:
+
+### Option A — All 15 always on, accept smaller top
+| Tier | RAM/VM | Fits roughly |
 |---|---|---|
-| RajaBee | 8 GB | runs the largest reasoning model in the cluster |
-| GiantQueen | 6 GB | planning model, mid-size |
-| DwarfQueen | 6 GB | delegation model, mid-size |
-| Worker | 4 GB | small executor, smallest models |
+| Worker | 4 GB | 3B q4 model |
+| DwarfQueen | 6 GB | 7B q4 model (tight) |
+| GiantQueen | 10 GB | 13B q4 model (tight) |
+| RajaBee | 14 GB | 14B q4 model (tight) |
 
-**Laptop usage:** RajaBee(8) + GiantQueen-A(6) + 2×DwarfQueen(6+6) + 4×Worker(4×4) = **42 GB**. Free for host: 22 GB. KillerBee website + WaggleDance server + host Ollama + headroom — comfortable.
+Laptop usage: 14 + 10 + 6 + 6 + 4×4 = **52 GB / 64**. 12 GB free for host. Comfortable.
+Desktop usage: 10 + 6 + 6 + 4×4 = **38 GB / 64**. 26 GB free. Very comfortable.
+**Cost:** RajaBee maxes at ~14B. Not flagship.
 
-**Desktop usage:** GiantQueen-B(6) + 2×DwarfQueen(6+6) + 4×Worker(4×4) = **34 GB**. Free for host: 30 GB. Very comfortable.
+### Option B — Big top tier, run cluster in waves
+| Tier | RAM/VM | Fits roughly |
+|---|---|---|
+| Worker | 6 GB | 7B q4 model |
+| DwarfQueen | 12 GB | 14B q4 model |
+| GiantQueen | 20 GB | 22B q4 (or 27B q4 tight) |
+| RajaBee | 28 GB | 32B q4 model |
 
-Neither host should swap.
+Naive Laptop usage: 28 + 20 + 12 + 12 + 6×4 = **96 GB**. Over 64 by 32 GB.
+**This is only viable if not all 15 are loaded simultaneously.** Concretely: RajaBee + both GiantQueens + the 2 DwarfQueens currently on the active path stay resident; idle Workers are `virsh suspend`ed and woken on demand. A suspended VM keeps its IP, libvirt domain, processes (frozen), and Ollama state — Rule #1 is still satisfied in spirit (it is a real separate machine, just paused). Active-set RAM on Laptop with 2 Workers awake: 28+20+12+12+6+6 = **84 GB** — still over 64. To fit we also need to swap one GiantQueen + DwarfQueens between hosts, or run only one branch of the tree at a time.
+**Cost:** complex orchestration, plus paused-bee semantics may break some Rule #1 tests where "all bees online" is the explicit invariant.
+
+### Option C — Mid path, all 15 on, modest top
+| Tier | RAM/VM | Fits roughly |
+|---|---|---|
+| Worker | 4 GB | 3B q4 model |
+| DwarfQueen | 8 GB | 8B q4 / 7B q5 model |
+| GiantQueen | 12 GB | 13B q4 (or 14B q4 tight) |
+| RajaBee | 18 GB | 22B q4 model |
+
+Laptop usage: 18 + 12 + 8 + 8 + 4×4 = **62 GB / 64**. Only 2 GB host headroom — *tight*. KillerBee website + WaggleDance + host Ollama may need to move to Desktop, or we accept that the Laptop host runs basically nothing besides the libvirt stack while a test is in progress.
+Desktop usage: 12 + 8 + 8 + 4×4 = **44 GB / 64**. 20 GB free. Comfortable.
+**Cost:** RajaBee = 22B (decent but not flagship). Workers stay small (3B).
+
+### Decision pending
+Nir will pick A, B, or C. **Until that choice is made, do NOT pull any model and do NOT run `virt-install`.** Building on the wrong RAM budget means rebuilding the whole template image.
 
 ## 5. IP plan (bridged networking on br0)
 
@@ -87,45 +122,83 @@ Neither host should swap.
 
 All VMs on the real LAN via `br0`, **not** the libvirt default NAT (`192.168.122.x`). NAT would isolate VMs from the Laptop's KillerBee website at `10.0.0.1:8877` and break the test. See §7 for bridge setup.
 
-## 6. Model assignment — PROVISIONAL, MUST BE GOOGLE-VERIFIED
+## 6. Model selection — three test rounds, open category discovery
 
-> **STATUS: UNVERIFIED.** The model tags below are Desktop Claude's best guess at what's currently published on `ollama.com/library`. Claude does **not** have live web access in this session and the Ollama library changes constantly. Before pulling any of these, Nir will run a Google search per row (Claude will write the exact search string), paste the answer back, and we will replace the row with a real, currently-available tag. Rows still marked `?` after that pass do not get pulled.
->
-> **Hard rule:** all 15 models must be from **Chinese labs** (Alibaba/Qwen, DeepSeek, Shanghai AI Lab/InternLM, Zhipu/GLM, 01.AI/Yi, Baichuan, etc.). If a row's verification turns up only non-Chinese alternatives, the row stays empty until we find a Chinese substitute. **No silent substitution with Llama, Gemma, Phi, Mistral, etc.**
+### 6.1 Three rounds, three independent model assignments
 
-| # | VM | Role | Host | RAM | Provisional model (UNVERIFIED) |
-|---|---|---|---|---|---|
-| 1 | RajaBee | orchestrator | Laptop | 8 GB | `deepseek-r1:7b` ? |
-| 2 | GiantQueen-A | planner | Laptop | 6 GB | `qwen3:4b` ? |
-| 3 | GiantQueen-B | planner | Desktop | 6 GB | `qwen2.5:7b` ? |
-| 4 | DwarfQueen-A1 | delegator | Laptop | 6 GB | `qwen2.5:3b` ? |
-| 5 | DwarfQueen-A2 | delegator | Desktop | 6 GB | `qwen2.5-coder:3b` ? |
-| 6 | DwarfQueen-B1 | delegator | Laptop | 6 GB | `qwen3:1.7b` ? |
-| 7 | DwarfQueen-B2 | delegator | Desktop | 6 GB | `deepseek-coder:6.7b` ? |
-| 8 | Worker-A1a | executor | Laptop | 4 GB | `qwen2.5:1.5b` ? |
-| 9 | Worker-A1b | executor | Laptop | 4 GB | `qwen2.5:0.5b` ? |
-| 10 | Worker-A2a | executor | Desktop | 4 GB | `qwen2.5-coder:1.5b` ? |
-| 11 | Worker-A2b | executor | Desktop | 4 GB | `qwen2.5-coder:0.5b` ? |
-| 12 | Worker-B1a | executor | Laptop | 4 GB | `qwen3:0.6b` ? |
-| 13 | Worker-B1b | executor | Laptop | 4 GB | `deepseek-r1:1.5b` ? |
-| 14 | Worker-B2a | executor | Desktop | 4 GB | `deepseek-coder:1.3b` ? |
-| 15 | Worker-B2b | executor | Desktop | 4 GB | `internlm2:1.8b` ? |
+The same 15 VMs will be tested in three independent passes. Each pass loads a different *family* of models, runs the same KillerBee benchmark, and gets logged to `EXPERIMENT_LOG.md` as its own experiment.
 
-Each `?` means: not verified against `ollama.com/library` yet. Verification protocol is in §6.1.
+| Round | Model family | Why |
+|---|---|---|
+| **1. Dense** | Standard dense transformers (Qwen, Llama, Gemma, etc.) | The baseline. What every distributed-AI paper assumes. |
+| **2. MoE** | Mixture-of-Experts (DeepSeek-V3, Qwen-MoE, Mixtral, Phi-MoE, etc.) | MoE punches above its weight on CPU because only a fraction of experts activate per token. Could let us run "bigger" effective models in the same RAM budget. |
+| **3. Vision** | Vision-language models (Qwen-VL, LLaVA, MiniCPM-V, etc.) | Lets the swarm process images. Opens up image-batch tasks for the cluster. |
 
-### 6.1 Verification protocol (Google + Nir + Claude loop)
+Between rounds: stop all bees, `ollama rm` the previous round's models, `ollama pull` the next round's models, restart bees. Same VMs, same hostnames, same IPs.
 
-Claude does not have live internet here. To verify each row, Claude will hand Nir an exact Google search string. Nir pastes it into Google, pastes the AI Overview / first result back into the chat, Claude updates the row in this doc, repeat for the next row.
+### 6.2 Hard filters for every model in every round
 
-Example for row 1:
+- **Available on `ollama.com/library`** as a real published tag. No "you can convert it from Hugging Face." Already tested non-Ollama paths in the LM Studio era; not going there again.
+- **Released recently** — we want current state-of-the-art, not 2024 leftovers. Each Google search is time-bounded to the most recent releases.
+- **English-language tasks.** No Chinese/Hebrew language requirement. (We expect the answers to be mostly Chinese-lab models because China leads in small-and-efficient open models, but origin is not a filter — Google/Meta/Mistral/etc. results are equally welcome if they're the best in their category.)
+- **Quality > speed.** A model that takes 5 minutes per token is fine if it's smarter than one that takes 5 seconds.
+- **Fits the tier RAM budget** picked in §4 (Option A/B/C TBD).
 
-> **Claude tells Nir to paste into Google:** `ollama library deepseek-r1 7b tag site:ollama.com`
->
-> **Nir pastes the result back.**
->
-> **Claude updates row 1:** removes the `?`, locks the exact tag (e.g. `deepseek-r1:7b` confirmed, or replaces with whatever is actually there).
+### 6.3 Discovery protocol — open-ended Google searches by category
 
-Run this loop 15 times before any `ollama pull` happens. The verified table replaces this provisional one.
+Claude has no live web in this session. Each category gets **one open-ended Google query** that Claude writes for Nir. Nir pastes it into Google, lets Google's AI / Gemini / search results answer, pastes the response back. Claude writes the candidates into the table for that category. Repeat per category. Then assignment.
+
+**Open-ended means:** the question is "what are the best X" not "is X available." We want Google to volunteer names we haven't thought of, including non-Chinese ones if they're genuinely competitive.
+
+Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQueen / RajaBee) has at least one search aimed at the parameter range it can host.
+
+#### Round 1 — Dense models, categories:
+- **D1.** Best small dense LLMs (≈3B-class) on Ollama for Worker tier.
+- **D2.** Best mid-size dense LLMs (≈7B-8B-class) on Ollama for DwarfQueen tier.
+- **D3.** Best larger dense LLMs (≈13B-14B-class) on Ollama for GiantQueen tier.
+- **D4.** Best top-tier dense LLMs (≈22B-32B-class) on Ollama for RajaBee.
+- (Add D5 if Option B in §4 is picked: Best ≈70B-class dense on Ollama, for the wave-loaded RajaBee.)
+
+#### Round 2 — MoE models, categories:
+- **M1.** Best MoE LLMs on Ollama with small total footprint (single-digit GB) — Worker tier.
+- **M2.** Best MoE LLMs on Ollama in the ~10-20 GB RAM footprint — Queen tiers.
+- **M3.** Best top-tier MoE LLMs on Ollama (DeepSeek-V3 family, Qwen-MoE family, etc.) — RajaBee.
+
+#### Round 3 — Vision models, categories:
+- **V1.** Best small vision-language LLMs on Ollama — Worker tier.
+- **V2.** Best mid-size vision-language LLMs on Ollama — DwarfQueen / GiantQueen tier.
+- **V3.** Best top-tier vision-language LLMs on Ollama — RajaBee.
+
+### 6.4 Candidate tables (filled in as Google answers come back)
+
+#### Round 1 — Dense
+
+| Cat | Tier | RAM target | Candidates from Google (filled per search) | Chosen |
+|---|---|---|---|---|
+| D1 | Worker | tier-W | _pending search D1_ | _pending_ |
+| D2 | DwarfQueen | tier-DQ | _pending search D2_ | _pending_ |
+| D3 | GiantQueen | tier-GQ | _pending search D3_ | _pending_ |
+| D4 | RajaBee | tier-RB | _pending search D4_ | _pending_ |
+
+#### Round 2 — MoE
+
+| Cat | Tier | RAM target | Candidates from Google | Chosen |
+|---|---|---|---|---|
+| M1 | Worker | tier-W | _pending search M1_ | _pending_ |
+| M2 | Queens | tier-DQ/GQ | _pending search M2_ | _pending_ |
+| M3 | RajaBee | tier-RB | _pending search M3_ | _pending_ |
+
+#### Round 3 — Vision
+
+| Cat | Tier | RAM target | Candidates from Google | Chosen |
+|---|---|---|---|---|
+| V1 | Worker | tier-W | _pending search V1_ | _pending_ |
+| V2 | DQ/GQ | tier-DQ/GQ | _pending search V2_ | _pending_ |
+| V3 | RajaBee | tier-RB | _pending search V3_ | _pending_ |
+
+### 6.5 Final per-VM assignments (filled at the end of each round)
+
+Same shape three times — one table per round — once Nir has chosen from the candidates above. Until §4 (RAM tier) and §6.4 (candidates) are filled, no `ollama pull` and no `virt-install` happens.
 
 ## 7. Build order
 
@@ -274,4 +347,5 @@ Then stop. Wait for Nir to say go.
 ## Changelog
 
 - **2026-04-14 08:47 UTC** — Initial version by Desktop Windows Claude (Opus 4.6) before reboot to Linux. **Wrong on key points** (Debian 12 netinst guests, llama3.2:3b, same model on every VM). Superseded.
-- **2026-04-14 (afternoon, Linux session)** — Full rewrite by Desktop Linux Claude (Opus 4.6, on Mint 22.2 after reboot) under direct correction from Nir. Locked: Ubuntu Server 24.04 minimal on Desktop VMs, Debian 13 Trixie netinst on Laptop VMs, full 15-VM topology (1 RajaBee + 2 GiantQueens + 4 DwarfQueens + 8 Workers), CPU-only Ollama, different Chinese model per VM. Model table is PROVISIONAL pending §6.1 Google verification — Claude has no live web access and Nir does not memorise current Ollama tags, so all 15 rows must be checked against `ollama.com/library` via Google before any `ollama pull`.
+- **2026-04-14 (afternoon, Linux session)** — Full rewrite by Desktop Linux Claude (Opus 4.6, on Mint 22.2 after reboot) under direct correction from Nir. Locked: Ubuntu Server 24.04 minimal on Desktop VMs, Debian 13 Trixie netinst on Laptop VMs, full 15-VM topology (1 RajaBee + 2 GiantQueens + 4 DwarfQueens + 8 Workers), CPU-only Ollama. Model selection then: provisional Chinese-only table, row-by-row verification.
+- **2026-04-14 (later that afternoon)** — §4 (RAM budget) and §6 (model selection) corrected by Nir. Origin filter "Chinese only" **removed** — origin is not a filter, quality is; in practice most answers are expected to be Chinese-lab models because China leads in small-and-efficient open models, but Google/Meta/Mistral/etc. results are accepted on merit. "Tiny" tier removed — Workers are small, not tiny, and each layer above grows. RajaBee + GiantQueens should be the largest the hardware allows. Three test rounds added (Dense → MoE → Vision), each its own model assignment over the same 15 VMs. RAM budget left as three options (A small-top-all-on, B big-top-waves, C mid-all-on) pending Nir's pick. Model discovery is now open-ended Google searches by category, not row-by-row tag verification.
