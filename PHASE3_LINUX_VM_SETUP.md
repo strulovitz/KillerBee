@@ -108,8 +108,39 @@ Laptop usage: 18 + 12 + 8 + 8 + 4×4 = **62 GB / 64**. Only 2 GB host headroom �
 Desktop usage: 12 + 8 + 8 + 4×4 = **44 GB / 64**. 20 GB free. Comfortable.
 **Cost:** RajaBee = 22B (decent but not flagship). Workers stay small (3B).
 
+### 4.1 Quantization (already baked in, but we can push it further)
+
+Ollama serves quantized models by default — `ollama pull qwen2.5:32b` returns `q4_K_M` (4-bit), not full-precision fp16. The `params × 0.6 GB` math used in Options A/B/C above **already assumes q4_K_M.** Quantization is not a new lever; it is the one we have been pulling all along.
+
+What we *can* do is push the dial harder for the top of the tree, where larger models tolerate aggressive quantization better than small ones. Rough RAM-per-billion-params at common quant levels:
+
+| Quant | GB per 1B params | Quality vs fp16 | Notes |
+|---|---|---|---|
+| fp16 | 2.0 | 100% | not viable on this hardware |
+| q8_0 | 1.0 | ~99% | overkill |
+| q6_K | 0.75 | ~98% | nice for top tier |
+| q5_K_M | 0.7 | ~97% | safe for small models |
+| **q4_K_M** | **0.6** | **~95%** | **Ollama default** |
+| q3_K_M | 0.45 | ~90% | aggressive; works on big models |
+| q2_K | 0.3 | ~80% | only on very large models; breaks small ones |
+
+**Rule of thumb for this cluster:** quantize the *top* of the tree harder, not the bottom. A 70B at q2 is still useful; a 3B at q2 is broken. Workers stay at q4 or q5; RajaBee may go to q3 to fit a much larger base model in the same VM.
+
+### 4.2 Option C-quant (preferred starting point — to confirm with Nir)
+
+Apply Options C's RAM caps but assign quantization per tier:
+
+| Tier | RAM/VM | Quant | Fits roughly |
+|---|---|---|---|
+| Worker | 4 GB | q5_K_M | 3B q5 model |
+| DwarfQueen | 8 GB | q4 or q3 | 8B q4 or 13B q3 |
+| GiantQueen | 12 GB | q3_K_M | 22B q3 (or 14B q5) |
+| RajaBee | 18 GB | q3_K_M | **32B q3** (or 27B q4 as fallback) |
+
+Same per-host totals as plain Option C (Laptop 62/64, Desktop 44/64), but RajaBee jumps from a 22B model to a **32B model** at the same VM size. Real quality upgrade, no extra RAM.
+
 ### Decision pending
-Nir will pick A, B, or C. **Until that choice is made, do NOT pull any model and do NOT run `virt-install`.** Building on the wrong RAM budget means rebuilding the whole template image.
+Nir will pick A, B, C, or **C-quant**. **Until that choice is made, do NOT pull any model and do NOT run `virt-install`.** Building on the wrong RAM budget means rebuilding the whole template image.
 
 ## 5. IP plan (bridged networking on br0)
 
