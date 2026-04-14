@@ -225,9 +225,9 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 
 | Cat | Tier | RAM target | Candidates from Google | Chosen |
 |---|---|---|---|---|
-| M1 | Worker | tier-W | _pending search M1_ | _pending_ |
-| M2 | Queens | tier-DQ/GQ | `qwen3.5:35b-a3b` (35B total / 3B active, MoE — fits ~16 GB at q3) — bonus from "medium" dense search | _pending_ |
-| M3 | RajaBee | tier-RB | `glm-4.7-flash` (30B MoE / 3B active, "thinking" mode, from "medium-small" — fits ~16 GB at q3). Earlier flagship MoEs (deepseek-v3.2 671B, qwen3.5 397B-A17B, glm-5, kimi-k2.5 1T, qwen3 235B-A22B, mixtral 8x22B) all too big for 64 GB host. | _pending_ |
+| M1 | Worker | tier-W | `granite-3.1-moe:1b`, `granite-3.1-moe:3b` (IBM, ultra-low latency, edge — from "small MoE") | _pending_ |
+| M2 | Queens | tier-DQ/GQ | `qwen3.5:35b-a3b` (35B total / 3B active — bonus from "medium" dense), `qwen3:30b-a3b` (30B total / 3B active — from "small MoE", possibly same family) | _pending_ |
+| M3 | RajaBee | tier-RB | `glm-4.7-flash` (30B MoE / 3B active, "thinking" mode, ~16 GB at q3), `gemma4:26b-moe` (26B / 3.8B active, 88.3% AIME 2026 math, ~12 GB at q3 — from "small MoE"), `mixtral:8x7b` (47B / 13B active, borderline at q3 ~21 GB — from "small MoE"). Out-of-budget: deepseek-v3.2 671B, qwen3.5 397B-A17B, glm-5, kimi-k2.5 1T, qwen3 235B-A22B, mixtral 8x22B. | _pending_ |
 
 #### Round 3 — Vision
 
