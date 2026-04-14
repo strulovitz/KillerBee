@@ -150,6 +150,7 @@ Worker 4 GB / DwarfQueen 8 GB / GiantQueen 12 GB / RajaBee 18 GB, with quantizat
 5. **Many short searches, not one mega-query.** Each tier × each round gets its own short query.
 6. **Nir runs the searches manually**, pastes the list back. Claude does not have live web access in this session.
 7. **Do NOT dictate parameter counts in the query.** Use category words like "small", "medium", "big", "large" instead. Let Google volunteer the actual sizes that exist; Claude slots each result into the right tier afterwards based on its memory footprint.
+8. **Five size buckets per round, in order:** `small` → `medium` → `big` → `medium-small` → `medium-big`. The middle two refinements catch models that fall between the main buckets and weren't surfaced by the first three searches. Apply per round (Dense, MoE, Vision = 15 searches total minimum).
 
 ## 5. IP plan (bridged networking on br0)
 
@@ -217,16 +218,16 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 |---|---|---|---|---|
 | D1 | Worker | tier-W | `phi-4-mini:3.8b` (Microsoft, reasoning king under 4B), `qwen3:1.7b` (efficiency breakthrough), `deepseek-r1-distill-qwen:1.5b` (CoT thinking tiny), `smollm3:3b` (HF, balanced) — from "small" search | _pending_ |
 | D2 | DwarfQueen | tier-DQ | `qwen3:7b` (coding specialist), `mistral-small-3:7b` (structured outputs, fast), `qwen2.5-coder:7b` (agentic coding) — from "small" search | _pending_ |
-| D3 | GiantQueen | tier-GQ | `gemma3:12b` (Google flagship, general-purpose daily driver) — from "small" search | _pending more from medium/big_ |
-| D4 | RajaBee | tier-RB | _pending search "big" or "large"_ | _pending_ |
+| D3 | GiantQueen | tier-GQ | `gemma3:12b` (from "small"), `qwen3:14b` (coding, from "medium") | _pending_ |
+| D4 | RajaBee | tier-RB | `qwen3.5:27b` (speed, from "medium"), `exaone-4:32b` (LG, efficient, from "medium") — possibly `qwen3.5:35b-a3b` if MoE active params let it fit | _pending more from "big"_ |
 
 #### Round 2 — MoE
 
 | Cat | Tier | RAM target | Candidates from Google | Chosen |
 |---|---|---|---|---|
 | M1 | Worker | tier-W | _pending search M1_ | _pending_ |
-| M2 | Queens | tier-DQ/GQ | _pending search M2_ | _pending_ |
-| M3 | RajaBee | tier-RB | _pending search M3_ | _pending_ |
+| M2 | Queens | tier-DQ/GQ | `qwen3.5:35b-a3b` (35B total / 3B active, MoE — fits ~16 GB at q3) — bonus from "medium" dense search | _pending_ |
+| M3 | RajaBee | tier-RB | `mixtral:8x22b` (176B total — likely too big for C-quant, flagged) — bonus from "medium" dense search | _pending more from "big"_ |
 
 #### Round 3 — Vision
 
