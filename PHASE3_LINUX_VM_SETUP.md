@@ -235,7 +235,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 |---|---|---|---|---|
 | V1 | Worker | tier-W | `gemma3:4b` (multimodal edge, bonus from D1), `qwen3.5:0.8b-vl` (Alibaba ultra-low VRAM, from "small V/MM"), `qwen3-vl:5b` (efficiency king, from "small V/MM"), `ministral-3:3b` (Mistral edge variant, from "small V/MM") | _pending_ |
 | V2 | DQ/GQ | tier-DQ/GQ | `gemma3:12b` (Google, native vision, 128K context, from "small V/MM" — also in D3 dense), `qwen3-vl:9b` (from "small V/MM"), `llama4:8b-vision` (Meta, set-and-forget reliability, from "small V/MM") | _pending_ |
-| V3 | RajaBee | tier-RB | `mistral-small-3.1:24b` (multimodal, fits at q3, from "small V/MM"), `glm-4.6v-flash` (fast prefill, size TBD, from "small V/MM") | _pending_ |
+| V3 | RajaBee | tier-RB | `mistral-small-3.1:24b` (multimodal, fits at q3), `glm-4.6v-flash` (fast prefill, size TBD), **`qwen3-vl:32b`** (dense vision reasoning, 81.8 MMLU-Pro, fits at q3 ~14 GB, from "medium V/MM" — strong addition), `gemma4:26b-moe` (also multimodal per "medium V/MM", dual-classified with M3, 181 t/s, native variable aspect ratios). Out-of-budget: `llama4:scout` 109B/17B (native multimodal but too big, already flagged in M3). | _pending_ |
 
 ### 6.5 Final per-VM assignments (filled at the end of each round)
 
