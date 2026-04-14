@@ -245,10 +245,10 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | RajaBee | RB | `gemma4:31b` (256K context decisive for orchestrator, freshest Google dense flagship) | 2026-04-14 by Nir |
 | GiantQueen-A | GQ | `qwen3:14b` (Qwen flagship 14B, strongest small-dense for instruction-following + decomposition) | 2026-04-14 by Nir |
 | GiantQueen-B | GQ | `qwen3:14b` (same — Nir picked all #1s) | 2026-04-14 by Nir |
-| DwarfQueen-A1 | DQ | _pending_ | |
-| DwarfQueen-A2 | DQ | _pending_ | |
-| DwarfQueen-B1 | DQ | _pending_ | |
-| DwarfQueen-B2 | DQ | _pending_ | |
+| DwarfQueen-A1 | DQ | `qwen3:7b` (Qwen 7B flagship, best reasoning+structured-output for delegation) | 2026-04-14 by Nir |
+| DwarfQueen-A2 | DQ | `qwen3:7b` (same #1) | 2026-04-14 by Nir |
+| DwarfQueen-B1 | DQ | `qwen3:7b` (same #1) | 2026-04-14 by Nir |
+| DwarfQueen-B2 | DQ | `qwen3:7b` (same #1) | 2026-04-14 by Nir |
 | Worker × 8 | W | _pending_ | |
 
 #### Round 2 — MoE
@@ -257,6 +257,11 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | RajaBee | RB | `qwen3:30b-a3b-thinking` (explicit CoT thinking + 262K context, ideal for orchestration planning) | 2026-04-14 by Nir |
 | GiantQueen-A | GQ | `qwen3.5:35b-a3b` (newer "gold standard" 35B/3B-active small-MoE) | 2026-04-14 by Nir |
 | GiantQueen-B | GQ | `qwen3.5:35b-a3b` (same — Nir picked all #1s) | 2026-04-14 by Nir |
+| DwarfQueen-A1 | DQ | `granite-3.1-moe:3b` (IBM, only MoE that fits 8 GB tier; M2 candidates too big at 30-35B) | 2026-04-14 by Nir |
+| DwarfQueen-A2 | DQ | `granite-3.1-moe:3b` (same #1) | 2026-04-14 by Nir |
+| DwarfQueen-B1 | DQ | `granite-3.1-moe:3b` (same #1) | 2026-04-14 by Nir |
+| DwarfQueen-B2 | DQ | `granite-3.1-moe:3b` (same #1) | 2026-04-14 by Nir |
+| Worker × 8 | W | _pending_ | |
 
 #### Round 3 — Vision/Multi-modal
 | VM | Tier | Model | Locked |
@@ -264,6 +269,11 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | RajaBee | RB | `qwen3-vl:32b` (top dense VLM, 81.8 MMLU-Pro, highest raw multi-modal reasoning) | 2026-04-14 by Nir |
 | GiantQueen-A | GQ | `qwen3-vl:9b` (Qwen-VL is strongest small-VLM family, fits tier with headroom) | 2026-04-14 by Nir |
 | GiantQueen-B | GQ | `qwen3-vl:9b` (same — Nir picked all #1s) | 2026-04-14 by Nir |
+| DwarfQueen-A1 | DQ | `llama3.2-vision:11b` (Meta production-tested vision, full use of tier) | 2026-04-14 by Nir |
+| DwarfQueen-A2 | DQ | `llama3.2-vision:11b` (same #1) | 2026-04-14 by Nir |
+| DwarfQueen-B1 | DQ | `llama3.2-vision:11b` (same #1) | 2026-04-14 by Nir |
+| DwarfQueen-B2 | DQ | `llama3.2-vision:11b` (same #1) | 2026-04-14 by Nir |
+| Worker × 8 | W | _pending_ | |
 
 ### 6.6 ALL THREE rounds — variety rule fully relaxed (locked by Nir 2026-04-14)
 
