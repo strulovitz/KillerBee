@@ -142,6 +142,14 @@ Same per-host totals as plain Option C (Laptop 62/64, Desktop 44/64), but RajaBe
 ### Decision: C-quant LOCKED 2026-04-14 by Nir
 Worker 4 GB / DwarfQueen 8 GB / GiantQueen 12 GB / RajaBee 18 GB, with quantization pushed harder at the top (q3_K_M for GiantQueen + RajaBee, q4 for DwarfQueen, q5 for Worker). Search Google for models by parameter range only — do NOT mention quantization or CPU/RAM in the queries; assume models hold up under quantization, then Claude picks the exact quantized tag from ollama.com/library after Nir pastes the list.
 
+### 4.3 Google search rules (locked by Nir 2026-04-14)
+1. **Short keyword queries.** Google is not ChatGPT — do not paste paragraphs. 5-8 words max per query.
+2. **Always include the word `ollama`** in the query so results point at the Ollama library, not random Hugging Face mirrors or research papers.
+3. **Always end the query with `2026`** so Google biases toward current releases.
+4. **Do NOT mention "quantized", "q3", "q4", "CPU", "RAM", "VM"** in the query. We assume all candidates hold up under quantization; Claude picks the exact `q*` tag from `ollama.com/library` later.
+5. **Many short searches, not one mega-query.** Each tier × each round gets its own short query.
+6. **Nir runs the searches manually**, pastes the list back. Claude does not have live web access in this session.
+
 ## 5. IP plan (bridged networking on br0)
 
 | Range | Used by |
