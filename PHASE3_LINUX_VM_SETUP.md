@@ -108,6 +108,12 @@ Laptop usage: 18 + 12 + 8 + 8 + 4×4 = **62 GB / 64**. Only 2 GB host headroom �
 Desktop usage: 12 + 8 + 8 + 4×4 = **44 GB / 64**. 20 GB free. Comfortable.
 **Cost:** RajaBee = 22B (decent but not flagship). Workers stay small (3B).
 
+### 4.0 CPU-ONLY. NO GPU. EVER.
+
+This cluster runs Ollama on CPU only. **No PCIe GPU passthrough, no vfio binding, no GPU layers, no `--gpu-layers`, no CUDA, no ROCm, no MPS, nothing GPU-related inside any VM.** When this doc or any Google search response mentions "VRAM," translate it to "system RAM" — we are not using a GPU. The host RTX 4070 Ti (Desktop) and RTX 5090 (Laptop) are reserved for non-VM workloads only and are invisible to the guest VMs.
+
+Any future Claude session that proposes GPU layers, GPU passthrough, vfio, or "just offload some layers to the GPU for speed" should re-read this section and stop.
+
 ### 4.1 Quantization (already baked in, but we can push it further)
 
 Ollama serves quantized models by default — `ollama pull qwen2.5:32b` returns `q4_K_M` (4-bit), not full-precision fp16. The `params × 0.6 GB` math used in Options A/B/C above **already assumes q4_K_M.** Quantization is not a new lever; it is the one we have been pulling all along.
