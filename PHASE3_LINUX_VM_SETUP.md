@@ -241,9 +241,9 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 
 Same shape three times — one table per round — once Nir has chosen from the candidates above. Until §4 (RAM tier) and §6.4 (candidates) are filled, no `ollama pull` and no `virt-install` happens.
 
-### 6.6 Vision round only — variety rule relaxed (locked by Nir 2026-04-14)
+### 6.6 Vision AND MoE rounds — variety rule relaxed (locked by Nir 2026-04-14)
 
-After completing all 15 searches the multi-modal candidate pool is too thin to fill 15 unique slots. Nir has accepted that **for the vision/multi-modal round only**, the "different model per VM" rule is relaxed and duplicates are allowed. Dense and MoE rounds still require one unique model per VM.
+After completing all 15 searches, both the multi-modal pool **and the MoE pool** are too thin to fill 15 unique slots. Nir has accepted that **for the vision/multi-modal round AND the MoE round**, the "different model per VM" rule is relaxed and duplicates are allowed. **Only the Dense round still requires one unique model per VM** (and Dense is itself borderline — see §6.7).
 
 **Confirmed multi-modal pool (14 models, Ministral entries excluded as uncertain):**
 
@@ -272,7 +272,47 @@ RajaBee-class (18 GB tier at q3, 6 models):
 - **4 DwarfQueens + 2 GiantQueens = 6 slots / 5 candidates:** one model must appear twice.
 - **1 RajaBee / 6 candidates:** free pick, the other 5 stay unused for this round.
 
-**Why the variety rule was relaxed (Nir's reasoning):** the small open-source VLM ecosystem in early 2026 is genuinely narrow at the sub-5B size — most labs ship one or two VLM sizes per family, not a continuous range. Forcing 8 unique small VLMs would require either making things up (reward-hacking) or running more searches and still coming up short. Better to be honest: vision round duplicates at the Worker tier, dense and MoE rounds stay one-per-VM unique.
+**Why the vision variety rule was relaxed:** the small open-source VLM ecosystem in early 2026 is genuinely narrow at the sub-5B size — most labs ship one or two VLM sizes per family, not a continuous range. Forcing 8 unique small VLMs would require making things up.
+
+### 6.7 MoE round — variety rule also relaxed
+
+Confirmed MoE pool from the 5 MoE searches:
+
+Worker-class (≤ 4 GB tier, 2 models):
+- `granite-3.1-moe:1b` — IBM
+- `granite-3.1-moe:3b` — IBM
+
+DwarfQueen / GiantQueen-class (8-12 GB tier, 2 models):
+- `qwen3.5:35b-a3b` — 35B/3B active
+- `qwen3:30b-a3b` — 30B/3B active
+
+RajaBee-class (18 GB tier, ~7 models):
+- `glm-4.7-flash` (30B/3B active, thinking)
+- `gemma4:26b-moe` (26B/3.8B active, AIME 88.3%)
+- `nemotron-cascade-2:30b` (NVIDIA, STEM)
+- `qwen3:30b-a3b-thinking` (262K context)
+- `qwen3-coder-next:32b`
+- `nemotron-3-nano:30b` (hybrid MoE, dual D4)
+- `mixtral:8x7b` (47B/13B active, borderline at q3)
+
+**Per-tier duplication math for 15 VMs in MoE round:**
+- **8 Workers / 2 candidates:** 4 each, or 5+3.
+- **6 DQ+GQ slots / 2 candidates:** 3 each.
+- **1 RajaBee / 7 candidates:** free pick.
+
+**Why the MoE variety rule was relaxed:** the small/mid MoE ecosystem in 2026 is genuinely thin. IBM Granite is essentially the only sub-5B MoE family on Ollama. The Qwen-A3B family is the only mainstream small-active MoE in the 30B-class. Forcing 15 unique MoEs across 15 VMs is not honestly possible without making models up.
+
+### 6.8 Dense round — borderline, decision pending
+
+Dense pool inventory:
+- D1 Worker: 4 candidates for 8 slots (short by 4)
+- D2 DwarfQueen: 3 candidates for 4 slots (short by 1)
+- D3 GiantQueen: 4 candidates for 2 slots (enough)
+- D4 RajaBee: 5 candidates for 1 slot (enough)
+
+**Total: 16 unique candidates for 15 slots, but maldistributed.** Dense round is technically feasible only if at least one Worker model is reused, and one Worker model is shared with the DwarfQueen tier, which is ugly.
+
+**Decision pending Nir:** either (a) run 1-2 more targeted searches on small dense families to fill D1 cleanly, or (b) relax variety in dense too like vision and MoE. Until Nir picks, the dense round assignment table stays empty.
 
 ## 7. Build order
 
