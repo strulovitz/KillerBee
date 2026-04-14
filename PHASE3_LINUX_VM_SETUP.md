@@ -241,9 +241,11 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 
 Same shape three times — one table per round — once Nir has chosen from the candidates above. Until §4 (RAM tier) and §6.4 (candidates) are filled, no `ollama pull` and no `virt-install` happens.
 
-### 6.6 Vision AND MoE rounds — variety rule relaxed (locked by Nir 2026-04-14)
+### 6.6 ALL THREE rounds — variety rule fully relaxed (locked by Nir 2026-04-14)
 
-After completing all 15 searches, both the multi-modal pool **and the MoE pool** are too thin to fill 15 unique slots. Nir has accepted that **for the vision/multi-modal round AND the MoE round**, the "different model per VM" rule is relaxed and duplicates are allowed. **Only the Dense round still requires one unique model per VM** (and Dense is itself borderline — see §6.7).
+After completing all 15 searches, every round's candidate pool is too thin to cleanly fill 15 unique slots. Nir has accepted that **for all three rounds (Dense, MoE, Vision/Multi-modal)**, the "different model per VM" rule is relaxed and duplicates are allowed. The original "different model on every VM" goal stands as an aspiration but is overruled by hardware reality and ecosystem reality: the open-source model space in 2026 does not provide 15 distinct families per category at the size ranges our 64 GB hosts can run.
+
+Heterogeneity at the cluster level is preserved by mixing **as many distinct models as the pool actually contains** within each round, with duplication only where unavoidable.
 
 **Confirmed multi-modal pool (14 models, Ministral entries excluded as uncertain):**
 
@@ -302,17 +304,21 @@ RajaBee-class (18 GB tier, ~7 models):
 
 **Why the MoE variety rule was relaxed:** the small/mid MoE ecosystem in 2026 is genuinely thin. IBM Granite is essentially the only sub-5B MoE family on Ollama. The Qwen-A3B family is the only mainstream small-active MoE in the 30B-class. Forcing 15 unique MoEs across 15 VMs is not honestly possible without making models up.
 
-### 6.8 Dense round — borderline, decision pending
+### 6.8 Dense round — variety also relaxed
 
-Dense pool inventory:
-- D1 Worker: 4 candidates for 8 slots (short by 4)
-- D2 DwarfQueen: 3 candidates for 4 slots (short by 1)
-- D3 GiantQueen: 4 candidates for 2 slots (enough)
-- D4 RajaBee: 5 candidates for 1 slot (enough)
+Dense pool:
+- D1 Worker (4 GB tier): `phi-4-mini:3.8b`, `qwen3:1.7b`, `deepseek-r1-distill-qwen:1.5b`, `smollm3:3b` — 4 candidates
+- D2 DwarfQueen (8 GB tier): `qwen3:7b`, `mistral-small-3:7b`, `qwen2.5-coder:7b` — 3 candidates
+- D3 GiantQueen (12 GB tier): `gemma3:12b`, `qwen3:14b`, `ministral-3:14b`, `mistral-small-3.2:24b` — 4 candidates
+- D4 RajaBee (18 GB tier): `qwen3.5:27b`, `exaone-4:32b`, `gpt-oss:20b`, `nemotron-3-nano:30b`, `gemma4:31b` — 5 candidates
 
-**Total: 16 unique candidates for 15 slots, but maldistributed.** Dense round is technically feasible only if at least one Worker model is reused, and one Worker model is shared with the DwarfQueen tier, which is ugly.
+**Per-tier duplication math for 15 VMs in Dense round:**
+- **8 Workers / 4 candidates:** 2 each (clean even split).
+- **4 DwarfQueens / 3 candidates:** 2+1+1 or similar.
+- **2 GiantQueens / 4 candidates:** free pick of 2 distinct.
+- **1 RajaBee / 5 candidates:** free pick.
 
-**Decision pending Nir:** either (a) run 1-2 more targeted searches on small dense families to fill D1 cleanly, or (b) relax variety in dense too like vision and MoE. Until Nir picks, the dense round assignment table stays empty.
+Same reasoning as MoE and vision relaxations: the 1-3B small dense ecosystem published on Ollama in 2026 is wider than MoE/vision but still does not contain 8 distinct families that would cleanly fit a 4 GB Worker tier without forcing artificial picks.
 
 ## 7. Build order
 
