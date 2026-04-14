@@ -173,7 +173,7 @@ The same 15 VMs will be tested in three independent passes. Each pass loads a di
 |---|---|---|
 | **1. Dense** | Standard dense transformers (Qwen, Llama, Gemma, etc.) | The baseline. What every distributed-AI paper assumes. |
 | **2. MoE** | Mixture-of-Experts (DeepSeek-V3, Qwen-MoE, Mixtral, Phi-MoE, etc.) | MoE punches above its weight on CPU because only a fraction of experts activate per token. Could let us run "bigger" effective models in the same RAM budget. |
-| **3. Vision** | Vision-language models (Qwen-VL, LLaVA, MiniCPM-V, etc.) | Lets the swarm process images. Opens up image-batch tasks for the cluster. |
+| **3. Vision / Multi-modal** | Vision-language and other multi-modal models (Qwen-VL, LLaVA, MiniCPM-V, Gemma-vision, etc.) | Lets the swarm process images and other non-text inputs. Vision and multi-modal are searched together (one search per bucket covers both). |
 
 Between rounds: stop all bees, `ollama rm` the previous round's models, `ollama pull` the next round's models, restart bees. Same VMs, same hostnames, same IPs.
 
