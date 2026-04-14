@@ -219,7 +219,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | D1 | Worker | tier-W | `phi-4-mini:3.8b` (Microsoft, reasoning king under 4B), `qwen3:1.7b` (efficiency breakthrough), `deepseek-r1-distill-qwen:1.5b` (CoT thinking tiny), `smollm3:3b` (HF, balanced) — from "small" search | _pending_ |
 | D2 | DwarfQueen | tier-DQ | `qwen3:7b` (coding specialist), `mistral-small-3:7b` (structured outputs, fast), `qwen2.5-coder:7b` (agentic coding) — from "small" search | _pending_ |
 | D3 | GiantQueen | tier-GQ | `gemma3:12b` (from "small"), `qwen3:14b` (coding, from "medium") | _pending_ |
-| D4 | RajaBee | tier-RB | `qwen3.5:27b` (speed, from "medium"), `exaone-4:32b` (LG, efficient, from "medium") — possibly `qwen3.5:35b-a3b` if MoE active params let it fit | _pending more from "big"_ |
+| D4 | RajaBee | tier-RB | `qwen3.5:27b` (speed, from "medium"), `exaone-4:32b` (LG, efficient, from "medium"). "big" search returned nothing new in C-quant range — DeepSeek-V3.2 671B, Qwen3.5-397B-A17B, GLM-5, Kimi-K2.5 1T, Qwen3-235B-A22B all need 96-256+ GB even at q3, do not fit our 64 GB hosts. | _pending_ |
 
 #### Round 2 — MoE
 
@@ -227,7 +227,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 |---|---|---|---|---|
 | M1 | Worker | tier-W | _pending search M1_ | _pending_ |
 | M2 | Queens | tier-DQ/GQ | `qwen3.5:35b-a3b` (35B total / 3B active, MoE — fits ~16 GB at q3) — bonus from "medium" dense search | _pending_ |
-| M3 | RajaBee | tier-RB | `mixtral:8x22b` (176B total — likely too big for C-quant, flagged) — bonus from "medium" dense search | _pending more from "big"_ |
+| M3 | RajaBee | tier-RB | `mixtral:8x22b` (176B total — too big), `deepseek-v3.2:671b` (~250 GB at q3, too big), `qwen3.5:397b-a17b` (~150 GB, too big), `glm-5` (128GB+ requirement, too big), `kimi-k2.5:1t` (1T params, too big), `qwen3:235b-a22b` (96GB+, too big), `minimax-m2.5` (~64-128 GB, borderline). **NOTE:** the entire "big" search returned almost nothing that fits our 64 GB hosts. The only realistic MoE RajaBee candidate so far is `qwen3.5:35b-a3b` (already in M2). | _pending_ |
 
 #### Round 3 — Vision
 
