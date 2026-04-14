@@ -5,7 +5,8 @@
 **Status:** PLAN. Not executed. Awaiting Nir review before any `virt-install` runs.
 **Supersedes:** `PHASE3_REBUILD_PLAN.md` (commit `3e8fbf9`, the V1 plan). V1 is retained as historical record per the iteration-history rule.
 **Trigger for V2:** V1 plan failed the host-fit check after the QEMU envelope tax and Cinnamon/libvirtd/ICQ overhead were honestly accounted for — V1 left only 0–2 GB host headroom. Nir owned the framing error in his apology (in `claude-memory/KILLERBEE_DOWNGRADE_2026-04-14.md`) and asked for everyone to drop one notch, with Workers moving to a brand-new TINY tier researched together on Google this evening.
-**Tier selections:** locked in `KillerBee/PHASE3_V2_TIER_PICKS.md` (commit `2b1ef22` plus this commit's update).
+**Tier selections:** locked in `KillerBee/PHASE3_V2_TIER_PICKS.md`. All 8 primary model tags are verified against the live Ollama library — see `PHASE3_V2_TIER_PICKS.md` "Tag verification" section at the bottom for the exact check results.
+**Disk sizing rule change (2026-04-14 late evening, Nir):** every per-VM disk size from §2 below is **doubled** in the final plan, per Nir's instruction: *"it does not cost me anything, and maybe we are wrong, I want more twice as much disk space proportionally for every component of each VM."* The arithmetic in §2 is the sizing **floor** (the absolute minimum that workload analysis demands); the numbers actually passed to `virt-install` are the floors × 2. This is reflected in §5 "Summary table".
 **Build procedure:** unchanged from V1. Same autoinstall seed, same `killerbee` libvirt pool on `/home/killerbee-images`, same `br0` bridge, same three build scripts (`scripts/autoinstall_one.sh`, `scripts/full_cycle_one.sh`, `scripts/full_cycle_remaining6.sh`) with only the per-VM disk/RAM/vCPU parameters changing.
 
 ---
@@ -186,24 +187,28 @@ Total: 6 + 8 + 8 = **22 vCPU on 32 logical** (69% allocation, no overcommit). 10
 
 ---
 
-## 5. Summary table (the single page Nir reads)
+## 5. Summary table (the single page Nir reads) — WITH 2× DISK DOUBLING
+
+All disk sizes below are **2× the §2 floors**, per Nir's doubling rule. `virt-install` is called with these values, not the §2 floors.
 
 | VM | Tier | Disk (GB) | RAM (GB) | vCPU | Dense | MoE | Vision |
 |---|---|---|---|---|---|---|---|
-| giantqueen-b | old-DQ | **40** | **11** | **6** | `qwen3:8b` | `granite3.1-moe:3b` | `llama3.2-vision:11b` |
-| dwarfqueen-b1 | old-Worker | **25** | **6** | **4** | `phi4-mini:3.8b` | `granite3.1-moe:3b` | `gemma3:4b` |
-| dwarfqueen-b2 | old-Worker | **25** | **6** | **4** | `phi4-mini:3.8b` | `granite3.1-moe:3b` | `gemma3:4b` |
-| worker-b1 | NEW TINY | **20** | **4** | **2** | `qwen3:1.7b` | `granite3.1-moe:1b` | `qwen3.5:0.8b` |
-| worker-b2 | NEW TINY | **20** | **4** | **2** | `qwen3:1.7b` | `granite3.1-moe:1b` | `qwen3.5:0.8b` |
-| worker-b3 | NEW TINY | **20** | **4** | **2** | `qwen3:1.7b` | `granite3.1-moe:1b` | `qwen3.5:0.8b` |
-| worker-b4 | NEW TINY | **20** | **4** | **2** | `qwen3:1.7b` | `granite3.1-moe:1b` | `qwen3.5:0.8b` |
-| **Totals** |   | **170 GB** | **39 GB** | **22** |   |   |   |
+| giantqueen-b | old-DQ | **80** | **11** | **6** | `qwen3:8b` ✓ | `granite3.1-moe:3b` ✓ | `llama3.2-vision:11b` ✓ |
+| dwarfqueen-b1 | old-Worker | **50** | **6** | **4** | `phi4-mini:3.8b` ✓ | `granite3.1-moe:3b` ✓ | `gemma3:4b` ✓ |
+| dwarfqueen-b2 | old-Worker | **50** | **6** | **4** | `phi4-mini:3.8b` ✓ | `granite3.1-moe:3b` ✓ | `gemma3:4b` ✓ |
+| worker-b1 | NEW TINY | **40** | **4** | **2** | `qwen3:1.7b` ✓ | `granite3.1-moe:1b` ✓ | `qwen3.5:0.8b` ✓ |
+| worker-b2 | NEW TINY | **40** | **4** | **2** | `qwen3:1.7b` ✓ | `granite3.1-moe:1b` ✓ | `qwen3.5:0.8b` ✓ |
+| worker-b3 | NEW TINY | **40** | **4** | **2** | `qwen3:1.7b` ✓ | `granite3.1-moe:1b` ✓ | `qwen3.5:0.8b` ✓ |
+| worker-b4 | NEW TINY | **40** | **4** | **2** | `qwen3:1.7b` ✓ | `granite3.1-moe:1b` ✓ | `qwen3.5:0.8b` ✓ |
+| **Totals** |   | **340 GB** | **39 GB** | **22** |   |   |   |
 
-### Fit check
+✓ = tag verified against the live Ollama library on 2026-04-14 late evening; see `PHASE3_V2_TIER_PICKS.md` "Tag verification" section for evidence.
+
+### Fit check (with doubled disk)
 
 | Resource | Allocated | Host has | Remaining | Verdict |
 |---|---|---|---|---|
-| Disk (virtual, `/home`) | 170 GB | 1500 GB free | 1330 GB | Plenty. Real sparse use will be ~100 GB once all 21 models pulled. |
+| Disk (virtual, `/home`) | 340 GB | 1500 GB free | 1160 GB | Plenty. qcow2 is sparse — real on-disk footprint at steady state will be ~100–130 GB with all 21 models pulled. The doubling only costs virtual space, not real space. |
 | RAM (including QEMU tax + host overhead) | 43.1 GB | 62 GiB | 18.9 GB | **PASS** — meets 5–8 GB headroom target with ~2.5× margin. |
 | vCPU | 22 | 32 | 10 | Plenty, no overcommit. |
 
@@ -223,17 +228,17 @@ Total: 6 + 8 + 8 = **22 vCPU on 32 logical** (69% allocation, no overcommit). 10
 
 Script parameterization change: the existing `scripts/autoinstall_one.sh` hard-codes `size=15` inside the `--disk` flag. Before execution, the script will be updated to accept a `<disk-GB>` third argument and interpolate it into the `--disk` flag. Same for `scripts/full_cycle_one.sh`. The driver will become a loop over `(name, ram-MB, disk-GB, vcpu)` quadruples.
 
-Execution sequence (one VM at a time, no parallelism):
+Execution sequence (one VM at a time, no parallelism) — with **doubled disk sizes**:
 
-1. `full_cycle_one.sh giantqueen-b 11264 40 6`
+1. `full_cycle_one.sh giantqueen-b 11264 80 6`
 2. `ollama pull qwen3:8b && ollama pull granite3.1-moe:3b && ollama pull llama3.2-vision:11b` on giantqueen-b
 3. Verify with `ollama list` and from the host with `curl http://<ip>:11434/api/tags`
-4. `full_cycle_one.sh dwarfqueen-b1 6144 25 4`, pull its three models, verify
-5. `full_cycle_one.sh dwarfqueen-b2 6144 25 4`, pull its three models, verify
-6. `full_cycle_one.sh worker-b1 4096 20 2`, pull its three models, verify
-7. `full_cycle_one.sh worker-b2 4096 20 2`, same
-8. `full_cycle_one.sh worker-b3 4096 20 2`, same
-9. `full_cycle_one.sh worker-b4 4096 20 2`, same
+4. `full_cycle_one.sh dwarfqueen-b1 6144 50 4`, pull its three models, verify
+5. `full_cycle_one.sh dwarfqueen-b2 6144 50 4`, pull its three models, verify
+6. `full_cycle_one.sh worker-b1 4096 40 2`, pull its three models, verify
+7. `full_cycle_one.sh worker-b2 4096 40 2`, same
+8. `full_cycle_one.sh worker-b3 4096 40 2`, same
+9. `full_cycle_one.sh worker-b4 4096 40 2`, same
 10. Full cluster verification (SSH each VM, `hostname && cat /etc/machine-id && ollama list`; from host `curl /api/tags` on each).
 11. Telegraph ICQ to Laptop: `"V2 rebuild complete, 7 VMs up, 21 models pulled, host headroom X GB. File: KillerBee/PHASE3_REBUILD_STATUS_V2.md commit <hash>."`
 
