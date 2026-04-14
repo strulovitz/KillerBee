@@ -233,9 +233,9 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 
 | Cat | Tier | RAM target | Candidates from Google | Chosen |
 |---|---|---|---|---|
-| V1 | Worker | tier-W | `gemma3:4b` (Google, native multimodal for edge) — bonus from "small" dense search | _pending_ |
-| V2 | DQ/GQ | tier-DQ/GQ | _pending search V2_ | _pending_ |
-| V3 | RajaBee | tier-RB | _pending search V3_ | _pending_ |
+| V1 | Worker | tier-W | `gemma3:4b` (multimodal edge, bonus from D1), `qwen3.5:0.8b-vl` (Alibaba ultra-low VRAM, from "small V/MM"), `qwen3-vl:5b` (efficiency king, from "small V/MM"), `ministral-3:3b` (Mistral edge variant, from "small V/MM") | _pending_ |
+| V2 | DQ/GQ | tier-DQ/GQ | `gemma3:12b` (Google, native vision, 128K context, from "small V/MM" — also in D3 dense), `qwen3-vl:9b` (from "small V/MM"), `llama4:8b-vision` (Meta, set-and-forget reliability, from "small V/MM") | _pending_ |
+| V3 | RajaBee | tier-RB | `mistral-small-3.1:24b` (multimodal, fits at q3, from "small V/MM"), `glm-4.6v-flash` (fast prefill, size TBD, from "small V/MM") | _pending_ |
 
 ### 6.5 Final per-VM assignments (filled at the end of each round)
 
