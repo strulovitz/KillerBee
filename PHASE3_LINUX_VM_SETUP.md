@@ -219,7 +219,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | D1 | Worker | tier-W | `phi-4-mini:3.8b` (Microsoft, reasoning king under 4B), `qwen3:1.7b` (efficiency breakthrough), `deepseek-r1-distill-qwen:1.5b` (CoT thinking tiny), `smollm3:3b` (HF, balanced) — from "small" search | _pending_ |
 | D2 | DwarfQueen | tier-DQ | `qwen3:7b` (coding specialist), `mistral-small-3:7b` (structured outputs, fast), `qwen2.5-coder:7b` (agentic coding) — from "small" search | _pending_ |
 | D3 | GiantQueen | tier-GQ | `gemma3:12b` (from "small"), `qwen3:14b` (from "medium"), `ministral-3:14b` (Mistral, balanced, from "medium-small"), `mistral-small-3.2:24b` (high-quality reasoning, fits at q3, from "medium-small") | _pending_ |
-| D4 | RajaBee | tier-RB | `qwen3.5:27b` (from "medium"), `exaone-4:32b` (from "medium"), `gpt-oss:20b` (from "medium-small"), `nemotron-3-nano:30b` (NVIDIA, math leader 90%+ on benchmarks, from "medium-big"). "big" search returned only out-of-budget flagships (DeepSeek-V3.2 671B, Qwen3.5-397B-A17B, GLM-5, Kimi-K2.5 1T, Qwen3-235B-A22B, Qwen3 72B, Kimi-Dev-72B — all need 64-256+ GB even at q3). | _pending_ |
+| D4 | RajaBee | tier-RB | `qwen3.5:27b`, `exaone-4:32b`, `gpt-oss:20b`, `nemotron-3-nano:30b` (math leader 90%+), `gemma4:31b` (256K context, native multimodal but also dense — dual-classified with V3, from "medium-big V/MM"). Out-of-budget: DeepSeek-V3.2 671B, Qwen3.5-397B-A17B, GLM-5, Kimi-K2.5 1T, Qwen3-235B-A22B, Qwen3 72B, Kimi-Dev-72B. | _pending_ |
 
 #### Round 2 — MoE
 
@@ -235,7 +235,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 |---|---|---|---|---|
 | V1 | Worker | tier-W | `gemma3:4b` (multimodal edge, bonus from D1), `qwen3.5:0.8b-vl` (Alibaba ultra-low VRAM, from "small V/MM"), `qwen3-vl:5b` (efficiency king, from "small V/MM"), `ministral-3:3b` (Mistral edge variant, from "small V/MM") | _pending_ |
 | V2 | DQ/GQ | tier-DQ/GQ | `gemma3:12b` (also in D3 dense), `qwen3-vl:9b`, `llama4:8b-vision`, `llama3.2-vision:11b`, `gemma4:e4b` (8.5B, native vision, 128K context, all-rounder, from "medium-small V/MM"), `ministral-3:14b` (dense reasoning + vision, dual-classified with D3, from "medium-small V/MM") | _pending_ |
-| V3 | RajaBee | tier-RB | `mistral-small-3.1:24b` (multimodal, q3), `glm-4.6v-flash` (size TBD), `qwen3-vl:32b` (81.8 MMLU-Pro, q3 ~14 GB), `gemma4:26b-moe` (dual M3, 181 t/s), **`qwen3-vl:30b-a3b-instruct`** (MoE vision variant, 84.7% math + vision, from "big V/MM" — dual-classified with M3, strong addition). Out-of-budget: `llama4:scout` 109B, `qwen3.5:397b-a17b` (native early-fusion vision but too big), `llama3.2-vision:90b`, `kimi-k2.5` 1T (native multimodal agentic, too big). | _pending_ |
+| V3 | RajaBee | tier-RB | `mistral-small-3.1:24b`, `glm-4.6v-flash` (size TBD), `qwen3-vl:32b` (81.8 MMLU-Pro), `gemma4:26b-moe` (dual M3, 181 t/s), `qwen3-vl:30b-a3b-instruct` (MoE vision, 84.7% math, dual M3), **`gemma4:31b`** (dense, 256K context, native variable aspect ratios, dual D4, from "medium-big V/MM"). Out-of-budget: `llama4:scout` 109B, `qwen3.5:397b-a17b`, `llama3.2-vision:90b`, `kimi-k2.5` 1T. | _pending_ |
 
 ### 6.5 Final per-VM assignments (filled at the end of each round)
 
