@@ -139,8 +139,8 @@ Apply Options C's RAM caps but assign quantization per tier:
 
 Same per-host totals as plain Option C (Laptop 62/64, Desktop 44/64), but RajaBee jumps from a 22B model to a **32B model** at the same VM size. Real quality upgrade, no extra RAM.
 
-### Decision pending
-Nir will pick A, B, C, or **C-quant**. **Until that choice is made, do NOT pull any model and do NOT run `virt-install`.** Building on the wrong RAM budget means rebuilding the whole template image.
+### Decision: C-quant LOCKED 2026-04-14 by Nir
+Worker 4 GB / DwarfQueen 8 GB / GiantQueen 12 GB / RajaBee 18 GB, with quantization pushed harder at the top (q3_K_M for GiantQueen + RajaBee, q4 for DwarfQueen, q5 for Worker). Search Google for models by parameter range only — do NOT mention quantization or CPU/RAM in the queries; assume models hold up under quantization, then Claude picks the exact quantized tag from ollama.com/library after Nir pastes the list.
 
 ## 5. IP plan (bridged networking on br0)
 
