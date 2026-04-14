@@ -1,70 +1,67 @@
-# Phase 3 V2 — Model picks per tier (living document)
+# Phase 3 V2 — Model picks per tier (ALL LOCKED)
 
-**Purpose:** lock the model choices for the V2 rebuild (the downshifted plan from `claude-memory/KILLERBEE_DOWNGRADE_2026-04-14.md`), one row at a time, as Nir approves each tier. Once all three rows are locked, this file feeds directly into `PHASE3_REBUILD_PLAN_V2.md`.
+**Purpose:** one place to see what each tier is getting for the V2 rebuild. All three rows are now LOCKED by Nir under the "one-notch downshift, like the apology" rule (2026-04-14 evening).
 
-**Status key:** **LOCKED** = Nir has explicitly approved. **PENDING** = awaiting Nir decision.
+The rule: every role takes the models that were going to be one tier above it in V1. Workers take a brand-new TINY tier that did not exist in V1 at all (it was the tier Nir's "no tiny" rule explicitly excluded this morning — and which his apology reversed).
 
----
-
-## Worker-B1..B4 (TINY tier) — LOCKED 2026-04-14 by Nir
-
-| Slot | Model | Why |
-|---|---|---|
-| Dense | `qwen3:1.7b` | Alibaba 2026 current-gen sub-2B flagship, ~62% MMLU — best intelligence-per-byte in the whole TINY box. |
-| MoE | `granite3.1-moe:1b` | IBM, 1B total / ~400M active — the only true sub-2B MoE that exists on Ollama in 2026. |
-| Multi-modal / Vision | `qwen3.5:0.8b` | Alibaba ultra-tiny multi-modal, 0.8B total including vision encoder, 262K context — the strongest intelligence-per-byte in the sub-1B multi-modal bracket. |
-
-**Alternatives considered** (kept as fallbacks if the #1 choices fail verification on first pull):
-- Dense #2: `llama3.2:1b` (Meta 1B text, rock-solid, older)
-- Dense #3: `deepseek-r1-distill-qwen:1.5b` (1.5B reasoning-distilled, unique chain-of-thought focus)
-- MoE #2: `granite3.1-moe:3b` (3B, upper-edge of TINY, stronger but bigger)
-- MoE #3: *does not exist* — TINY MoE is a Granite monoculture on Ollama in 2026
-- Vision #2: `moondream2:1.7b` (1.7B, battle-tested image captioning, safe fallback)
-- Vision #3: *flagged* — "llama3.2:1b-vision" appears in Google summaries but cannot be confirmed as a real Ollama tag; Meta's official Llama-3.2-Vision is 11B/90B only
+**Source of V1 tier assignments:** `PHASE3_LINUX_VM_SETUP.md` §6.5.
 
 ---
 
-## DwarfQueen-B1, DwarfQueen-B2 — PENDING
+## GiantQueen-B — LOCKED (takes old DwarfQueen's models)
 
-Awaiting Nir's D1-vs-D2 decision (see bottom of this file). Candidates depend on which downshift rule applies.
-
----
-
-## GiantQueen-B — PENDING
-
-Awaiting Nir's D1-vs-D2 decision (see bottom of this file). Candidates depend on which downshift rule applies.
-
----
-
-## Open decision: one-notch downshift (D1) vs two-notch downshift (D2)
-
-Both options lock Workers at TINY (as above). They differ in what the DwarfQueens and GiantQueen-B get.
-
-### Option D1 — one-notch downshift (each role moves down exactly one tier)
-
-| VM | Dense | MoE | Vision | RAM |
+| Slot | Model | On-disk (est. GB) | RAM loaded (est. GB) | Why |
 |---|---|---|---|---|
-| GiantQueen-B | `phi4-mini:3.8b` (SMALL, ~2.5 GB) | `granite3.1-moe:3b` (~2 GB) | `gemma3:4b` (~2.5 GB) | 6 GB |
-| DwarfQueen-B1/B2 | `gemma4:e2b` (MINI, 2.3 GB) | `granite3.1-moe:3b` (~2 GB) | `ministral3:3b` (~2.5 GB) *or* `moondream2:1.7b` (~1.7 GB) | 5 GB each |
-| Worker-B1..B4 | `qwen3:1.7b` (~1.1 GB) | `granite3.1-moe:1b` (~0.7 GB) | `qwen3.5:0.8b` (~0.6 GB) | 4 GB each |
-| **Totals** | | | | **32 GB guest, ~30 GB host headroom** |
+| Dense | `qwen3:8b` | 5.2 | 5.5 | Best dense at the old 8-GB DwarfQueen tier per V1 §6.5. |
+| MoE | `granite3.1-moe:3b` | 2.0 | 2.2 | Unchanged — the ONLY MoE in the pool small enough to fit anywhere on Desktop. MoE ecosystem on Ollama is a Granite monoculture at this size. |
+| Multi-modal / Vision | `llama3.2-vision:11b` | 7.8 | 8.0 | V1 §6.5 vision assignment for old DwarfQueens; Meta production-tested 11B vision model, largest that still fits the new GQ-B RAM tier. |
 
-### Option D2 — two-notch downshift (what we were about to do before Nir added the in-between tier)
+**Largest-single-model-in-memory:** `llama3.2-vision:11b` → 8 GB loaded → RAM must be ≥ 10 GB. Chosen: **11 GB** (small headroom for KV cache and image token buffers).
 
-| VM | Dense | MoE | Vision | RAM |
+---
+
+## DwarfQueen-B1, DwarfQueen-B2 — LOCKED (take old Worker's models)
+
+| Slot | Model | On-disk (est. GB) | RAM loaded (est. GB) | Why |
 |---|---|---|---|---|
-| GiantQueen-B | `qwen3:8b` (~5.2 GB) | `granite3.1-moe:3b` (~2 GB) | `llama3.2-vision:11b` (~7.8 GB) *or* `qwen3-vl:8b` (~5 GB) | 10 GB *or* 8 GB |
-| DwarfQueen-B1/B2 | `phi4-mini:3.8b` (~2.5 GB) | `granite3.1-moe:3b` (~2 GB) | `gemma3:4b` (~2.5 GB) | 6 GB each |
-| Worker-B1..B4 | `qwen3:1.7b` | `granite3.1-moe:1b` | `qwen3.5:0.8b` | 4 GB each |
-| **Totals** | | | | **38 GB guest, ~20 GB host headroom** (11b vision) or **36 GB, ~22 GB** (8b vision) |
+| Dense | `phi4-mini:3.8b` | 2.5 | 2.7 | V1 §6.5 Worker Dense pick; Microsoft's highest-quality sub-4B dense model per §6.8 review. |
+| MoE | `granite3.1-moe:3b` | 2.0 | 2.2 | Same reason as GQ-B: only real option. |
+| Multi-modal / Vision | `gemma3:4b` | 2.5 | 2.7 | V1 §6.5 Worker Vision pick; Google's native multimodal edge flagship for 2026. |
 
-**Tradeoff:**
-- **D1** gives more host headroom, smaller tier variance (GQ is only slightly bigger than DQ).
-- **D2** keeps GiantQueen-B meaningfully bigger than DwarfQueens, preserving the hierarchy variance that makes the KillerBee hive test interesting.
+**Largest-single-model-in-memory:** `phi4-mini:3.8b` or `gemma3:4b` ≈ 2.7 GB loaded → RAM ≥ 5 GB. Chosen: **6 GB** per DwarfQueen.
 
-**Open questions for Nir:**
+---
 
-1. **D1 or D2?**
-2. **(Only if D2)** GiantQueen-B vision = `llama3.2-vision:11b` (stronger but 7.8 GB model, GQ RAM must be 10 GB) *or* `qwen3-vl:8b` (smaller 5 GB model, GQ RAM can stay at 8 GB)?
+## Worker-B1..B4 — LOCKED (new TINY tier from the 2026-04-14 evening Google session)
 
-Once these are answered, this file gets the remaining rows filled in, then `PHASE3_REBUILD_PLAN_V2.md` gets drafted with full disk/RAM/vCPU/fit-check arithmetic.
+| Slot | Model | On-disk (est. GB) | RAM loaded (est. GB) | Why |
+|---|---|---|---|---|
+| Dense | `qwen3:1.7b` | 1.1 | 1.3 | Alibaba 2026 current-gen sub-2B flagship, ~62% MMLU — best intelligence-per-byte in the TINY box per this evening's Google session. |
+| MoE | `granite3.1-moe:1b` | 0.7 | 0.9 | IBM, 1B total / ~400M active — the only true sub-2B MoE that exists on Ollama in 2026. |
+| Multi-modal / Vision | `qwen3.5:0.8b` | 0.6 | 0.8 | Alibaba ultra-tiny multi-modal; 0.8B total including vision encoder, 262K context, text+image+video — strongest intelligence-per-byte under 1B multi-modal. |
+
+**Largest-single-model-in-memory:** `qwen3:1.7b` → 1.3 GB loaded → RAM ≥ 3 GB. Chosen: **4 GB** per Worker (4 GB is the practical minimum for a comfortable Ubuntu Server VM including systemd, Ollama daemon, and scratch).
+
+**Fallbacks** (if a #1 pick fails verification on first pull):
+- Dense: `llama3.2:1b` (1B, older but rock-solid) → `deepseek-r1-distill-qwen:1.5b` (1.5B reasoning-distilled)
+- MoE: `granite3.1-moe:3b` (3B, upper TINY edge but much stronger) → **no #3**, TINY MoE ecosystem is a Granite monoculture
+- Vision: `moondream2:1.7b` (1.7B, battle-tested tiny vision) → **no reliable #3**; if both qwen3.5:0.8b and moondream2 fail, drop the Worker-tier vision round entirely and let DwarfQueens handle all vision
+
+---
+
+## Totals (for V2 plan arithmetic)
+
+| VM | Disk (GB) | RAM (GB) | vCPU |
+|---|---|---|---|
+| giantqueen-b | 40 | 11 | 6 |
+| dwarfqueen-b1 | 25 | 6 | 4 |
+| dwarfqueen-b2 | 25 | 6 | 4 |
+| worker-b1 | 20 | 4 | 2 |
+| worker-b2 | 20 | 4 | 2 |
+| worker-b3 | 20 | 4 | 2 |
+| worker-b4 | 20 | 4 | 2 |
+| **Totals** | **170** | **39** | **22** |
+
+**Host fit:** 62 GiB usable − 39 GiB guest − ~2 GiB QEMU envelope tax − ~2 GiB Cinnamon/libvirtd/ICQ overhead = **~19 GiB host headroom**. Meets the 5–8 GiB headroom requirement from the downgrade brief with comfortable margin.
+
+Full arithmetic, per-VM sizing breakdown, scripts, fit check, and execution plan live in `PHASE3_REBUILD_PLAN_V2.md`.
