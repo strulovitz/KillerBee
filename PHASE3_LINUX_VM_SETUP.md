@@ -241,6 +241,39 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 
 Same shape three times — one table per round — once Nir has chosen from the candidates above. Until §4 (RAM tier) and §6.4 (candidates) are filled, no `ollama pull` and no `virt-install` happens.
 
+### 6.6 Vision round only — variety rule relaxed (locked by Nir 2026-04-14)
+
+After completing all 15 searches the multi-modal candidate pool is too thin to fill 15 unique slots. Nir has accepted that **for the vision/multi-modal round only**, the "different model per VM" rule is relaxed and duplicates are allowed. Dense and MoE rounds still require one unique model per VM.
+
+**Confirmed multi-modal pool (14 models, Ministral entries excluded as uncertain):**
+
+Worker-class (≤ 4 GB tier, 3 models):
+- `gemma3:4b` — Google, native vision
+- `qwen3.5:0.8b-vl` — Alibaba, ultra-tiny VL
+- `qwen3-vl:5b` — Alibaba VL
+
+DwarfQueen / GiantQueen-class (8-12 GB tier, 5 models):
+- `qwen3-vl:9b`
+- `llama4:8b-vision`
+- `llama3.2-vision:11b`
+- `gemma3:12b`
+- `gemma4:e4b` (8.5B effective)
+
+RajaBee-class (18 GB tier at q3, 6 models):
+- `mistral-small-3.1:24b`
+- `qwen3-vl:32b` (dense, 81.8 MMLU-Pro)
+- `qwen3-vl:30b-a3b-instruct` (MoE vision, 84.7% math)
+- `gemma4:26b-moe`
+- `gemma4:31b` (256K context)
+- `glm-4.6v-flash` (size TBD)
+
+**Per-tier duplication math for 15 VMs:**
+- **8 Workers / 3 candidates:** unavoidable duplication — fair split 3+3+2 (each Worker model appears 2-3 times).
+- **4 DwarfQueens + 2 GiantQueens = 6 slots / 5 candidates:** one model must appear twice.
+- **1 RajaBee / 6 candidates:** free pick, the other 5 stay unused for this round.
+
+**Why the variety rule was relaxed (Nir's reasoning):** the small open-source VLM ecosystem in early 2026 is genuinely narrow at the sub-5B size — most labs ship one or two VLM sizes per family, not a continuous range. Forcing 8 unique small VLMs would require either making things up (reward-hacking) or running more searches and still coming up short. Better to be honest: vision round duplicates at the Worker tier, dense and MoE rounds stay one-per-VM unique.
+
 ## 7. Build order
 
 1. **Confirm CPU virt enabled on Desktop:** `grep -E 'vmx|svm' /proc/cpuinfo` — done in this Mint session before installing KVM.
