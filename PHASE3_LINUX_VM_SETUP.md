@@ -227,7 +227,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 |---|---|---|---|---|
 | M1 | Worker | tier-W | `granite-3.1-moe:1b`, `granite-3.1-moe:3b` (IBM, ultra-low latency, edge — from "small MoE") | _pending_ |
 | M2 | Queens | tier-DQ/GQ | `qwen3.5:35b-a3b` (35B total / 3B active — bonus from "medium" dense), `qwen3:30b-a3b` (30B total / 3B active — from "small MoE", possibly same family) | _pending_ |
-| M3 | RajaBee | tier-RB | `glm-4.7-flash` (30B MoE / 3B active, "thinking" mode, ~16 GB at q3), `gemma4:26b-moe` (26B / 3.8B active, 88.3% AIME 2026 math, ~12 GB at q3 — from "small MoE"), `mixtral:8x7b` (47B / 13B active, borderline at q3 ~21 GB — from "small MoE"). Out-of-budget: deepseek-v3.2 671B, qwen3.5 397B-A17B, glm-5, kimi-k2.5 1T, qwen3 235B-A22B, mixtral 8x22B. | _pending_ |
+| M3 | RajaBee | tier-RB | `glm-4.7-flash` (30B/3B active, thinking mode), `gemma4:26b-moe` (26B/3.8B active, 88.3% AIME math), `mixtral:8x7b` (47B/13B active, borderline at q3), `nemotron-cascade-2:30b` (30B/3B active, NVIDIA, competitive programming + STEM, from "medium MoE"), `qwen3:30b-a3b-thinking` (30B/3B active, 262K context, reasoning variant, from "medium MoE"), `qwen3-coder-next:32b` (32B coder variant, from "medium MoE"). Out-of-budget: deepseek-v3.2 671B, qwen3.5 397B-A17B, glm-5, kimi-k2.5 1T, qwen3 235B-A22B, mixtral 8x22B. | _pending_ |
 
 #### Round 3 — Vision
 
