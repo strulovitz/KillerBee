@@ -219,7 +219,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 | D1 | Worker | tier-W | `phi-4-mini:3.8b` (Microsoft, reasoning king under 4B), `qwen3:1.7b` (efficiency breakthrough), `deepseek-r1-distill-qwen:1.5b` (CoT thinking tiny), `smollm3:3b` (HF, balanced) — from "small" search | _pending_ |
 | D2 | DwarfQueen | tier-DQ | `qwen3:7b` (coding specialist), `mistral-small-3:7b` (structured outputs, fast), `qwen2.5-coder:7b` (agentic coding) — from "small" search | _pending_ |
 | D3 | GiantQueen | tier-GQ | `gemma3:12b` (from "small"), `qwen3:14b` (from "medium"), `ministral-3:14b` (Mistral, balanced, from "medium-small"), `mistral-small-3.2:24b` (high-quality reasoning, fits at q3, from "medium-small") | _pending_ |
-| D4 | RajaBee | tier-RB | `qwen3.5:27b` (from "medium"), `exaone-4:32b` (from "medium"), `gpt-oss:20b` (speed champion, fits 18 GB tier easily, from "medium-small"). "big" search returned only out-of-budget flagships (DeepSeek-V3.2 671B, Qwen3.5-397B-A17B, GLM-5, Kimi-K2.5 1T, Qwen3-235B-A22B — all need 96-256+ GB even at q3). | _pending_ |
+| D4 | RajaBee | tier-RB | `qwen3.5:27b` (from "medium"), `exaone-4:32b` (from "medium"), `gpt-oss:20b` (from "medium-small"), `nemotron-3-nano:30b` (NVIDIA, math leader 90%+ on benchmarks, from "medium-big"). "big" search returned only out-of-budget flagships (DeepSeek-V3.2 671B, Qwen3.5-397B-A17B, GLM-5, Kimi-K2.5 1T, Qwen3-235B-A22B, Qwen3 72B, Kimi-Dev-72B — all need 64-256+ GB even at q3). | _pending_ |
 
 #### Round 2 — MoE
 
