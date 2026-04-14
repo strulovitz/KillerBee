@@ -215,10 +215,10 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 
 | Cat | Tier | RAM target | Candidates from Google (filled per search) | Chosen |
 |---|---|---|---|---|
-| D1 | Worker | tier-W | _pending search D1_ | _pending_ |
-| D2 | DwarfQueen | tier-DQ | _pending search D2_ | _pending_ |
-| D3 | GiantQueen | tier-GQ | _pending search D3_ | _pending_ |
-| D4 | RajaBee | tier-RB | _pending search D4_ | _pending_ |
+| D1 | Worker | tier-W | `phi-4-mini:3.8b` (Microsoft, reasoning king under 4B), `qwen3:1.7b` (efficiency breakthrough), `deepseek-r1-distill-qwen:1.5b` (CoT thinking tiny), `smollm3:3b` (HF, balanced) — from "small" search | _pending_ |
+| D2 | DwarfQueen | tier-DQ | `qwen3:7b` (coding specialist), `mistral-small-3:7b` (structured outputs, fast), `qwen2.5-coder:7b` (agentic coding) — from "small" search | _pending_ |
+| D3 | GiantQueen | tier-GQ | `gemma3:12b` (Google flagship, general-purpose daily driver) — from "small" search | _pending more from medium/big_ |
+| D4 | RajaBee | tier-RB | _pending search "big" or "large"_ | _pending_ |
 
 #### Round 2 — MoE
 
@@ -232,7 +232,7 @@ Categories per round are chosen so that each tier (Worker / DwarfQueen / GiantQu
 
 | Cat | Tier | RAM target | Candidates from Google | Chosen |
 |---|---|---|---|---|
-| V1 | Worker | tier-W | _pending search V1_ | _pending_ |
+| V1 | Worker | tier-W | `gemma3:4b` (Google, native multimodal for edge) — bonus from "small" dense search | _pending_ |
 | V2 | DQ/GQ | tier-DQ/GQ | _pending search V2_ | _pending_ |
 | V3 | RajaBee | tier-RB | _pending search V3_ | _pending_ |
 
