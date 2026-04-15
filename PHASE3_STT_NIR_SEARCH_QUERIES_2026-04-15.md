@@ -1,3 +1,5 @@
+**SUPERSEDED by KillerBee/PHASE3_STT_AND_TOOLING_2026-04-15_v2.md — DO NOT USE, KEPT AS HISTORICAL REFERENCE.**
+
 # Phase 3 STT — Spot-Check Search Queries for Nir — 2026-04-15
 
 **Purpose:** high-signal search queries Nir can paste into Google / DuckDuckGo / HuggingFace / GitHub to independently verify the claims in `PHASE3_STT_RESEARCH_2026-04-15.md`. Every query is copy-paste ready. Under each query is a one-line note saying *what Nir should find when he runs it* — so the spot-check is a direct yes/no, not a guessing game.

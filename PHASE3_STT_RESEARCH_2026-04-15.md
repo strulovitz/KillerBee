@@ -1,3 +1,5 @@
+**SUPERSEDED by KillerBee/PHASE3_STT_AND_TOOLING_2026-04-15_v2.md — DO NOT USE, KEPT AS HISTORICAL REFERENCE.**
+
 # Phase 3 STT Research — 2026-04-15
 
 **Author:** Desktop Claude (Opus 4.6, 1M context), Linux Mint 22.2
