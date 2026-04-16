@@ -66,7 +66,7 @@ echo "=== polling disk writes (expect 15-30 min total) ==="
 PREV_ALLOC=0
 FLAT_COUNT=0
 FLAT_THRESHOLD=18  # 18 x 10s = 3 minutes of no writes
-MIN_SIZE=2000000000  # don't trigger until at least 2GB written (install started)
+MIN_SIZE=500000000  # don't trigger until at least 500MB written (install started)
 
 while kill -0 $VIRT_PID 2>/dev/null; do
   ALLOC=$(sudo virsh domblkinfo "$NAME" vda 2>/dev/null | awk '/Allocation/ {print $2}') || ALLOC=0
