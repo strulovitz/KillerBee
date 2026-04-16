@@ -91,8 +91,11 @@ def main():
         sys.exit(1)
 
     tier_map = {
-        "worker_tiny": ("moonshine", "moonshine/tiny"),
-        "worker_small": ("moonshine", "moonshine/base"),
+        # Workers use Whisper tiny via whisper.cpp (SILVER fallback).
+        # Moonshine ONNX (GOLD) was dropped because the PyPI package
+        # (useful-moonshine) requires tensorflow, too heavy for 4GB workers.
+        "worker_tiny": ("whisper", "tiny"),
+        "worker_small": ("whisper", "base"),
         "dwarfqueen_small": ("whisper", "small"),
         "dwarfqueen_medium": ("whisper", "medium"),
         "giantqueen": ("whisper", "large-v3-turbo"),
