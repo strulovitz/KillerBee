@@ -102,6 +102,40 @@ All of the following were tested on 2026-04-16 and caused the installer to stall
 
 ---
 
+## Known Issue: `late-commands` Don't Execute
+
+The `late-commands` section in user-data (which sets up passwordless sudo) does NOT execute in this autoinstall setup. The autoinstall applies identity, SSH, packages, and storage correctly, but `late-commands` are silently skipped.
+
+**Workaround:** After autoinstall completes and before first boot, mount the qcow2 from the host and add the sudoers file manually:
+
+```bash
+sudo bash -c 'modprobe nbd max_part=8 && \
+  qemu-nbd --connect=/dev/nbd0 /home/killerbee-images/<VM-NAME>.qcow2 && \
+  sleep 2 && mkdir -p /tmp/vm-mount && \
+  mount /dev/nbd0p2 /tmp/vm-mount && \
+  echo "nir ALL=(ALL) NOPASSWD: ALL" > /tmp/vm-mount/etc/sudoers.d/90-nir && \
+  chmod 0440 /tmp/vm-mount/etc/sudoers.d/90-nir && \
+  umount /tmp/vm-mount && \
+  qemu-nbd --disconnect /dev/nbd0 && \
+  echo "DONE"'
+```
+
+This requires the host user's sudo password (Nir must run it from a terminal). The `nbd` module, `qemu-nbd`, and `mount` all need root. The partition is typically `nbd0p2` (the root filesystem).
+
+**This must be done for EVERY VM after autoinstall, before first boot.** Add to `full_cycle_one.sh` as a post-autoinstall step (requires Nir to enter sudo password once per session).
+
+### Known Issue: `shutdown: poweroff` Doesn't Fire
+
+The `shutdown: poweroff` directive in user-data does not reliably trigger auto-poweroff after install in Ubuntu 24.04.4. The VM finishes installing but sits running. Workaround: send ACPI shutdown from host after detecting flat disk writes:
+
+```bash
+virsh shutdown <vm-name>
+```
+
+`virsh shutdown` does NOT require a password (libvirt has its own NOPASSWD rules). This should also be added to `full_cycle_one.sh` — poll for flat disk, then force shutdown.
+
+---
+
 ## Verification After Boot
 
 After the VM auto-poweroffs and is booted (`virsh start`):
