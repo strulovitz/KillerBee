@@ -152,4 +152,20 @@ If hostname is `ubuntu-server`, the CIDATA seed was not found — check the seed
 
 ---
 
+## APT Mirror — Never Use Israeli Mirror
+
+The default Ubuntu mirror for Israel (`il.archive.ubuntu.com`) is unreliable — frequent sync failures. Always switch VMs to a European mirror during provisioning:
+
+```bash
+# In chroot or on the live VM:
+sed -i "s|il.archive.ubuntu.com|de.archive.ubuntu.com|g" /etc/apt/sources.list 2>/dev/null
+find /etc/apt/sources.list.d/ -name "*.sources" -exec sed -i "s|il.archive.ubuntu.com|de.archive.ubuntu.com|g" {} \;
+```
+
+Use `de.archive.ubuntu.com` (Germany) or `fr.archive.ubuntu.com` (France). Never `il.archive.ubuntu.com`.
+
+This should also be added to the autoinstall `late-commands` or to `PHASE3_PROVISION_VM.sh` so every VM gets it automatically.
+
+---
+
 *Canonical. Edit in place. Git is the time machine.*
