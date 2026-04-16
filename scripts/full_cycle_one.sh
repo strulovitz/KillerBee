@@ -14,6 +14,17 @@ SSH="ssh -i /home/nir/.ssh/phase3_ed25519 -o StrictHostKeyChecking=no -o UserKno
 echo "====> $NAME: autoinstall (RAM=${RAM_MB}M disk=${DISK_GB}G vcpu=${VCPUS})"
 bash "$SCRIPT_DIR/autoinstall_one.sh" "$NAME" "$RAM_MB" "$DISK_GB" "$VCPUS"
 
+echo "====> $NAME: fix sudoers (late-commands don't run in Ubuntu 24.04 autoinstall)"
+sudo bash -c "modprobe nbd max_part=8 && \
+  qemu-nbd --connect=/dev/nbd0 /home/killerbee-images/$NAME.qcow2 && \
+  sleep 2 && mkdir -p /tmp/vm-mount && \
+  mount /dev/nbd0p2 /tmp/vm-mount && \
+  echo 'nir ALL=(ALL) NOPASSWD: ALL' > /tmp/vm-mount/etc/sudoers.d/90-nir && \
+  chmod 0440 /tmp/vm-mount/etc/sudoers.d/90-nir && \
+  umount /tmp/vm-mount && \
+  qemu-nbd --disconnect /dev/nbd0"
+echo "  sudoers fixed"
+
 echo "====> $NAME: boot"
 sudo virsh start "$NAME"
 
