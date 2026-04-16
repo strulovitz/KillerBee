@@ -2,7 +2,53 @@
 
 **For:** Laptop Linux Claude (Debian 13) doing the same VM setup on the Laptop machine.
 **From:** Desktop Linux Claude (Mint 22.2), who just finished building 7 VMs on 2026-04-16.
+**Reviewed and corrected by:** Laptop Windows Claude on 2026-04-16 evening.
 **Written as if you are smart but have never seen my machine.**
+
+---
+
+## ⚠️ CRITICAL WARNING — READ THIS FIRST
+
+**Desktop Claude built all 7 VMs using Ubuntu Server 24.04.** That was correct for Desktop. But Nir specified — TWICE — that Laptop VMs must use **Debian 13 Trixie netinst**, NOT Ubuntu. See `PHASE3_LINUX_VM_SETUP.md` line 578: *"Locked: Ubuntu Server 24.04 minimal on Desktop VMs, Debian 13 Trixie netinst on Laptop VMs."*
+
+**This means MOST of this handoff document will NOT work for you directly.** Specifically:
+
+**What DOES NOT apply to you (Ubuntu-specific):**
+- The autoinstall process (Ubuntu cloud-init/autoinstall). Debian uses preseed or d-i, completely different.
+- The CIDATA seed ISO format (Ubuntu-specific cloud-init).
+- The `--location` + `--extra-args autoinstall ds=nocloud` virt-install flags (Ubuntu autoinstall-specific).
+- Trap 1 (autoinstall 5-min delay) — different installer, different behavior.
+- Trap 2 (`shutdown: poweroff` in user-data) — Debian doesn't use this format.
+- Trap 3 (`late-commands` silently skipped) — Debian preseed has different mechanisms.
+- Trap 4 (autoinstall unreliable ~50%) — might not apply to Debian's installer.
+- Trap 6 (Israeli apt mirror `il.archive.ubuntu.com`) — Debian uses `deb.debian.org`, different mirrors.
+- The `scripts/autoinstall_one.sh` script — Ubuntu-specific, will not work on Debian ISO.
+
+**What DOES apply to you (OS-independent):**
+- The CLONE strategy: build ONE working VM, clone the rest. This works regardless of guest OS.
+- The qemu-nbd mount trick for changing hostname/machine-id on clones.
+- The `virt-install --import` command for defining cloned VMs (works with any qcow2).
+- libvirt pool setup, bridge (br0) setup, SSH key generation — all host-level, OS-independent.
+- Ollama installation (same `curl | sh` script works on Debian).
+- Ollama bind to 0.0.0.0 (same systemd override).
+- whisper.cpp compilation (same on Debian — needs build-essential, cmake, git).
+- Python venv + pip packages (same on Debian).
+- Model pulls via Ollama (same).
+- Trap 5 (cloud-init 60s wait) — Debian might not have cloud-init at all, so this may not apply.
+- Trap 7 (qwen2.5vl:7b needs 12 GB RAM) — model-level, OS-independent.
+- Trap 8 (PNG not JPG for Ollama vision) — model-level, OS-independent.
+- Trap 9 (Moonshine is dead, use Whisper) — model-level, OS-independent.
+- Trap 10 (sudoers for host user) — same concept, same commands on Debian.
+
+**Your approach for Debian 13:**
+1. Download Debian 13 Trixie netinst ISO
+2. Build ONE VM manually or via preseed (NOT autoinstall — that's Ubuntu)
+3. Inside the VM: install openssh-server, set up user nir with SSH key, configure sudoers
+4. Shut it down
+5. CLONE it for the remaining 7 VMs using the qemu-nbd trick from this doc
+6. Post-install (Ollama, models, whisper.cpp, Python) is IDENTICAL to Desktop — follow Phases C and D below
+
+**If you get stuck on the Debian installer:** ask Nir. Do NOT improvise a switch to Ubuntu. Nir chose Debian for a reason and has said it twice.
 
 ---
 
