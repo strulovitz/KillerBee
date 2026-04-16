@@ -71,3 +71,34 @@ All 7 VMs verified on 2026-04-16:
 ---
 
 *Canonical. Edit in place. Git is the time machine.*
+
+## Smoke Test Results — 2026-04-16
+
+### Text Reasoners (Dense)
+| VM | Model | Prompt | Answer | Status |
+|---|---|---|---|---|
+| giantqueen-b | qwen3:8b | Capital of France? | Paris | ✅ |
+| dwarfqueen-b1 | phi4-mini:3.8b | Capital of France? | Paris | ✅ |
+| worker-b1 | qwen3:1.7b | Capital of France? | Paris | ✅ |
+
+### MoE Models
+| VM | Model | Prompt | Answer | Status |
+|---|---|---|---|---|
+| giantqueen-b | granite3.1-moe:3b | Three primary colors? | Red, blue, yellow | ✅ |
+| dwarfqueen-b1 | granite3.1-moe:3b | Three primary colors? | Red, blue, yellow | ✅ |
+| worker-b1 | granite3.1-moe:1b | Three primary colors? | Red, blue, yellow | ✅ |
+
+### Vision Models
+Test image: white background, red rectangle, blue circle, "Hello Hive" text.
+| VM | Model | Saw rectangle | Saw circle | Saw text | Status |
+|---|---|---|---|---|---|
+| giantqueen-b | qwen2.5vl:7b | ✅ | ✅ | ✅ | ✅ |
+| dwarfqueen-b1 | gemma3:4b | ✅ | ✅ | ✅ | ✅ |
+| worker-b1 | qwen3.5:0.8b | ✅ | ✅ | ✅ | ✅ |
+
+### STT (whisper.cpp)
+JFK inaugural address excerpt — all 7 VMs transcribed correctly. See PHASE3_STT_VERIFICATION_LOG.md.
+
+### RAM Fix
+giantqueen-b bumped from 8 GB to 12 GB — qwen2.5vl:7b needs 12.5 GiB for vision inference.
+New host RAM usage: ~35 GB / 62 GB = ~27 GB free.
