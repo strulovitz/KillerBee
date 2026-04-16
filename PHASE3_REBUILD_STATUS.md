@@ -8,7 +8,7 @@
 
 | VM | IP | RAM | vCPU | Dense | MoE | Vision |
 |---|---|---|---|---|---|---|
-| giantqueen-b | 10.0.0.16 | 8 GB | 6 | qwen3:8b (5.2 GB) | granite3.1-moe:3b (2.0 GB) | qwen2.5vl:7b (6.0 GB) |
+| giantqueen-b | 10.0.0.16 | 12 GB* | 6 | qwen3:8b (5.2 GB) | granite3.1-moe:3b (2.0 GB) | qwen2.5vl:7b (6.0 GB) |
 | dwarfqueen-b1 | 10.0.0.20 | 6 GB | 4 | phi4-mini:3.8b (2.5 GB) | granite3.1-moe:3b (2.0 GB) | gemma3:4b (3.3 GB) |
 | dwarfqueen-b2 | 10.0.0.21 | 6 GB | 4 | phi4-mini:3.8b (2.5 GB) | granite3.1-moe:3b (2.0 GB) | gemma3:4b (3.3 GB) |
 | worker-b1 | 10.0.0.22 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
@@ -16,7 +16,9 @@
 | worker-b3 | 10.0.0.6 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
 | worker-b4 | 10.0.0.23 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
 
-**Totals:** 7 VMs, 36 GB guest RAM, 22 vCPU, 21 models
+*giantqueen-b bumped from 8 to 12 GB because qwen2.5vl:7b needs 12.5 GiB for vision inference.
+
+**Totals:** 7 VMs, 40 GB guest RAM, 22 vCPU, 21 models
 
 ## Host Resources (all 7 VMs running)
 

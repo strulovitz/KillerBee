@@ -38,16 +38,15 @@ This plan specifies the **STT (speech-to-text) layer** and the **multimedia tool
 
 ## The STT ladder (final, verified against Hugging Face)
 
-Three model families. Two-and-a-half runtimes.
+**UPDATE 2026-04-16: Moonshine is DEAD.** `moonshine-onnx` does not exist on PyPI. `useful-moonshine` exists but requires tensorflow, which is too heavy for 4 GB worker VMs. ALL tiers now use whisper.cpp. The ladder below reflects reality after Desktop's verification.
 
-| Bracket | GOLD | SILVER | Params | License | Runtime |
-|---|---|---|---|---|---|
-| **tiny (worker)** | Moonshine Tiny | Whisper tiny | 27M / 39M | MIT / MIT | `moonshine-onnx` / `whisper.cpp` |
-| **small (worker)** | Moonshine Base | Whisper base | 61M / 74M | MIT / MIT | `moonshine-onnx` / `whisper.cpp` |
-| **medium-small (DwarfQueen)** | Whisper small | Whisper base | 244M | MIT | `whisper.cpp` |
-| **medium (DwarfQueen higher)** | Whisper medium | Whisper small | 769M | MIT | `whisper.cpp` |
-| **medium-big (GiantQueen)** | Whisper Large v3 Turbo | Whisper medium | 809M | MIT | `whisper.cpp` |
-| **big (RajaBee STT — reasoner stays separate and unchanged)** | Cohere Transcribe 03-2026 | Whisper Large v3 (non-turbo) | 2B / 1.55B | Apache 2.0 / MIT | HF Transformers CPU / `whisper.cpp` |
+| Bracket | Model | Params | License | Runtime |
+|---|---|---|---|---|
+| **tiny (worker)** | Whisper tiny | 39M | MIT | `whisper.cpp` |
+| **small (DwarfQueen)** | Whisper small | 244M | MIT | `whisper.cpp` |
+| **medium (DwarfQueen higher)** | Whisper medium | 769M | MIT | `whisper.cpp` |
+| **large (GiantQueen)** | Whisper Large v3 Turbo | 809M | MIT | `whisper.cpp` |
+| **big (RajaBee STT — reasoner stays separate and unchanged)** | Cohere Transcribe 03-2026 | 2B | Apache 2.0 | HF Transformers CPU |
 
 **Model URLs (verified on Hugging Face):**
 

@@ -207,11 +207,30 @@ All in the KillerBee repo:
 | CPU | i9-13900KF (32 threads) | Check `nproc` |
 | RAM | 62 GiB | Check `free -h` |
 | GPU | RTX 4070 Ti (unused, CPU-only) | RTX 5090 (unused, CPU-only) |
-| Role | Workers + DwarfQueens + GiantQueen | RajaBee + additional VMs (TBD by Nir) |
+| Role | 7 VMs: GiantQueen-B + 2 DwarfQueens-B + 4 Workers-B | 8 VMs: RajaBee + GiantQueen-A + 2 DwarfQueens-A + 4 Workers-A |
 | libvirt | Installed via apt | May need `apt install qemu-kvm libvirt-daemon-system virt-manager` |
 | Bridge | br0 on Mint (NetworkManager) | May need different setup on Debian |
 | Package manager | apt (same) | apt (same) |
 | Python | 3.12 | Check `python3 --version` |
+
+### Laptop VM table (8 VMs — from PHASE3_LINUX_VM_SETUP.md topology)
+
+| VM | RAM | vCPU | Dense | MoE | Vision | STT |
+|---|---|---|---|---|---|---|
+| rajabee | 18 GB | 6 | qwen3.5:27b | gemma4:26b-moe | mistral-small-3.1:24b | Cohere Transcribe (HF Transformers CPU) |
+| giantqueen-a | 12 GB* | 6 | qwen3:14b | granite3.1-moe:3b | qwen3-vl:8b | whisper large-v3-turbo |
+| dwarfqueen-a1 | 6 GB | 4 | qwen3:8b | granite3.1-moe:3b | llama3.2-vision:11b | whisper small |
+| dwarfqueen-a2 | 6 GB | 4 | qwen3:8b | granite3.1-moe:3b | llama3.2-vision:11b | whisper small |
+| worker-a1 | 4 GB | 2 | qwen3:1.7b | granite3.1-moe:1b | qwen3.5:0.8b | whisper tiny |
+| worker-a2 | 4 GB | 2 | qwen3:1.7b | granite3.1-moe:1b | qwen3.5:0.8b | whisper tiny |
+| worker-a3 | 4 GB | 2 | qwen3:1.7b | granite3.1-moe:1b | qwen3.5:0.8b | whisper tiny |
+| worker-a4 | 4 GB | 2 | qwen3:1.7b | granite3.1-moe:1b | qwen3.5:0.8b | whisper tiny |
+
+*12 GB not 8 GB — Desktop discovered qwen2.5vl:7b needs 12.5 GiB. Any VM running a 7B+ vision model needs 12 GB.
+
+**Total Laptop guest RAM:** 18+12+6+6+4+4+4+4 = 58 GB on a 64 GB host. Tight but fits (~6 GB host headroom). Verify with `free -h` after all 8 VMs are running.
+
+**Model tags for Laptop are from PHASE3_LINUX_VM_SETUP.md sections 11-12.** Verify each tag against the live Ollama library before pulling — some of these were selected weeks ago and tags can change.
 
 ### Key difference: RajaBee tier
 The Laptop hosts the RajaBee, which uses:
