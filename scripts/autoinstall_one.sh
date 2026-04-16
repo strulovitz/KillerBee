@@ -21,7 +21,7 @@ rm -rf "$STAGE"
 mkdir -p "$STAGE"
 sed "s/hostname: desktop-template/hostname: $NAME/" \
     "$TEMPLATE_SEED/user-data" > "$STAGE/user-data"
-: > "$STAGE/meta-data"
+echo "instance-id: $NAME" > "$STAGE/meta-data"
 genisoimage -quiet -output "$STAGE/seed.iso" -volid CIDATA \
     -joliet -rock "$STAGE/user-data" "$STAGE/meta-data"
 
