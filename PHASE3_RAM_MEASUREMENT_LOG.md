@@ -167,17 +167,49 @@ Only the 3 pre-existing host models remain. **Promise kept.**
 
 Same as sessions 1 and 2: baseline `free -h`, pull, load with the same 512x512 PNG test image (red square + blue circle + "Hello Hive" text) via API with `num_gpu: 0`, measure `free -h` delta + `ollama ps`, unload + delete.
 
-## Results
+## Results — 2026-04-17 session 3
 
-Will be filled in after measurement.
+Required an Ollama upgrade from 0.12.10 to 0.21.0 on the Laptop host first (gemma4 is too new for 0.12.x). Existing config preserved, existing three host models intact.
 
-| Model | Disk (q4) | `free -h` delta (real) | `ollama ps` claimed | Context | CPU inference time | Vision quality |
+| Model | Disk (q4) | `free -h` delta (real) | `ollama ps` claimed | Context | CPU inference time | Vision output |
 |---|---|---|---|---|---|---|
-| gemma4:e4b | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING |
+| gemma4:e4b | 9.6 GB | **~10.2 GB** | 11 GB | 32K | 148s | Identified shapes correctly, but hallucinated the "Hello Hive" text as appearing in two locations (it is only in one) |
 
-## Deletion log
+### Verdict
 
-- [ ] `ollama rm gemma4:e4b` — not yet executed
+**gemma4:e4b is NOT a better fit for either GiantQueen (12 GB VMs).**
+
+Fit analysis for 12 GB VM: 10.2 GB model + 1 GB OS + 1.5 GB inference = 12.7 GB used → **0.7 GB overflow** → same bad-tight swap-spill pattern we just removed from Desktop giantqueen-b. The model won the benchmark paper race (52.6% MMMU Pro) but loses the apartment fit, and also hallucinated more than qwen3-vl:8b did on the same test image (gemma4:e4b saw "Hello Hive" twice — the image has it only once; qwen3-vl:8b counted it correctly during session 1).
+
+### Decisions locked by measurement
+
+- **Both GiantQueens (Desktop giantqueen-b and Laptop giantqueen-a): KEEP `qwen3-vl:8b`** (6.1 GB measured, fits 12 GB VM with ~3.4 GB headroom, counted correctly on the test).
+- **RajaBee: KEEP `gemma3:12b`** (10.1 GB measured, fits 16 GB VM with ~3.4 GB headroom).
+- **No changes to `PHASE3_LAPTOP_ROSTER_LOCKED.md`.**
+
+### Lesson learned for future vision measurements
+
+Default context size matters a lot. gemma4's 32K default context inflated its KV cache vs qwen3-vl's 8K or gemma3's 4K. If we ever reconsider gemma4:e4b, we should test it with explicit `num_ctx: 4096` to see the minimum RAM — but the inference-speed-on-CPU gap (148s vs 53s) is probably not worth re-investigating regardless.
+
+## Deletion log — COMPLETED 2026-04-17
+
+- [x] `ollama rm gemma4:e4b` — DONE
+
+### Post-deletion `ollama list`:
+
+```
+NAME                                               ID              SIZE      MODIFIED
+llama2-uncensored:70b                              bdd0ec2f5ec5    38 GB     5 months ago
+hf.co/bartowski/L3-70B-Euryale-v2.1-GGUF:Q5_K_M    1c651cddf488    49 GB     5 months ago
+llama3.2:3b                                        a80c4f17acd5    2.0 GB    5 months ago
+```
+
+Only the 3 pre-existing host models remain. Test image `/tmp/test_vision.png` also deleted. **Promise kept.**
+
+### Side notes about this session
+
+- Ollama upgraded from 0.12.10 to 0.21.0 (required for gemma4 family). `/etc/systemd/system/ollama.service.d/override.conf` preserved, all GPU + context settings intact.
+- NOPASSWD sudo rule installed at `/etc/sudoers.d/99-nir-temp` during this session to allow autonomous sudo for future Phase 3 Laptop build work (KVM stack install, br0 bridge, etc.). To revoke later: `sudo rm /etc/sudoers.d/99-nir-temp`.
 
 ---
 
