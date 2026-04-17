@@ -7,6 +7,7 @@
 #   ip is the DHCP-assigned IPv4 address on br0 (10.0.0.x)
 
 set -euo pipefail
+shopt -s expand_aliases
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 <hostname> <ip>"

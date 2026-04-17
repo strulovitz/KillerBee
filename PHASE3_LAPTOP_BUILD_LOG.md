@@ -103,6 +103,43 @@ Process per VM (captured for future reference):
 
 **Lesson for future builds:** set appropriate disk size per tier at clone time, not after. Update `scripts/clone_laptop_vms.sh` to take a per-VM disk-size parameter.
 
+### Provisioning phase — COMPLETE 2026-04-17
+
+All 8 VMs provisioned sequentially per Nir's instruction. Each VM has:
+- Ollama installed + bound to 0.0.0.0:11434
+- Exactly 3 tier-specific Ollama models (Dense + MoE + Vision)
+- whisper.cpp compiled + tier-specific whisper model
+- Python venv with numpy, soundfile, Pillow, pytest, requests
+
+Final cluster state:
+
+| VM | IP | Dense | MoE | Vision | STT | Disk free |
+|---|---|---|---|---|---|---|
+| rajabee | 10.0.0.14 | qwen3:14b | granite3.1-moe:3b | qwen3.5:9b | large-v3-turbo | 29G / 58G |
+| giantqueen-a | 10.0.0.17 | qwen3:8b | granite3.1-moe:3b | qwen3-vl:8b | small | 25G / 48G |
+| dwarfqueen-a1 | 10.0.0.19 | phi4-mini:3.8b | granite3.1-moe:3b | gemma3:4b | tiny | 21G / 38G |
+| dwarfqueen-a2 | 10.0.0.25 | phi4-mini:3.8b | granite3.1-moe:3b | gemma3:4b | tiny | 21G / 38G |
+| worker-a1 | 10.0.0.27 | qwen3:1.7b | granite3.1-moe:1b | qwen3.5:0.8b | tiny | 16G / 28G |
+| worker-a2 | 10.0.0.29 | qwen3:1.7b | granite3.1-moe:1b | qwen3.5:0.8b | tiny | 16G / 28G |
+| worker-a3 | 10.0.0.31 | qwen3:1.7b | granite3.1-moe:1b | qwen3.5:0.8b | tiny | 16G / 28G |
+| worker-a4 | 10.0.0.33 | qwen3:1.7b | granite3.1-moe:1b | qwen3.5:0.8b | tiny | 16G / 28G |
+
+### Provisioning issue fixed — worker-a3 silent fail from `tee` + `pipefail`
+
+On worker-a3, `ollama pull qwen3.5:0.8b` hit a transient IPv6 network glitch (`Head ... read: network is unreachable`) while fetching the manifest from registry.ollama.ai. Ollama's internal retry loop spun for about 15 minutes then returned non-zero. However `scripts/provision_laptop_vm.sh` pipes its output through `tee` for log capture, and `set -o pipefail` was NOT set, so the script read tee's exit code (0) instead of ollama's. The script continued with `set -e` happy and exited 0 even though it hadn't pulled the vision model or run the whisper/venv steps.
+
+Manually fixed worker-a3: re-ran `ollama pull qwen3.5:0.8b` (succeeded on retry), then ran the rest of the provisioning steps manually (apt install, whisper.cpp build, whisper tiny download, Python venv).
+
+**Fix for the script (for future use):** add `set -o pipefail` at top of `provision_laptop_vm.sh` so SSH/ollama failures inside the `tee` pipe aren't swallowed. Also: gate each step with explicit `|| { echo "step failed"; exit 1; }` so errors are loud.
+
+### Status: Laptop half of Phase 3 = DONE
+
+8 VMs × 3 LLM models + 1 STT model each = 32 Ollama models + 8 whisper models installed.
+Every VM reachable via SSH at its IP with `~/.ssh/phase3_ed25519`.
+Every VM can reply to Ollama API on `http://<vm-ip>:11434/api/tags`.
+
+Next: wire up the KillerBee website + WaggleDance on Laptop host to start treating these 8 VMs as real bees in the hierarchy (RajaBee -> GiantQueen -> DwarfQueens -> Workers). Also the Desktop 7 VMs (already provisioned yesterday + vision swap this morning) join the cluster for the full 15-VM test.
+
 ### Next step — provisioning
 
 Each VM needs Ollama installed + the tier-specific Dense/MoE/Vision/STT models pulled. That is what `scripts/provision_laptop_vm.sh` does. Running 8 VMs in sequence takes multiple hours because of the model downloads. Running in parallel saturates the LAN and host CPU but is faster end-to-end. Nir to decide timing.
