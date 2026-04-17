@@ -41,18 +41,29 @@ After boot via IPv6 (SLAAC worked while IPv4 DHCP was failing), SSHed in, verifi
 
 ### Clone phase — COMPLETE 2026-04-17
 
-All 8 VMs cloned from template, booted, SSH-accessible via phase3_ed25519 key. Each got unique DHCP lease from the LAN router. Mapping:
+All 8 VMs cloned from template, booted, SSH-accessible via phase3_ed25519 key. Each got a unique DHCP lease from the LAN router. **Current mapping** (IPs shifted after initial DHCP lease churn — IPs are stable by MAC but not static):
 
 | VM | IP | RAM | vCPU | MAC |
 |---|---|---|---|---|
-| rajabee | 10.0.0.13 | 16 GB | 6 | 52:54:00:e1:a5:1b |
-| giantqueen-a | 10.0.0.15 | 12 GB | 6 | 52:54:00:c9:b2:c0 |
-| dwarfqueen-a1 | 10.0.0.18 | 6 GB | 4 | 52:54:00:08:98:0e |
-| dwarfqueen-a2 | 10.0.0.24 | 6 GB | 4 | 52:54:00:fb:50:79 |
-| worker-a1 | 10.0.0.26 | 4 GB | 2 | 52:54:00:ba:8f:9f |
-| worker-a2 | 10.0.0.28 | 4 GB | 2 | 52:54:00:4b:7d:a7 |
-| worker-a3 | 10.0.0.30 | 4 GB | 2 | 52:54:00:43:50:7d |
-| worker-a4 | 10.0.0.32 | 4 GB | 2 | 52:54:00:96:4d:e3 |
+| rajabee | 10.0.0.14 | 16 GB | 6 | 52:54:00:e1:a5:1b |
+| giantqueen-a | 10.0.0.17 | 12 GB | 6 | 52:54:00:c9:b2:c0 |
+| dwarfqueen-a1 | 10.0.0.19 | 6 GB | 4 | 52:54:00:08:98:0e |
+| dwarfqueen-a2 | 10.0.0.25 | 6 GB | 4 | 52:54:00:fb:50:79 |
+| worker-a1 | 10.0.0.27 | 4 GB | 2 | 52:54:00:ba:8f:9f |
+| worker-a2 | 10.0.0.29 | 4 GB | 2 | 52:54:00:4b:7d:a7 |
+| worker-a3 | 10.0.0.31 | 4 GB | 2 | 52:54:00:43:50:7d |
+| worker-a4 | 10.0.0.33 | 4 GB | 2 | 52:54:00:96:4d:e3 |
+
+### Network issue fixed during clone phase — `dhcpcd` on enp129s0 fighting with br0
+
+During clone verification, host-to-VM IPv4 connectivity was failing. Root cause: the Laptop host had `dhcpcd` running on BOTH `enp129s0` (from system boot before the bridge) AND `br0` (from the bridge setup this afternoon). Both were claiming the same 10.0.0.8 lease, and enp129s0's route entries (metric 1002) kept taking precedence over br0's (metric 1004), causing ARP requests to go out enp129s0 instead of through the bridge.
+
+Fix applied:
+- Added `denyinterfaces enp129s0` to `/etc/dhcpcd.conf` (persists across reboots)
+- Killed the running `dhcpcd: enp129s0` process
+- Flushed IP + routes from enp129s0
+
+After fix: `ip route` shows br0 as only 10.0.0.x path, ping to all VMs works, SSH direct to 10.0.0.14 (rajabee) etc. works cleanly.
 
 **Note:** IPs do not match the aspirational 10.0.0.11-18 range in `PHASE3_LINUX_VM_SETUP.md` §5. The LAN router's DHCP pool handed out whatever was available. This is stable by MAC, but if IP stability is needed, add static DHCP reservations on the router. Desktop had the same pattern (see `PHASE3_REBUILD_STATUS.md`).
 
