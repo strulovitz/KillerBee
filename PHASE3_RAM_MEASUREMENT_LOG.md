@@ -111,17 +111,44 @@ Only the 3 pre-existing host models remain. Test image `/tmp/test_vision.png` al
 5. Unload (`keep_alive: 0`) and `ollama rm qwen3:14b`
 6. Record results below
 
-## Results
+## Results — 2026-04-17 session 2
 
-Will be filled in after measurement.
+Measured on Laptop host with `num_gpu: 0` for CPU-only. Prompt: `"What is the capital of France? Answer in one sentence."` (short reasoning task for a dense text model — no image since qwen3:14b is not multimodal).
 
-| Model | Disk (q4) | `free -h` delta (real) | `ollama ps` claimed | Context | CPU inference time |
-|---|---|---|---|---|---|
-| qwen3:14b | PENDING | PENDING | PENDING | PENDING | PENDING |
+| Model | Disk (q4) | `free -h` delta (real) | `ollama ps` claimed | Context | CPU inference time | Response |
+|---|---|---|---|---|---|---|
+| qwen3:14b | 9.0 GB | **~9.0 GB** | 10 GB | 4K | 53s | "Paris is the capital of France." (correct) |
 
-## Deletion log
+### Verdict for RajaBee 16 GB VM
 
-- [ ] `ollama rm qwen3:14b` — not yet executed
+- Real loaded RAM: 9.0 GB
+- Plus OS: ~1 GB
+- Plus inference KV cache + activations: ~1.5 GB
+- **Total in-VM use: ~11.5 GB** in 16 GB VM
+- **Headroom: ~4.5 GB** — very comfortable, no swap spill risk
+
+Since Ollama lazy-loads one model at a time per tier, the biggest single resident is qwen3:14b (9 GB loaded). Other RajaBee residents (qwen3-vl:8b at 6.1 GB, granite3.1-moe:3b at ~2-3 GB, whisper large-v3-turbo a few hundred MB) each load separately and are all smaller than qwen3:14b, so they also fit comfortably.
+
+### Formula check — updated for dense text models
+
+`qwen3:14b` loaded 9 GB per 14B params = **0.64 GB per 1B params** — very close to the classic `params x 0.6` rule. Dense text models follow the classic formula closely. Vision models (as noted in session 1) load 15-40% bigger than this formula predicts because of the vision encoder + image-token KV cache.
+
+Takeaway: `params x 0.6 GB` is reliable for dense text, not reliable for vision. Always measure vision models before committing.
+
+## Deletion log — COMPLETED 2026-04-17
+
+- [x] `ollama rm qwen3:14b` — DONE
+
+### Post-deletion `ollama list`:
+
+```
+NAME                                               ID              SIZE      MODIFIED
+llama2-uncensored:70b                              bdd0ec2f5ec5    38 GB     5 months ago
+hf.co/bartowski/L3-70B-Euryale-v2.1-GGUF:Q5_K_M    1c651cddf488    49 GB     5 months ago
+llama3.2:3b                                        a80c4f17acd5    2.0 GB    5 months ago
+```
+
+Only the 3 pre-existing host models remain. **Promise kept.**
 
 ---
 
