@@ -1,10 +1,10 @@
 """
-seed_data.py — Populate KillerBee with demo data
-=================================================
+seed_data.py — Populate KillerBee with demo data (Phase 3 — 15 VMs)
+===================================================================
 Creates ONLY users and a swarm. Members are NOT pre-created —
 bees register themselves when they start up.
 
-This avoids showing fake "online" members that aren't actually running.
+Phase 3 hierarchy: RajaBee -> 2 GiantQueens -> 4 DwarfQueens -> 8 Workers (15 bees).
 """
 
 from app import app, db
@@ -13,51 +13,53 @@ from models import User, Swarm
 with app.app_context():
     db.create_all()
 
-    # Check if already seeded
     if User.query.first():
         print("Database already has data. Skipping seed.")
         exit(0)
 
-    # Create users (they register as members when their bee process starts)
+    users = []
+
     raja = User(username='raja_nir', email='raja@example.com', role='raja')
     raja.set_password('password')
-
-    giant_queen = User(username='queen_giant', email='giantqueen@example.com', role='giant_queen')
-    giant_queen.set_password('password')
-
-    dwarf_queen1 = User(username='queen_alpha', email='queen1@example.com', role='dwarf_queen')
-    dwarf_queen1.set_password('password')
-
-    dwarf_queen2 = User(username='queen_bravo', email='queen2@example.com', role='dwarf_queen')
-    dwarf_queen2.set_password('password')
+    users.append(raja)
 
     beekeeper = User(username='beekeeper_demo', email='bk@example.com', role='beekeeper')
     beekeeper.set_password('password')
+    users.append(beekeeper)
 
-    worker1 = User(username='worker_alpha', email='worker1@example.com', role='worker')
-    worker1.set_password('password')
+    for name in ['queen_giant_a', 'queen_giant_b']:
+        u = User(username=name, email=f'{name}@example.com', role='giant_queen')
+        u.set_password('password')
+        users.append(u)
 
-    worker2 = User(username='worker_bravo', email='worker2@example.com', role='worker')
-    worker2.set_password('password')
+    for name in ['queen_dwarf_a1', 'queen_dwarf_a2', 'queen_dwarf_b1', 'queen_dwarf_b2']:
+        u = User(username=name, email=f'{name}@example.com', role='dwarf_queen')
+        u.set_password('password')
+        users.append(u)
 
-    db.session.add_all([raja, giant_queen, dwarf_queen1, dwarf_queen2, beekeeper, worker1, worker2])
+    for name in ['worker_a1', 'worker_a2', 'worker_a3', 'worker_a4',
+                 'worker_b1', 'worker_b2', 'worker_b3', 'worker_b4']:
+        u = User(username=name, email=f'{name}@example.com', role='worker')
+        u.set_password('password')
+        users.append(u)
+
+    db.session.add_all(users)
     db.session.commit()
 
-    # Create a Swarm (but NO members — they register when bees start)
     swarm = Swarm(
-        name='Alpha Swarm',
-        description='General-purpose hierarchical hive for research and analysis tasks.',
+        name='Phase 3 Hive',
+        description='Phase 3 full 4-level hierarchy across 15 VMs: RajaBee -> 2 GiantQueens -> 4 DwarfQueens -> 8 Workers.',
         raja_id=raja.id,
-        raja_model='llama3.2:3b',
+        raja_model='qwen3:14b',
         specialty='research',
-        max_queens=10,
-        depth=3,
+        max_queens=16,
+        depth=4,
     )
     db.session.add(swarm)
     db.session.commit()
 
-    print("Seed data created:")
-    print(f"  Users: raja_nir, queen_giant, queen_alpha, queen_bravo, beekeeper_demo, worker_alpha, worker_bravo")
+    print("Seed data created (Phase 3):")
+    print(f"  Users ({len(users)}): {', '.join(u.username for u in users)}")
     print(f"  Password for all: 'password'")
-    print(f"  Swarm: Alpha Swarm (no members yet — bees register themselves)")
+    print(f"  Swarm: Phase 3 Hive (depth=4, no members yet — bees register themselves)")
     print(f"  Website: http://localhost:8877")
