@@ -152,4 +152,33 @@ Only the 3 pre-existing host models remain. **Promise kept.**
 
 ---
 
+# Session 3 — gemma4:e4b measurement (Vision for GiantQueen tier)
+
+**Date:** 2026-04-17 (same day, later still).
+**Purpose:** Measure real CPU-only loaded RAM of `gemma4:e4b` (Google, April 2026, confirmed 52.6% MMMU Pro) as a potential upgrade for BOTH GiantQueens (Desktop giantqueen-b and Laptop giantqueen-a, both 12 GB VMs). Currently those VMs plan / run `qwen3-vl:8b` at 6.1 GB loaded. If gemma4:e4b fits comfortably at similar RAM, it is a pure quality upgrade — 52.6% MMMU Pro vs qwen3-vl:8b's "competitive with gemma3" claim.
+
+## COMMITMENT — DELETE AFTER MEASUREMENT
+
+**Test model to delete:** `gemma4:e4b`
+
+**Host models to PRESERVE:** `llama2-uncensored:70b`, `hf.co/bartowski/L3-70B-Euryale-v2.1-GGUF:Q5_K_M`, `llama3.2:3b`
+
+## Method
+
+Same as sessions 1 and 2: baseline `free -h`, pull, load with the same 512x512 PNG test image (red square + blue circle + "Hello Hive" text) via API with `num_gpu: 0`, measure `free -h` delta + `ollama ps`, unload + delete.
+
+## Results
+
+Will be filled in after measurement.
+
+| Model | Disk (q4) | `free -h` delta (real) | `ollama ps` claimed | Context | CPU inference time | Vision quality |
+|---|---|---|---|---|---|---|
+| gemma4:e4b | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING |
+
+## Deletion log
+
+- [ ] `ollama rm gemma4:e4b` — not yet executed
+
+---
+
 *Canonical. Edit in place. Git is the time machine.*
