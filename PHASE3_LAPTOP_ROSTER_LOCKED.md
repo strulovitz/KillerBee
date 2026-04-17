@@ -13,7 +13,7 @@ All models downgraded one notch from the original flagship plan per `claude-memo
 
 | VM | IP slot | RAM | vCPU | Dense | MoE | Vision | STT |
 |---|---|---|---|---|---|---|---|
-| rajabee | 10.0.0.11 | 16 GB | 6 | qwen3:14b | granite3.1-moe:3b | qwen3-vl:8b | whisper large-v3-turbo |
+| rajabee | 10.0.0.11 | 16 GB | 6 | qwen3:14b | granite3.1-moe:3b | **gemma3:12b** | whisper large-v3-turbo |
 | giantqueen-a | 10.0.0.12 | 12 GB | 6 | qwen3:8b | granite3.1-moe:3b | **qwen3-vl:8b** | whisper small |
 | dwarfqueen-a1 | 10.0.0.13 | 6 GB | 4 | phi4-mini:3.8b | granite3.1-moe:3b | gemma3:4b | whisper tiny |
 | dwarfqueen-a2 | 10.0.0.14 | 6 GB | 4 | phi4-mini:3.8b | granite3.1-moe:3b | gemma3:4b | whisper tiny |
@@ -26,14 +26,16 @@ All models downgraded one notch from the original flagship plan per `claude-memo
 
 **Total vCPU:** 6 + 6 + 4 + 4 + 2 x 4 = 26 vCPU on 24 CPUs host. Slight overcommit OK since KillerBee inference is model-bound and not all VMs saturate CPUs simultaneously.
 
-## Vision alignment with Desktop
+## Vision choices per tier
 
-Both GiantQueens now share the same vision model by Nir's 2026-04-17 decision:
+**GiantQueens (both) — `qwen3-vl:8b`** (Nir's 2026-04-17 alignment decision):
+- **giantqueen-b** (Desktop 10.0.0.16, 12 GB VM) — swapped on 2026-04-17 from qwen2.5vl:7b, see `PHASE3_VISION_SWAP_GIANTQUEEN.md` and commit 045b4cf
+- **giantqueen-a** (Laptop 10.0.0.12, 12 GB VM) — planned (this file)
+- Rationale: measured CPU-only loaded RAM of `qwen3-vl:8b` is 6.1-6.3 GB, fits 12 GB VM with ~3.4 GB headroom and zero swap spill. `gemma4:e4b` was tested as an alternative on 2026-04-17 and rejected: overflowed 12 GB VM by ~0.7 GB, 3x slower on CPU, and hallucinated the test image (session 3 in `PHASE3_RAM_MEASUREMENT_LOG.md`, commit 6aedf68).
 
-- **giantqueen-b** (Desktop 10.0.0.16, 12 GB VM) — `qwen3-vl:8b` (swapped on 2026-04-17 from qwen2.5vl:7b, see `PHASE3_VISION_SWAP_GIANTQUEEN.md` and commit 045b4cf)
-- **giantqueen-a** (Laptop 10.0.0.12, 12 GB VM) — `qwen3-vl:8b` (this file, locked 2026-04-17)
-
-Rationale: measured CPU-only loaded RAM of `qwen3-vl:8b` is 6.1-6.3 GB, fits 12 GB VM with ~3.4 GB headroom and zero swap spill. Measured on Laptop host (commit 5e14d37), verified inside Desktop VM (commit 045b4cf).
+**RajaBee — `gemma3:12b`** (upgraded from qwen3-vl:8b on 2026-04-17):
+- rajabee (Laptop 10.0.0.11, 16 GB VM)
+- Rationale: RajaBee's 16 GB VM has room for a bigger vision model than the 12 GB GiantQueen VM. `qwen3-vl:8b` at 6.1 GB would waste ~7 GB of apartment capacity. `gemma3:12b` at 10.1 GB measured loaded RAM uses the 16 GB apartment properly and provides better quality (12B params vs 8B, stronger on complex reasoning benchmarks) while still leaving ~3.4 GB headroom. Measured in session 1 of `PHASE3_RAM_MEASUREMENT_LOG.md` (commit 5e14d37).
 
 ## Still-unmeasured models (risk surface)
 
