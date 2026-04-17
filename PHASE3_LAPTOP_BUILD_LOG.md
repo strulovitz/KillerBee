@@ -39,9 +39,36 @@ Fix via qemu-nbd mount of disk while VM was off:
 
 After boot via IPv6 (SLAAC worked while IPv4 DHCP was failing), SSHed in, verified everything, cleaned up multi-NIC fallback entries.
 
-### Next step
+### Clone phase — COMPLETE 2026-04-17
 
-Clone `laptop-template.qcow2` into 8 per-VM qcow2 files using `scripts/clone_laptop_vms.sh`. Each clone gets its own hostname + cleared machine-id + tier-specific RAM + vCPU via `virt-install --import`.
+All 8 VMs cloned from template, booted, SSH-accessible via phase3_ed25519 key. Each got unique DHCP lease from the LAN router. Mapping:
+
+| VM | IP | RAM | vCPU | MAC |
+|---|---|---|---|---|
+| rajabee | 10.0.0.13 | 16 GB | 6 | 52:54:00:e1:a5:1b |
+| giantqueen-a | 10.0.0.15 | 12 GB | 6 | 52:54:00:c9:b2:c0 |
+| dwarfqueen-a1 | 10.0.0.18 | 6 GB | 4 | 52:54:00:08:98:0e |
+| dwarfqueen-a2 | 10.0.0.24 | 6 GB | 4 | 52:54:00:fb:50:79 |
+| worker-a1 | 10.0.0.26 | 4 GB | 2 | 52:54:00:ba:8f:9f |
+| worker-a2 | 10.0.0.28 | 4 GB | 2 | 52:54:00:4b:7d:a7 |
+| worker-a3 | 10.0.0.30 | 4 GB | 2 | 52:54:00:43:50:7d |
+| worker-a4 | 10.0.0.32 | 4 GB | 2 | 52:54:00:96:4d:e3 |
+
+**Note:** IPs do not match the aspirational 10.0.0.11-18 range in `PHASE3_LINUX_VM_SETUP.md` §5. The LAN router's DHCP pool handed out whatever was available. This is stable by MAC, but if IP stability is needed, add static DHCP reservations on the router. Desktop had the same pattern (see `PHASE3_REBUILD_STATUS.md`).
+
+**Verification:** SSHed into rajabee, confirmed Debian 13 kernel 6.12.74, 15 GiB RAM available (of 16 GB allocated), 6 CPUs, 1.6 GB swap, eth0 on DHCP.
+
+### Clone discovery trick (for future clones)
+
+libvirt DHCP leases don't work for bridged VMs (no libvirt dnsmasq). To find a clone's IP right after boot:
+1. Get its MAC from `sudo virsh domiflist <vm> | awk '/bridge/ {print $NF}'`
+2. Compute the IPv6 link-local EUI-64 address: flip the 2nd bit of MAC's first byte, insert `ff:fe` in middle, prepend `fe80::`
+3. SSH via link-local with `%br0` scope: `ssh -6 nir@fe80::<eui64>%br0`
+4. Once in, `ip -br addr show eth0` shows the IPv4 lease
+
+### Next step — provisioning
+
+Each VM needs Ollama installed + the tier-specific Dense/MoE/Vision/STT models pulled. That is what `scripts/provision_laptop_vm.sh` does. Running 8 VMs in sequence takes multiple hours because of the model downloads. Running in parallel saturates the LAN and host CPU but is faster end-to-end. Nir to decide timing.
 
 ## Key infra details
 
