@@ -228,17 +228,43 @@ Only the 3 pre-existing host models remain. Test image `/tmp/test_vision.png` al
 
 Same as sessions 1-3: baseline, pull, CPU-only inference with the same test PNG, measure, unload, delete.
 
-## Results
+## Results — 2026-04-17 session 4
 
-Will be filled after measurement.
-
-| Model | Disk (q4) | `free -h` delta (real) | `ollama ps` claimed | Context | CPU inference time | Vision quality |
+| Model | Disk (q4) | `free -h` delta (real) | `ollama ps` claimed | Context | CPU inference time | Vision output |
 |---|---|---|---|---|---|---|
-| qwen3.5:9b | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING |
+| qwen3.5:9b | 6.6 GB | **~8.1 GB** | 9.6 GB | 32K | 161s | Excellent and accurate — "red square with black outline, blue circle with black outline, Hello Hive text in small black letters below the square, white background" |
 
-## Deletion log
+### Fit analysis
 
-- [ ] `ollama rm qwen3.5:9b` — not yet executed
+**RajaBee 16 GB VM:** 8.1 + 1 OS + 1.5 inference = 10.6 GB → 5.4 GB headroom ✅ comfortable by either metric.
+
+**GiantQueen 12 GB VM:** ambiguous. By `free -h` real-use (8.1 GB): 10.6 GB used, 1.4 GB headroom — tight but fits. By `ollama ps` reservation (9.6 GB): 12.1 GB used, 0.1 GB over ceiling — would recreate the same bad-tight swap-spill pattern we removed from giantqueen-b this morning. Safer to keep `qwen3-vl:8b` on GiantQueens.
+
+### Decisions
+
+- **RajaBee: UPGRADE vision to `qwen3.5:9b`** (roster file already has `gemma3:12b` from earlier in this conversation — should be updated to `qwen3.5:9b`).
+- **Both GiantQueens (Desktop giantqueen-b + Laptop giantqueen-a): KEEP `qwen3-vl:8b`** — safer apartment fit.
+
+### Why qwen3.5:9b wins for RajaBee but not GiantQueen
+
+- Benchmark: 69.2% MMMU Pro vs qwen3-vl:8b's 56.6% = +12.6 point quality improvement.
+- RAM: fits 16 GB apartment comfortably (5.4 GB headroom), but barely fits 12 GB apartment (1.4 GB or overflow depending on metric).
+- Speed: 3x slower than qwen3-vl:8b on CPU (161s vs 53s). Acceptable at RajaBee (top tier, quality matters most), less acceptable at GiantQueens where multiple VMs exist and total latency compounds.
+
+## Deletion log — COMPLETED 2026-04-17
+
+- [x] `ollama rm qwen3.5:9b` — DONE
+
+### Post-deletion `ollama list`:
+
+```
+NAME                                               ID              SIZE      MODIFIED
+llama2-uncensored:70b                              bdd0ec2f5ec5    38 GB     5 months ago
+hf.co/bartowski/L3-70B-Euryale-v2.1-GGUF:Q5_K_M    1c651cddf488    49 GB     5 months ago
+llama3.2:3b                                        a80c4f17acd5    2.0 GB    5 months ago
+```
+
+Only the 3 pre-existing host models remain. Test image `/tmp/test_vision.png` also deleted. **Promise kept.**
 
 ---
 
