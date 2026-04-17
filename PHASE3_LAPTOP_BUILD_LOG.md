@@ -23,7 +23,25 @@ Template-and-clone strategy (same pattern Desktop used):
 2. Shut down cleanly after install
 3. Clone per VM in the locked roster, resizing RAM / vCPU / hostname / machine-id
 
-Current status: `laptop-template` install launched via `virt-install` with initrd-inject preseed and `auto=true priority=critical` kernel args. Install expected to take 15-30 min. Progress visible via `sudo virsh domblkinfo laptop-template vda`.
+Current status: **laptop-template VM fully built + verified working** (2026-04-17). Debian 13.4, SSH works with phase3_ed25519 key, sudo NOPASSWD set up, curl + python3 + git + pip3 all present. Shut off cleanly. Ready to clone.
+
+### Post-install fix history
+
+The first boot had no network because:
+1. Debian netinst wrote `allow-hotplug enp1s0` to /etc/network/interfaces (systemd predictable naming)
+2. The `allow-hotplug` didn't fire at boot for the virtio NIC
+3. Actual interface name was unpredictable
+
+Fix via qemu-nbd mount of disk while VM was off:
+- Added `net.ifnames=0 biosdevname=0` to kernel cmdline in both `/boot/grub/grub.cfg` and `/etc/default/grub` so interface is forced to `eth0`
+- Rewrote `/etc/network/interfaces` with `auto eth0 / iface eth0 inet dhcp`
+- Added `console=ttyS0,115200n8 console=tty0` to kernel cmdline so future debugging sees kernel output on serial
+
+After boot via IPv6 (SLAAC worked while IPv4 DHCP was failing), SSHed in, verified everything, cleaned up multi-NIC fallback entries.
+
+### Next step
+
+Clone `laptop-template.qcow2` into 8 per-VM qcow2 files using `scripts/clone_laptop_vms.sh`. Each clone gets its own hostname + cleared machine-id + tier-specific RAM + vCPU via `virt-install --import`.
 
 ## Key infra details
 
