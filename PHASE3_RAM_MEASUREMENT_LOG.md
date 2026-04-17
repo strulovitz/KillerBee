@@ -91,4 +91,38 @@ Only the 3 pre-existing host models remain. Test image `/tmp/test_vision.png` al
 
 ---
 
+# Session 2 — qwen3:14b measurement (Dense LLM for RajaBee)
+
+**Date:** 2026-04-17 (same day, later).
+**Purpose:** Measure real CPU-only loaded RAM of `qwen3:14b` before planning RajaBee (16 GB VM on Laptop). This is the dense text reasoning model for the top tier of the downgraded hierarchy.
+
+## COMMITMENT — DELETE AFTER MEASUREMENT
+
+**Test model to delete:** `qwen3:14b`
+
+**Host models to PRESERVE:** `llama2-uncensored:70b`, `hf.co/bartowski/L3-70B-Euryale-v2.1-GGUF:Q5_K_M`, `llama3.2:3b`
+
+## Method
+
+1. `free -h` baseline
+2. `ollama pull qwen3:14b` (approximately 9 GB download at q4_K_M)
+3. Inference via API with `options.num_gpu=0` and a short reasoning prompt
+4. `free -h` again to capture delta; `ollama ps` to capture Ollama's claimed size
+5. Unload (`keep_alive: 0`) and `ollama rm qwen3:14b`
+6. Record results below
+
+## Results
+
+Will be filled in after measurement.
+
+| Model | Disk (q4) | `free -h` delta (real) | `ollama ps` claimed | Context | CPU inference time |
+|---|---|---|---|---|---|
+| qwen3:14b | PENDING | PENDING | PENDING | PENDING | PENDING |
+
+## Deletion log
+
+- [ ] `ollama rm qwen3:14b` — not yet executed
+
+---
+
 *Canonical. Edit in place. Git is the time machine.*
