@@ -13,7 +13,7 @@ All models downgraded one notch from the original flagship plan per `claude-memo
 
 | VM | IP slot | RAM | vCPU | Dense | MoE | Vision | STT |
 |---|---|---|---|---|---|---|---|
-| rajabee | 10.0.0.11 | 16 GB | 6 | qwen3:14b | granite3.1-moe:3b | **gemma3:12b** | whisper large-v3-turbo |
+| rajabee | 10.0.0.11 | 16 GB | 6 | qwen3:14b | granite3.1-moe:3b | **qwen3.5:9b** | whisper large-v3-turbo |
 | giantqueen-a | 10.0.0.12 | 12 GB | 6 | qwen3:8b | granite3.1-moe:3b | **qwen3-vl:8b** | whisper small |
 | dwarfqueen-a1 | 10.0.0.13 | 6 GB | 4 | phi4-mini:3.8b | granite3.1-moe:3b | gemma3:4b | whisper tiny |
 | dwarfqueen-a2 | 10.0.0.14 | 6 GB | 4 | phi4-mini:3.8b | granite3.1-moe:3b | gemma3:4b | whisper tiny |
@@ -33,9 +33,10 @@ All models downgraded one notch from the original flagship plan per `claude-memo
 - **giantqueen-a** (Laptop 10.0.0.12, 12 GB VM) — planned (this file)
 - Rationale: measured CPU-only loaded RAM of `qwen3-vl:8b` is 6.1-6.3 GB, fits 12 GB VM with ~3.4 GB headroom and zero swap spill. `gemma4:e4b` was tested as an alternative on 2026-04-17 and rejected: overflowed 12 GB VM by ~0.7 GB, 3x slower on CPU, and hallucinated the test image (session 3 in `PHASE3_RAM_MEASUREMENT_LOG.md`, commit 6aedf68).
 
-**RajaBee — `gemma3:12b`** (upgraded from qwen3-vl:8b on 2026-04-17):
+**RajaBee — `qwen3.5:9b`** (locked 2026-04-17 after session 4 measurement):
 - rajabee (Laptop 10.0.0.11, 16 GB VM)
-- Rationale: RajaBee's 16 GB VM has room for a bigger vision model than the 12 GB GiantQueen VM. `qwen3-vl:8b` at 6.1 GB would waste ~7 GB of apartment capacity. `gemma3:12b` at 10.1 GB measured loaded RAM uses the 16 GB apartment properly and provides better quality (12B params vs 8B, stronger on complex reasoning benchmarks) while still leaving ~3.4 GB headroom. Measured in session 1 of `PHASE3_RAM_MEASUREMENT_LOG.md` (commit 5e14d37).
+- Rationale: `qwen3.5:9b` scores 69.2% on MMMU Pro vs `gemma3:12b`'s 50.3% and `qwen3-vl:8b`'s 56.6% — the strongest vision benchmark in our pool that still fits a 16 GB VM. Measured CPU-only loaded RAM is 8.1 GB (free -h delta), 9.6 GB (ollama ps conservative). In 16 GB VM: 10.6 GB used, 5.4 GB headroom, no swap spill risk. Slower inference (161s CPU vs 53s for qwen3-vl:8b) is acceptable at the top tier per §4.0 "quality over speed." Session 4 in `PHASE3_RAM_MEASUREMENT_LOG.md` (commit 38088fe).
+- Why not for GiantQueens: same model in 12 GB VM would run 10.6 GB used with only 1.4 GB headroom (by free -h) or overflow by 0.1 GB (by ollama ps conservative reservation). Recreates the bad-tight pattern we removed from giantqueen-b this morning.
 
 ## Still-unmeasured models (risk surface)
 
