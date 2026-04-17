@@ -77,6 +77,32 @@ libvirt DHCP leases don't work for bridged VMs (no libvirt dnsmasq). To find a c
 3. SSH via link-local with `%br0` scope: `ssh -6 nir@fe80::<eui64>%br0`
 4. Once in, `ip -br addr show eth0` shows the IPv4 lease
 
+### Post-clone disk resize (2026-04-17)
+
+First provisioning attempt on rajabee filled its 30 GB VM disk to 98% (only 625 MB free) because rajabee holds the biggest model set (qwen3:14b + qwen3.5:9b + granite3.1-moe:3b = ~18 GB, plus whisper large-v3-turbo = 1.6 GB, plus OS = ~7 GB, plus apt cache, etc).
+
+**Root cause:** The template was created with 30 GB disk. When cloned, every VM inherited that size. 30 GB was fine for Desktop's rebuild plan (§2.3 in `PHASE3_REBUILD_PLAN.md` calls for 40 GB workers and larger) but the Laptop clone used template-default.
+
+**Fix:** resized each VM's qcow2 + filesystem using `virt-resize --expand /dev/sda1` (from libguestfs-tools). Handles swap partition correctly. New sizes matched to tier needs:
+
+| VM | New disk | Rationale |
+|---|---|---|
+| rajabee | 60 GB | biggest model pile, plus generous headroom |
+| giantqueen-a | 50 GB | medium models + whisper small |
+| dwarfqueen-a1, a2 | 40 GB | smaller models |
+| worker-a1..a4 | 30 GB (unchanged) | tiny models fit easily |
+
+Process per VM (captured for future reference):
+1. `sudo virsh shutdown <vm>` then wait for "shut off"
+2. `sudo qemu-img create -f qcow2 <new>.qcow2 <size>G`
+3. `sudo virt-resize --expand /dev/sda1 <old>.qcow2 <new>.qcow2`
+4. `sudo mv <old>.qcow2 <old>-backup.qcow2 && sudo mv <new>.qcow2 <old>.qcow2`
+5. `sudo chown libvirt-qemu:kvm <old>.qcow2 && sudo chmod 600 <old>.qcow2`
+6. `sudo virsh start <vm>` and verify via `ssh nir@<ip> 'df -h /'`
+7. Delete backup once confirmed working.
+
+**Lesson for future builds:** set appropriate disk size per tier at clone time, not after. Update `scripts/clone_laptop_vms.sh` to take a per-VM disk-size parameter.
+
 ### Next step — provisioning
 
 Each VM needs Ollama installed + the tier-specific Dense/MoE/Vision/STT models pulled. That is what `scripts/provision_laptop_vm.sh` does. Running 8 VMs in sequence takes multiple hours because of the model downloads. Running in parallel saturates the LAN and host CPU but is faster end-to-end. Nir to decide timing.
