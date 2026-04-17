@@ -6,15 +6,17 @@
 
 ## Cluster Map
 
-| VM | IP | RAM | vCPU | Dense | MoE | Vision |
-|---|---|---|---|---|---|---|
-| giantqueen-b | 10.0.0.16 | 12 GB* | 6 | qwen3:8b (5.2 GB) | granite3.1-moe:3b (2.0 GB) | qwen3-vl:8b (6.1 GB CPU-measured loaded) |
-| dwarfqueen-b1 | 10.0.0.20 | 6 GB | 4 | phi4-mini:3.8b (2.5 GB) | granite3.1-moe:3b (2.0 GB) | gemma3:4b (3.3 GB) |
-| dwarfqueen-b2 | 10.0.0.21 | 6 GB | 4 | phi4-mini:3.8b (2.5 GB) | granite3.1-moe:3b (2.0 GB) | gemma3:4b (3.3 GB) |
-| worker-b1 | 10.0.0.22 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
-| worker-b2 | 10.0.0.7 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
-| worker-b3 | 10.0.0.6 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
-| worker-b4 | 10.0.0.23 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
+IPs are DHCP leases from the router (bridge br0) and drift across reboots. MAC is the stable identifier — to discover current IPs run `sudo virsh domiflist <vm>` for the MAC, then grep ARP.
+
+| VM | MAC | IP (2026-04-18) | RAM | vCPU | Dense | MoE | Vision |
+|---|---|---|---|---|---|---|---|
+| giantqueen-b | 52:54:00:83:58:27 | 10.0.0.6 | 12 GB* | 6 | qwen3:8b (5.2 GB) | granite3.1-moe:3b (2.0 GB) | qwen3-vl:8b (6.1 GB CPU-measured loaded) |
+| dwarfqueen-b1 | 52:54:00:e5:73:c7 | 10.0.0.7 | 6 GB | 4 | phi4-mini:3.8b (2.5 GB) | granite3.1-moe:3b (2.0 GB) | gemma3:4b (3.3 GB) |
+| dwarfqueen-b2 | 52:54:00:5d:65:63 | 10.0.0.9 | 6 GB | 4 | phi4-mini:3.8b (2.5 GB) | granite3.1-moe:3b (2.0 GB) | gemma3:4b (3.3 GB) |
+| worker-b1 | 52:54:00:d5:d7:e8 | 10.0.0.10 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
+| worker-b2 | 52:54:00:a1:1b:5f | 10.0.0.11 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
+| worker-b3 | 52:54:00:85:22:c0 | 10.0.0.12 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
+| worker-b4 | 52:54:00:a1:35:6c | 10.0.0.16 | 4 GB | 2 | qwen3:1.7b (1.4 GB) | granite3.1-moe:1b (1.4 GB) | qwen3.5:0.8b (1.0 GB) |
 
 *giantqueen-b bumped from 8 to 12 GB originally for qwen2.5vl:7b (12.5 GiB loaded, tight). On 2026-04-17 vision model swapped to qwen3-vl:8b (~6.3 GiB loaded, 4.6 GiB headroom, no swap spill) per PHASE3_VISION_SWAP_GIANTQUEEN.md. 12 GB ceiling kept for headroom.
 
