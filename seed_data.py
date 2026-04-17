@@ -53,7 +53,7 @@ with app.app_context():
         raja_model='qwen3:14b',
         specialty='research',
         max_queens=16,
-        depth=4,
+        depth=3,
     )
     db.session.add(swarm)
     db.session.commit()
