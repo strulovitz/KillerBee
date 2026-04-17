@@ -213,4 +213,33 @@ Only the 3 pre-existing host models remain. Test image `/tmp/test_vision.png` al
 
 ---
 
+# Session 4 — qwen3.5:9b measurement (potential triple upgrade)
+
+**Date:** 2026-04-17 (same day, later still).
+**Purpose:** Measure `qwen3.5:9b` — the new 2026 unified multimodal model from Alibaba. Reported 69.2% MMMU Pro (vs qwen3-vl:8b's 56.6%). If it fits 12 GB GiantQueen VMs it is a strict quality upgrade across ALL upper-tier VMs (both GiantQueens AND RajaBee).
+
+## COMMITMENT — DELETE AFTER MEASUREMENT
+
+**Test model to delete:** `qwen3.5:9b`
+
+**Host models to PRESERVE:** `llama2-uncensored:70b`, `hf.co/bartowski/L3-70B-Euryale-v2.1-GGUF:Q5_K_M`, `llama3.2:3b`
+
+## Method
+
+Same as sessions 1-3: baseline, pull, CPU-only inference with the same test PNG, measure, unload, delete.
+
+## Results
+
+Will be filled after measurement.
+
+| Model | Disk (q4) | `free -h` delta (real) | `ollama ps` claimed | Context | CPU inference time | Vision quality |
+|---|---|---|---|---|---|---|
+| qwen3.5:9b | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING |
+
+## Deletion log
+
+- [ ] `ollama rm qwen3.5:9b` — not yet executed
+
+---
+
 *Canonical. Edit in place. Git is the time machine.*
