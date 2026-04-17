@@ -35,25 +35,59 @@ Done sequentially, one model at a time, smallest first (minicpm-v:8b at 5.7 GB d
 
 ---
 
-## Results
+## Results — 2026-04-17 measurements
 
-Will be filled in as measurements complete.
+All measured on Laptop host with `num_gpu: 0` flag to force CPU-only inference (matching what VMs will experience, since §4.0 mandates no GPU passthrough). Same test image: 512x512 PNG with red square, blue circle, "Hello Hive" text. Prompt: "describe this image briefly".
 
-| Model | Disk (q4) | Loaded RAM (measured) | `ollama ps` size | Verdict for 12 GB VM |
-|---|---|---|---|---|
-| minicpm-v:8b | 5.7 GB | PENDING | PENDING | PENDING |
-| qwen3-vl:8b | 6.1 GB | PENDING | PENDING | PENDING |
-| gemma3:12b | 8.1 GB | PENDING | PENDING | PENDING |
+| Model | Disk (q4) | `free -h` delta (real loaded RAM) | `ollama ps` claimed | Context | CPU inference time | Vision quality |
+|---|---|---|---|---|---|---|
+| minicpm-v:8b | 5.7 GB | **~5.6 GB** | 5.4 GB | 4K | 33s | Good — saw rect, circle, "Hello Hive" |
+| qwen3-vl:8b | 6.1 GB | **~6.1 GB** | 11 GB | 8K | 53s | Best — colors + composition + full text + background |
+| gemma3:12b | 8.1 GB | **~10.1 GB** | 10 GB | 4K | 66s | Good — verbose, accurate |
+
+### Interpretation
+
+- **Real loaded RAM** (`free -h` delta) is the honest number for VM planning.
+- `ollama ps` can report higher than actual use when context window is large (qwen3-vl had 8K ctx and claimed 11 GB but only used 6.1 GB in reality) — appears to reserve context buffer speculatively.
+- gemma3:12b's `ollama ps` (10 GB) matched real use (10.1 GB) — no speculation gap, because its context is only 4K.
+
+### Verdict for a 12 GB VM (real RAM + ~1 GB OS + ~1.5 GB inference overhead)
+
+- **minicpm-v:8b** — 5.6 + 2.5 = 8.1 GB used → 3.9 GB headroom — comfortable
+- **qwen3-vl:8b** — 6.1 + 2.5 = 8.6 GB used → 3.4 GB headroom — comfortable
+- **gemma3:12b** — 10.1 + 2.5 = 12.6 GB used → 0.6 GB over ceiling — same bad-tight as the current qwen2.5vl:7b gold
+
+### Formula lesson learned
+
+Old formula: `params x 0.6 GB per 1B = loaded size`. For these vision models:
+- minicpm-v 8B: 0.7 GB per 1B (cleaner than expected)
+- qwen3-vl 8B: 0.76 GB per 1B
+- gemma3 12B: 0.84 GB per 1B
+
+Vision models are ~15-40% larger loaded than the text formula predicts, and bigger models are disproportionately bigger. Future plans should measure before committing.
 
 ---
 
-## Deletion log
+## Deletion log — COMPLETED 2026-04-17
 
-Will be filled in after each deletion as proof.
+All 3 test models successfully removed. Verified with `ollama list` showing only the pre-existing host models remain.
 
-- [ ] `ollama rm minicpm-v:8b` — not yet executed
-- [ ] `ollama rm qwen3-vl:8b` — not yet executed
-- [ ] `ollama rm gemma3:12b` — not yet executed
+- [x] `ollama rm minicpm-v:8b` — DONE
+- [x] `ollama rm qwen3-vl:8b` — DONE
+- [x] `ollama rm gemma3:12b` — DONE
+
+### Post-deletion `ollama list` (proof):
+
+```
+NAME                                               ID              SIZE      MODIFIED
+llama2-uncensored:70b                              bdd0ec2f5ec5    38 GB     5 months ago
+hf.co/bartowski/L3-70B-Euryale-v2.1-GGUF:Q5_K_M    1c651cddf488    49 GB     5 months ago
+llama3.2:3b                                        a80c4f17acd5    2.0 GB    5 months ago
+```
+
+Only the 3 pre-existing host models remain. Test image `/tmp/test_vision.png` also deleted.
+
+**Promise kept.**
 
 ---
 
