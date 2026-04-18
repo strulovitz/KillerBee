@@ -317,3 +317,14 @@ These experiments belong in the chapter about real-world testing of the hierarch
 - Recommended Desktop surgical fix: rsync patched GiantHoneyBee to 10.0.0.6 (GQ-b) and 10.0.0.7 (DQ-b1) only, restart just those 2 with max_wait=60 recalibration.
 - DQ-b2 is doing real work. Do not restart her.
 
+
+### Q2 DENSE Antarctic Station — COMPLETE at 08:23
+
+- **Royal Honey**: 3358 chars, covers structural engineering, medical infrastructure, psychological, logistics, treaty compliance.
+- **Wall clock**: 5591.9s (93 min). Faster than Q1 which took 104 min.
+- **Orphaned component**: c242 (GQ-b side 53% of work, structural + logistics) was orphaned when Desktop surgical-restarted DQ-b1. Stubbed completed. Gap in GQ-b side coverage.
+- **Laptop subtree covered it**: Final Royal Honey is still coherent, Antarctic-relevant, with correct domain content.
+- **Second Ollama hang** on DQ-b1 (Desktop) required Ollama restart at ~07:52.
+- **Saved**: results/q2_antarctic_royal_honey.md.
+- **Q3 DENSE Provence Bee Farm** submitted as Job 4.
+
