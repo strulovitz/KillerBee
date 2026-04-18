@@ -155,12 +155,43 @@ All times UTC, 2026-04-18.
 - "GQ-b contributed nothing to Q1 and we disclosed it instead of hiding it" is the operational-honesty case study. The Royal Honey was real, the subtree that produced it was smaller than advertised, and the log says so.
 - The surgical-restart + c242-orphan + stubbed-disclosure sequence is the clearest example of "no reward hacking, ever" in the night. Nothing was faked. Every gap is documented.
 
-## 16. Remaining tonight (pre-sleep)
+## 16. Q3 Provence Bee Farm outcome and shutdown
 
-1. Q3 Provence Bee Farm: in progress. Watch for completion. Append Q3 result timing to section 11 above.
-2. Stop all 15 bees cleanly after Q3 lands. Note: use `pkill -9 -f _client.py` on each VM, not any alternation-regex variant.
-3. Do NOT start the MoE batch tonight per Nir's updated plan.
-4. Push this file.
+Q3 completed after the two-worker runaway-thinking-loop incident near the end of the run. Observed sequence:
+- Two workers (my worker_b1 on 10.0.0.10 and Laptop's worker_a3 on 10.0.0.31) went into runaway generation on qwen3:1.7b. worker_b1 was at 199% CPU for an extended stretch on the Provence prompt's education+regulation section. Not hung — genuinely generating forever.
+- `sudo systemctl restart ollama` on both worker VMs broke the runaway. The bees' `ollama.chat()` calls raised, the bees caught the exception, attempted to post error strings as their worker results.
+- The error-post from DQ-b1 for c318 did not land — by the time she went to write the error result the DQ had already moved past c318 in her main loop, so c318 stayed in `processing` forever.
+- Laptop stubbed c318 (Desktop side) and c315 (Laptop side) with honest disclosure strings so Raja could proceed to combine. 2 of 16 total Q3 components were stubs = ~87.5% real subtree work.
+- Raja's final combine step also needed manual intervention — Flask Werkzeug on the KillerBee host got flaky at the 2-hour mark and Raja's poll-for-completion loop timed out. Laptop manually combined and delivered the Royal Honey.
+- **Q3 Royal Honey delivered,** all 5 sub-questions covered (apiculture, botany, disease, economics, education+regulation) plus the 10-year capital+operating plan.
+
+**Q3 timing entry for section 11 table:** Q3 submitted ~04:56 UTC, Royal Honey delivered after the 2-hour Werkzeug flake + manual combine, ~07:00-ish UTC range. ~2h end-to-end including the manual recovery.
+
+## 17. Shutdown and end state
+
+- Sent final ICQ to Laptop acknowledging Dense batch complete.
+- Killed all 7 Desktop bee processes with `pkill -9 -f _client.py` across 10.0.0.6, 10.0.0.7, 10.0.0.9, 10.0.0.10, 10.0.0.11, 10.0.0.12, 10.0.0.16. Verified CLEAN on all 7 via follow-up `pgrep -af _client.py`.
+- VMs themselves left running and healthy. Ollama processes left running (no reason to restart). No libvirt-level shutdown — tomorrow's MoE batch can bring the bees straight back up.
+- KillerBee website left running on Laptop host per Laptop's note.
+- KillerBee `killerbee.db` left intact with all 15 SwarmMembers + swarm + job history. Useful for reference when Nir reviews the results in the morning.
+
+## 18. Handoff to the MoE-batch session (next night)
+
+When resuming for Q4/Q5/Q6:
+1. `git pull` in both `/home/nir/KillerBee` and `/home/nir/GiantHoneyBee`.
+2. Re-verify VM IPs (they may have shifted if VMs rebooted). Use MAC lookup per PHASE3_REBUILD_STATUS.md.
+3. Rsync `/home/nir/GiantHoneyBee` to all 7 Desktop VMs so every one has the patched code (not just 10.0.0.6/10.0.0.7).
+4. Start bees with `KILLERBEE_MODEL=<moe-tier-model>`:
+   - Raja: `granite3.1-moe:3b`, GQ: `granite3.1-moe:3b`, DQ: `granite3.1-moe:3b`, Worker: `granite3.1-moe:1b` (per plan Section 3).
+5. Stagger startup bottom-up (workers first, wait ~30s, DQs, wait ~30s, GQs, wait ~30s, Raja) to avoid the 4-tier calibration deadlock.
+6. Run topology helper again in case IDs shifted: `python scripts/assign_phase3_topology.py --swarm-id 1`.
+7. Submit Q4/Q5/Q6 per plan Section 5.
+
+Before MoE batch it would also be wise to land two real code fixes:
+- Add `timeout=N` to `ollama.chat()` in `HoneycombOfAI/ollama_client.py` so the combine-hang+manual-restart dance goes away.
+- Add a server-side watchdog on components stuck in `processing` > N minutes so orphans don't require human stubbing.
+
+Neither is required for the run to work; both are quality-of-life for the next session.
 
 ---
 
