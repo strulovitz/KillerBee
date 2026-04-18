@@ -349,3 +349,15 @@ Documentation for MadHoney book:
 - results/q3_provence_royal_honey.md
 - EXPERIMENT_LOG.md (this file, running log)
 
+
+---
+
+## Night of 2026-04-19 — MoE Batch (Q4/Q5/Q6)
+
+### Pre-flight — Laptop side — 01:33 UTC
+
+- Nir gave GREEN at ~01:15 Israel time, going to sleep. Guidance: reuse existing plan, no pre-built infrastructure, solve problems from ROOT (not ad-hoc stubs) when they surface, honesty above all.
+- Both Claudes ACK'd GREEN via ICQ (#362 laptop, #363 desktop, #364 laptop, #366 laptop). Heads match: KillerBee 5c3bd07, GiantHoneyBee 03766a3.
+- Laptop 8 VMs were shut off at start — booted all 8 via `sudo virsh start rajabee/giantqueen-a/dwarfqueen-a1-a2/worker-a1-a4`. All came up with expected IPs 10.0.0.14/17/19/25/27/29/31/33 after ~90s DHCP settle.
+- Part A (rsync patched GiantHoneyBee 03766a3 to all 8 Laptop VMs): first pass returned rsync protocol error code 12 on all 8. Root cause: `rsync` package was not installed on any of the 8 Laptop VMs. Installed rsync on all 8 via passwordless sudo apt-get. Retried rsync, clean exit=0 on all 8. Verified `max_wait = 60` lands 3 times per VM (raja_bee.py + giant_queen_client.py + dwarf_queen_client.py = 3 hits). Laptop Part A DONE.
+- Desktop Part A (his 7 VMs) still running per his last ICQ; awaiting his done-signal before Part B bottom-up bring-up.
