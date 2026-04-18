@@ -274,3 +274,13 @@ These experiments belong in the chapter about real-world testing of the hierarch
 - Revised expected Raja completion: 05:00-05:10.
 - Q1 Mars Colony will submit the moment Raja enters main_loop.
 
+### Night heartbeat (05:05, Laptop) - calibration issues
+- Raja buzzing calibration all 3 rounds timed out on both GiantQueens (4-level cluster deadlock: kids busy with their own kids).
+- Raja entered main_loop with empty in-memory fractions.
+- Q1 Mars Colony submitted as Job 2 at 05:04. Raja picked it up.
+- FORMAT BUG: raja_bee.py line 490 `f.get("fraction", default)` returns None when value is explicitly None (not missing). `f"{None:.2f}"` crashes.
+- Manually set queen_giant_a and queen_giant_b fraction=0.5 capacity=100 in DB. API now returns 0.526/0.474 post-recalculate.
+- But Raja's in-memory fractions still stale. Patched raja_bee.py: (1) max_wait 600 -> 60 for faster future calibration, (2) `f.get(fraction)` default-or fix. Killed and restarted Raja.
+- Restarted Raja re-enters buzzing cycle with max_wait=60, should finish in ~12 min and fetch correct DB fractions.
+- Q1 Job 2 still pending in DB. Will be picked up when Raja enters main_loop again.
+
