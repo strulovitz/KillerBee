@@ -266,3 +266,11 @@ These experiments belong in the chapter about real-world testing of the hierarch
   - All 4 worker pairs sum to 1.0 under their DQ parents.
 - Still no stalls or crashes. Flask serving 200s, no retry-give-up events.
 
+### Night heartbeat (04:27, Laptop)
+- Raja calibration is the bottleneck. Round 2/3 in progress 48 min after Round 1 started.
+- 150 total components, 130 done, 17 pending, 12/15 fractions.
+- qwen3:14b thinking-model generation on 6 CPU cores is glacial - each Raja score or GQ answer is several minutes.
+- No stalls, just slow. Cluster is working.
+- Revised expected Raja completion: 05:00-05:10.
+- Q1 Mars Colony will submit the moment Raja enters main_loop.
+
