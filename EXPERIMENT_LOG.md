@@ -284,3 +284,10 @@ These experiments belong in the chapter about real-world testing of the hierarch
 - Restarted Raja re-enters buzzing cycle with max_wait=60, should finish in ~12 min and fetch correct DB fractions.
 - Q1 Job 2 still pending in DB. Will be picked up when Raja enters main_loop again.
 
+### Night heartbeat (05:36, Laptop)
+- Raja exited buzzing_cycle with fractions queen_giant_b=0.526 queen_giant_a=0.474 (from DB via _fetch_fractions after my manual SwarmMember set).
+- Raja picked up Job 2 (Q1 DENSE Mars Colony) at 05:35.
+- Currently splitting task into components on qwen3:14b.
+- Patch 03766a3 pushed to GiantHoneyBee main: max_wait 60s + fraction None-safe default in _split_task. Desktop agreed to sync on MoE batch restart per plan Section 11.
+- Waiting for Raja to post components to GQs, then cascade down to workers, then roll up to Royal Honey.
+
