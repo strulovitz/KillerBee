@@ -292,3 +292,9 @@ These experiments belong in the chapter about real-world testing of the hierarch
 - Patch 03766a3 pushed to GiantHoneyBee main: max_wait 60s + fraction None-safe default in _split_task. Desktop agreed to sync on MoE batch restart per plan Section 11.
 - Waiting for Raja to post components to GQs, then cascade down to workers, then roll up to Royal Honey.
 
+### Night heartbeat (06:28, Laptop)
+- Q1 Mars Colony: 21/22 components completed, 1 still in "Combining" phase on DQ-a2 (10.0.0.25) using phi4-mini:3.8b. Been combining ~20 min, CPU 370%, slow but not stuck.
+- Q1 component tree was: 6 DQ-level Raja splits (2 Laptop + 4 Desktop DQs), each DQ split into 1-3 worker subtasks = 16 total, then grew to 22 as some components re-split.
+- Dense-batch processing is REAL and WORKING end-to-end. Workers answering real sub-parts of "Design a 6-person Mars base".
+- Waiting for last combine + Raja's final integrate to deliver Royal Honey.
+
