@@ -398,3 +398,21 @@ DQs tier (02:00-02:15): Both sides fired 2 DQs each with granite3.1-moe:3b. All 
 GQs tier (02:15-): Both sides fired 1 GQ each. FIRST ATTEMPT FAILED: GQ R1 calibration timed out because DQ split-combine takes 60-100s (DQ orchestrates through workers, not a single Ollama call like 3-tier) and max_wait=60 (last night's patch) was too tight. Halted both GQs. Laptop committed GiantHoneyBee 6c0896c raising max_wait 60->300 in raja_bee.py:281 + giant_queen_client.py:268 + dwarf_queen_client.py:268. Rsynced to all 15 VMs. SECOND ATTEMPT IN PROGRESS with max_wait=300.
 
 Current state (02:45 UTC): GQ-b R1 DQ-b1 49.3s OK, R2 DQ-b1 90.6s OK, R3 DQ-b1 102.7s OK (all under 300s budget), but DQ-b2 R2 timed out even at 300s. Root cause: DQ-b2 is STUCK waiting for subtask Component 425 (child of Component 421, her R1 calibration question) - subtask assigned to Laptop worker_a3 member_id=14 which is IDLE (CPU 0, no ollama loaded, completed=12). Worker did the work, POST-result dropped (Network-unreachable), DB stuck at status=processing forever. Same orphan class as last night c242/c315/c318 but root cause is HOST NETWORK DROPS (Laptop host rebooted earlier, Flask/Werkzeug under sustained load). Laptop investigating (A) stub-close 421/425/471 with disclosure (B) network-drop investigation with possible waitress swap as the ROOT fix. Desktop approved both actions via ICQ #394. Awaiting Laptop execution.
+
+### Heartbeat — 02:30 UTC Laptop — MoE Night 2 Part B mid-way
+
+Status: Raja fired on 10.0.0.14 at 02:30, now calibrating 2 GQs. Both GQs in main_loop. All 4 DQs in main_loop. All 8 Workers in main_loop.
+
+Problems encountered and solved tonight:
+
+1. **max_wait=60 too tight for 4-tier calibration cascade** — DQ receiving a calibration task splits to workers and combines, measured 60-143s per call. Root fix committed as GiantHoneyBee `6c0896c` (max_wait 60→300 in all 3 client files). Rsynced to all 15 VMs. Both GQs restarted with patched code.
+
+2. **Orphan components from Network-is-unreachable retry exhaustion** — Components 421 (GQ-b R1 DQ-b2), 425 (DQ-b2 sub→worker_a3), 471 (GQ-a R3 DQ-a2) all stuck in `processing` after bees completed work locally but their result-POST failed and exhausted the 3-retry budget. Investigation showed: 20/20 curl loops from VM to Flask succeed (2-14ms), bridge br0 clean 0 errors, Flask log 200s to all VMs. Error is transient VM-kernel-level (likely ARP refresh or libvirt DHCP route race — one VM had a suspicious dual-DHCP route `src 10.0.0.30` for a `.31` VM).
+   - Immediate fix: `scripts/stub_orphans.py 421 425 471` marked them completed with ABANDONED disclosure.
+   - Root fix: committed as GiantHoneyBee `67e1c95` — bumped `max_retries` from 3 to 10 in `killerbee_client.py`. Old budget was 6s cumulative (2s, 4s); new is ~90s cumulative (2s, 4s, 6s, ..., 18s over 10 attempts). Rsynced to all 8 Laptop VMs. NEXT bee fires (Raja + any future restarts) use new budget; running bees continue on old retry until restart — acceptable per plan Section 11 (no mid-batch client restart unless required).
+
+3. **shell-quoting blind spot** (Laptop only) — dropped `cd /home/nir/GiantHoneyBee` prefix 4 times in a row on GQ-a restart. Fixed by writing command to a bash script file `/tmp/fire_gq_a.sh` and running it. Used same approach for Raja fire (`/tmp/fire_raja.sh`), worked first try.
+
+Desktop Part A + Part B + patches all tracked in parallel ICQs. Git push/pull chain: KillerBee `c09e6fe` (DB reset), GiantHoneyBee `6c0896c` (max_wait 300), GiantHoneyBee `67e1c95` (retry 10).
+
+Next: Raja main_loop (~10-15min), then submit Q4 Space Elevator via beekeeper_demo.
