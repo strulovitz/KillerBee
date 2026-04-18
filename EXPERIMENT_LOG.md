@@ -195,6 +195,12 @@ Comprehensive answer covering: propulsion concepts (light sails, nuclear pulse, 
 
 ---
 
+## Night heartbeat — 2026-04-18 (Phase 3 first run)
+
+- `00:38 UTC` **desktop-claude**: 7 Desktop bees alive, giantqueen-b calibrating. Topology helper confirmed working (GQ-b sees 2 DwarfQueens, no claim race). Waiting for Raja cluster-wide calibration.
+
+---
+
 ## For the Book (MadHoney)
 
 These experiments belong in the chapter about real-world testing of the hierarchical system. Key narrative points:
