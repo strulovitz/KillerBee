@@ -368,3 +368,23 @@ Documentation for MadHoney book:
 - Part A rsync patched GiantHoneyBee (commit 03766a3) from Desktop host to all 7 Desktop VMs in parallel. rsync package already present on Desktop VMs (unlike Laptop — Desktop VMs were cloned from giantqueen-b which had rsync pre-installed). All 7 rsync exit=0.
 - Verified `max_wait = 60` landed 3 times per VM (raja_bee.py + giant_queen_client.py + dwarf_queen_client.py) on all 7 Desktop VMs.
 - Desktop Part A DONE. Both sides Part A complete. Ready to coordinate Part B bottom-up bring-up.
+
+### DB cleanup for MoE fresh start — 01:40 UTC 2026-04-19
+
+Laptop host was rebooted ~01:00 UTC (uptime 43 min when discovered), forcing:
+1. 8 Laptop VMs booted via `sudo virsh start` (IPs came back MAC-stable).
+2. KillerBee Flask website restarted (`nohup ./killerbee-venv/bin/python app.py`), HTTP 200 verified.
+3. DB preserved but had 45 zombie components under Job 1 (last night's calibration cascade-deadlock leftovers: rainbow / China / tech-innovation calibration tasks — 33 pending + 12 processing) and 14 swarm_members with Dense-calibrated buzzing fields that don't apply to tonight's granite MoE models.
+
+Executed `scripts/reset_for_moe_batch.py` to:
+- Mark 45 zombies as `status='completed'` with `result='[ABANDONED: Dense-batch Job 1 calibration cascade deadlock never completed, marked at MoE pre-flight 2026-04-19]'`. Preserves row history per Desktop's preference; invisible to `get_my_work` which filters by pending/processing.
+- Zero the 5 buzzing fields (`fraction`, `capacity`, `buzzing_speed`, `buzzing_quality`, `buzzing`) on all 15 swarm_members so MoE calibration starts fresh.
+- Leave `parent_member_id` intact on all 15 (last night's hard-won topology fix preserved).
+- Leave Jobs 1-4 intact as historical record.
+
+Post-cleanup verification:
+- 0 components in pending/processing status.
+- 0 swarm_members with non-NULL buzzing fields.
+- Sample parent_member_id on id=1 (parent=4), id=8 Raja (parent=None), id=10 DQ (parent=9) — all preserved.
+
+Ready for Part B Workers bring-up.
