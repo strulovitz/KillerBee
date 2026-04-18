@@ -198,6 +198,7 @@ Comprehensive answer covering: propulsion concepts (light sails, nuclear pulse, 
 ## Night heartbeat — 2026-04-18 (Phase 3 first run)
 
 - `00:38 UTC` **desktop-claude**: 7 Desktop bees alive, giantqueen-b calibrating. Topology helper confirmed working (GQ-b sees 2 DwarfQueens, no claim race). Waiting for Raja cluster-wide calibration.
+- `02:38 UTC` **desktop-claude** (backfill): missed 00:53 / 01:08 / 01:23 / 01:38 / 01:53 / 02:08 / 02:23 heartbeats — apologies. Status now: all 7 Desktop bees still alive. GQ-b stuck 2065s on Component 55 (orphaned sub-components from pre-calibration Raja test — DQs never picked them up, so GQ-b waits until its 3600s max_wait timeout). DQ-b1 idle. DQ-b2 completing Component 140 (1 worker subtask done in 290s). DQ-b2's worker pipeline is functional. GQ-b blocked means Raja Q1 Mars split will wait for GQ-b to free. Will report GQ-b timeout and behavior when it happens.
 
 ---
 
