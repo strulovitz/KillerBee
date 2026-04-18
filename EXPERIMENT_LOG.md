@@ -209,3 +209,25 @@ These experiments belong in the chapter about real-world testing of the hierarch
 8. **smart_splitter** — let the LLM write naturally instead of forcing formats. A general principle: adapt to the tool, don't force the tool to adapt to you.
 9. **5 bugs found and fixed in Buzzing** — real engineering, real debugging, real solutions. Each bug has a story.
 10. **15x improvement** from fixing splitting alone — the difference between a good architecture and good implementation
+
+---
+
+## Night of 2026-04-18 — Phase 3 (in progress)
+
+### Pre-run state (03:34)
+
+- All 15 VMs up (8 Laptop, 7 Desktop).
+- KillerBee website at http://10.0.0.8:8877, swarm id=1 "Phase 3 Hive", depth=4.
+- GiantHoneyBee + HoneycombOfAI cloned on all 15 VMs.
+- Bee clients patched with KILLERBEE_MODEL env + CLI override (commit 4d9625d).
+- Topology helper (commit 38dc332) applied: race fixed, 7 parent_member_id rewrites.
+
+### Bee bring-up (03:26-03:34)
+
+- First Laptop fire: bees registered but initial claim race did happen. queen_dwarf_b2 grabbed worker_a1..a4; queen_dwarf_b1 grabbed worker_b3..b4.
+- Desktop disclosed zombie bees from pre-sleep launch; all pkill'd clean.
+- Topology helper run on Laptop host, 7 parents corrected.
+- Laptop bees killed and restarted with PYTHONUNBUFFERED=1 for live logs. Restart cleanly used the corrected topology on second registration.
+- rajabee log confirms: found 2 existing giant_queen subordinates, no unassigned, starting calibration with qwen3:14b.
+- Desktop pending restart of 7 bees.
+
