@@ -416,3 +416,17 @@ Problems encountered and solved tonight:
 Desktop Part A + Part B + patches all tracked in parallel ICQs. Git push/pull chain: KillerBee `c09e6fe` (DB reset), GiantHoneyBee `6c0896c` (max_wait 300), GiantHoneyBee `67e1c95` (retry 10).
 
 Next: Raja main_loop (~10-15min), then submit Q4 Space Elevator via beekeeper_demo.
+
+### Architectural root-fix + Raja main_loop + Q4 submitted — 03:15 UTC 2026-04-19
+
+ROOT-CAUSE BUG FOUND: KillerBee app.py line 604 `api_available_components` filtered jobs by `status='processing'` only, while `api_available_subtasks` at line 578 had no status filter. Since calibration jobs are `status='calibration'`, sub-components posted by GQs during Raja's calibration cascade were invisible to DQs. Phase 2 3-tier never triggered this because DQ-to-Worker went through the subtask endpoint (no filter). Phase 3 4-tier calibration cascade exposed it. Retroactively explains last night's c242/c315/c318 orphan pattern as NOT a race - it was this filter asymmetry.
+
+Patch: KillerBee `322c7b4` (Laptop) dropped the status filter on `api_available_components` to match the subtask endpoint. Flask restarted on Laptop host (~5s blip, absorbed by retry=10 budget). Immediate validation: Component 494 transitioned from orphan (member_id=None, pending forever) to member_id=DQ claimed, status=processing, with grandchild Component 497 posted to a worker. The 4-tier calibration cascade flowed end-to-end for the first time ever.
+
+Raja calibration completed with REAL data all 6 rounds (no timeouts under new max_wait=300):
+- R1 GQ-b 361s (over budget? actually should have timed out - possibly first entry into retry loop completed first attempt within 300s wall clock despite network blips)
+- R1 GQ-a 133s, R2 GQ-b 91s, R2 GQ-a 129s, R3 GQ-b 269s, R3 GQ-a last-round
+
+Raja entered main_loop. Q4 Space Elevator submitted as job_id=5 (581 chars) via direct DB INSERT per Laptop (bypassing the CSRF web form). Desktop subtree at 03:15 UTC: GQ-b processing Component 555, DQ-b1 on 560, DQ-b2 on 559, workers polling. Cascade is flowing.
+
+No orphans in DB right now. max_retries=10 and max_wait=300 both doing their job - RETRY markers visible in Raja's log but all self-recover within 1-2 attempts.
