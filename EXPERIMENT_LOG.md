@@ -308,3 +308,11 @@ These experiments belong in the chapter about real-world testing of the hierarch
 - **Saved to**: `results/q1_mars_royal_honey.md`.
 - **Q2 DENSE Antarctic** now submitted as Job 3.
 
+
+### Night heartbeat (07:03, Laptop) - after Q1 completion
+- Q1 Mars delivered. Desktop disclosure: GQ-b was stuck on Component 55 for 3600s then Component 65 for 2485s - contributed NOTHING to Q1. Q1 Royal Honey = 100% Laptop subtree.
+- Raja rediscovered post-Q1, saw no changes in fractions/capacity, SKIPPED recalibration (guard worked). Picked up Job 3 (Q2 Antarctic) immediately.
+- Raja splitting Q2 now with qwen3:14b.
+- Recommended Desktop surgical fix: rsync patched GiantHoneyBee to 10.0.0.6 (GQ-b) and 10.0.0.7 (DQ-b1) only, restart just those 2 with max_wait=60 recalibration.
+- DQ-b2 is doing real work. Do not restart her.
+
