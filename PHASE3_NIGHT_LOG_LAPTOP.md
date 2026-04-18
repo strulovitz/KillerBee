@@ -224,3 +224,46 @@ MoE model pulls are already on every VM from the provisioning pass — `granite3
 ---
 
 *Laptop night log complete. Signed off 10:35, 2026-04-18. Next session: MoE batch.*
+
+---
+
+## 20. Option analysis — re-running only Raja's combine on Q3 raw material (NOT executed)
+
+Nir asked, after the Dense batch finished, how expensive it would be to hand Raja the 5 completed level-0 component results from Q3 and have her do JUST the combine step — the one that timed out in the original run because of Werkzeug flakiness. This section is the analysis we produced, saved for the MadHoney book and for the MoE-night to-do list. Nothing was executed.
+
+**Estimated cost:** about 15 to 30 minutes, mostly Ollama compute on qwen3:14b. Roughly 5 minutes to write a small recovery script that (a) reads the 5 Q3 level-0 `JobComponent.result` rows from the KillerBee DB, (b) builds Raja's exact `_combine_results` prompt from her bee code, (c) calls the Ollama API on the rajabee VM directly, (d) writes the synthesized Royal Honey to `results/q3_provence_royal_honey_raja_retry.md`. Then 10 to 30 minutes of qwen3:14b inference (roughly 5k input tokens prefill plus 2 to 3k output tokens plus whatever thinking tokens the model decides to burn).
+
+**Pros:**
+- Q3 would end up in the same form as Q1 and Q2: a Raja-synthesized compressed Royal Honey (~3 to 4k characters) instead of the 27k-character raw concatenation we have now.
+- Same model, same prompt template, same bee — scientifically comparable to Q1 and Q2 for the book.
+- Much cheaper than a full Q3 rerun (~90 to 120 min of hive-wide work).
+- Low blast radius: one script call, no calibration cascade, no fan-out, no new failure modes introduced.
+
+**Cons:**
+- Does not fix the two stub components (c315 and c318). Raja would synthesize over a ~60/40 real/stub input. She can name the gaps, but she cannot invent content that was never produced.
+- Technically bypasses the KillerBee website for the combine step (Rule 1 says bee-to-bee comms route through the server). This would be an honest recovery of a server-side poll that failed, not a reward hack, but it is still a rule bend that should be named.
+- Same `ollama.chat` runaway-generation class of failure that wedged two DQs tonight could wedge Raja too. Needs a hard timeout on the Ollama call (which the current codebase does not have).
+- Treats the symptom, not the cause. The real fix for Q3 is (i) server-side processing watchdog and Ollama timeouts, (ii) re-run only the two stuck DQ branches so c315 and c318 contain real work, (iii) then let Raja combine natively through the KillerBee poll path like she did for Q1 and Q2.
+
+**Decision:** deferred. Not done tonight. On MoE night we will either (a) skip the retry and let Q3's raw-concat Royal Honey stand as-is with full disclosure in the book, or (b) do the retry AFTER we add an Ollama timeout so it is safe. Whichever Nir prefers.
+
+## 21. Reflection on choosing a thinking LLM family (qwen3)
+
+The Laptop tier lineup was locked 1 to 2 days ago in `PHASE3_LAPTOP_ROSTER_LOCKED.md`: `qwen3:14b` for Raja, `qwen3:8b` for GiantQueen-A (Desktop kept `qwen2.5vl:7b` for vision, irrelevant for tonight), `phi4-mini:3.8b` for the DwarfQueens, `qwen3:1.7b` for the Workers. qwen3 is a thinking model family — every call produces an internal chain-of-thought block before the user-facing answer. phi4-mini is not a thinking model.
+
+After one night of Dense-batch work with this stack, a reasonable honest verdict is: **picking a thinking LLM family for the Raja, GiantQueen and Worker tiers was probably a suboptimal choice for this kind of CPU-only, hierarchical, orchestration-heavy experiment.** Three concrete signals from tonight point the same direction.
+
+1. **The most reliable tier was the non-thinking one.** `phi4-mini:3.8b` at the DwarfQueens never runawayed, finished calibration fastest, and did most of Q1's combine work before getting stuck on a compound input from a thinking-model worker. The crashes clustered at qwen3 tiers.
+2. **All three Ollama runaway-generation hangs involved qwen3 models.** Q1 DQ-a2 combining a `qwen3:1.7b` worker output, Q2 DQ-b1 similarly, Q3 two workers directly on `qwen3:1.7b`. The classic symptom was Ollama at 180 to 390 percent CPU for over 150 CPU-minutes with no output — consistent with the model failing to emit an EOS token after an open-ended thinking block.
+3. **Wall clock suffered from invisible thinking tokens.** Raja spent roughly 10 minutes generating each of the 3 calibration questions on `qwen3:14b` on 6 vCPU. Most of that was internal reasoning the hive could not use. For a splitting-and-combining role — which is mostly shallow templating — thinking tokens are pure overhead.
+
+The trade-off we had accepted implicitly is that thinking models are better on hard reasoning. That is true but mostly irrelevant to Raja and GiantQueen work: their actual job is "take a task, write N bullet-sized sub-tasks" or "take N answers, concatenate them intelligently." Those jobs do not benefit from deep chains of thought. The Worker tier does need genuine reasoning, but `qwen3:1.7b` is where the runaway losses hurt most because Workers are at the bottom of the tree and their hangs cascade upward.
+
+**What we would try on future sessions:**
+
+- Drop `qwen3` for a non-thinking family at every tier. Candidate stacks: Raja `mistral-nemo:12b` or `llama3.1:8b`, GQ `llama3.1:8b`, DQ `phi4-mini:3.8b` (keep), Worker `llama3.2:3b` or `phi3:mini`. All are Apache or MIT licensed, all are non-thinking, all have CPU-reasonable inference speeds.
+- Or keep qwen3 but pass the `think: false` option on the Ollama chat call where the model supports it (newer qwen3 quantizations do).
+- **Add a hard timeout to `ollama.chat` regardless of which family we use.** A runaway generation must never wedge a bee. That is the highest-leverage fix, independent of model choice.
+
+**Honest caveat.** This is Monday-morning quarterbacking after one night of real data. qwen3 was picked a day or two ago for three reasons that were all sensible at the time: the family has a clean size ladder (1.7b / 8b / 14b) across tiers, it was newer than the alternatives, and its benchmark scores looked strong. What tonight showed is narrower: on CPU-only hardware, with no `ollama.chat` timeout, and for a workload dominated by split/combine rather than deep reasoning, a thinking-model family is fragile. Change any one of those three things and the stack is much more reliable. The general lesson for the book is **match the model class to the role**, not **always use the smartest model available**.
+
