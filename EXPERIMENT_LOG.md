@@ -388,3 +388,13 @@ Post-cleanup verification:
 - Sample parent_member_id on id=1 (parent=4), id=8 Raja (parent=None), id=10 DQ (parent=9) — all preserved.
 
 Ready for Part B Workers bring-up.
+
+### Part B bottom-up bring-up + max_wait patch — 01:50-02:45 UTC 2026-04-19
+
+Workers tier (01:50-02:00): Both sides fired 4 Workers each with KILLERBEE_MODEL=granite3.1-moe:1b. Laptop workers: w_a1/a2/a3/a4 @ 10.0.0.27/29/31/33 member_ids 12-15. Desktop workers: w_b2/b1/b4/b3 @ 10.0.0.11/10/16/12 member_ids 1/3/5/6. All 8 in main_loop, polling cleanly.
+
+DQs tier (02:00-02:15): Both sides fired 2 DQs each with granite3.1-moe:3b. All 4 completed buzzing calibration in Round 3/3 with REAL calibration numbers (not fallback defaults, unlike last night's 4-tier deadlock). Sample: DQ-b1 scored w_b1 speed=9.0 q=10.0 buzzing=90.0 and w_b2 speed=10.0 q=10.0 buzzing=100.0. Each worker calibration answer took ~17-20s. Bottom-up stagger is WORKING - last night's deadlock is absent.
+
+GQs tier (02:15-): Both sides fired 1 GQ each. FIRST ATTEMPT FAILED: GQ R1 calibration timed out because DQ split-combine takes 60-100s (DQ orchestrates through workers, not a single Ollama call like 3-tier) and max_wait=60 (last night's patch) was too tight. Halted both GQs. Laptop committed GiantHoneyBee 6c0896c raising max_wait 60->300 in raja_bee.py:281 + giant_queen_client.py:268 + dwarf_queen_client.py:268. Rsynced to all 15 VMs. SECOND ATTEMPT IN PROGRESS with max_wait=300.
+
+Current state (02:45 UTC): GQ-b R1 DQ-b1 49.3s OK, R2 DQ-b1 90.6s OK, R3 DQ-b1 102.7s OK (all under 300s budget), but DQ-b2 R2 timed out even at 300s. Root cause: DQ-b2 is STUCK waiting for subtask Component 425 (child of Component 421, her R1 calibration question) - subtask assigned to Laptop worker_a3 member_id=14 which is IDLE (CPU 0, no ollama loaded, completed=12). Worker did the work, POST-result dropped (Network-unreachable), DB stuck at status=processing forever. Same orphan class as last night c242/c315/c318 but root cause is HOST NETWORK DROPS (Laptop host rebooted earlier, Flask/Werkzeug under sustained load). Laptop investigating (A) stub-close 421/425/471 with disclosure (B) network-drop investigation with possible waitress swap as the ROOT fix. Desktop approved both actions via ICQ #394. Awaiting Laptop execution.
