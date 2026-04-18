@@ -328,3 +328,24 @@ These experiments belong in the chapter about real-world testing of the hierarch
 - **Saved**: results/q2_antarctic_royal_honey.md.
 - **Q3 DENSE Provence Bee Farm** submitted as Job 4.
 
+
+### Q3 DENSE Provence Bee Farm — manually combined at 10:32
+
+- **Royal Honey** (27073 chars): manual concatenation of 5 level-0 component results via scripts/manual_combine_q3.py.
+- **Why manual**: Raja's _wait_for_components timed out at 3600s (Flask dev-server connection drops under sustained load prevented the final state from reaching her poll). All 5 level-0 components WERE completed in the DB, but Raja bailed before seeing the completion.
+- **Two stubs**: c315 (DQ-a1 side) and c318 (DQ-b1 side) orphaned after Ollama restart on worker_a3 + worker_b1; stubbed with honest disclosure strings so Raja could proceed.
+- **Saved**: results/q3_provence_royal_honey.md.
+
+### Dense batch complete — STOPPING FOR TODAY per Nir instruction
+
+MoE batch (Q4/Q5/Q6) deferred to next night.
+
+Documentation for MadHoney book:
+- PHASE3_NIGHT_LOG_LAPTOP.md (19 sections, Laptop view)
+- PHASE3_NIGHT_LOG_DESKTOP.md (16 sections, Desktop view)
+- PHASE3_NIGHT_EXPERIMENT_PLAN.md (night plan + contract)
+- results/q1_mars_royal_honey.md
+- results/q2_antarctic_royal_honey.md
+- results/q3_provence_royal_honey.md
+- EXPERIMENT_LOG.md (this file, running log)
+
