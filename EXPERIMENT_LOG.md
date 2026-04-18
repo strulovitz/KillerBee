@@ -245,3 +245,13 @@ These experiments belong in the chapter about real-world testing of the hierarch
 - Ollama on rajabee 554% CPU, 9.4 GB resident, qwen3:14b q4_K_M loaded.
 - Expected Raja calibration completion 20-40 min from now. Q1 Mars Colony follows.
 
+### Night heartbeat (03:49, Laptop)
+- Cluster still calibrating. Bottom-up progress visible:
+- DQ-a2 on Round 3/3 sending to worker_a3.
+- DQ-a1 on Round 2/3, received worker_a1 full answer.
+- GQ-a on Round 1/3 sending to DQ-a1.
+- Raja on Round 1/3 sending to GQ-b.
+- DB shows 5 of 15 members have fractions (all from pre-restart race run on Desktop side; stale).
+- 12 pending components out of 53 total. Calibration flowing.
+- No stalls, no crashes.
+
