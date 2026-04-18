@@ -255,3 +255,14 @@ These experiments belong in the chapter about real-world testing of the hierarch
 - 12 pending components out of 53 total. Calibration flowing.
 - No stalls, no crashes.
 
+### Night heartbeat (04:08, Laptop)
+- 12/15 bees calibrated with proportional fractions. Only Raja and her 2 GiantQueens remain uncalibrated.
+- 125 total components, 107 completed, 15 pending, 0 in_progress.
+- Desktop-side DwarfQueens done. Laptop-side DwarfQueens done.
+- Raja calibrating GQ-a and GQ-b on qwen3:14b (slow). Expected completion in 20-30 min.
+- Fraction splits (under each parent) sum to 1.0 cleanly:
+  - queen_dwarf_a1 0.531 + queen_dwarf_a2 0.469 = 1.0 under GQ-a.
+  - queen_dwarf_b1 0.490 + queen_dwarf_b2 0.510 = 1.0 under GQ-b.
+  - All 4 worker pairs sum to 1.0 under their DQ parents.
+- Still no stalls or crashes. Flask serving 200s, no retry-give-up events.
+
