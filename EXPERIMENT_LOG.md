@@ -231,3 +231,11 @@ These experiments belong in the chapter about real-world testing of the hierarch
 - rajabee log confirms: found 2 existing giant_queen subordinates, no unassigned, starting calibration with qwen3:14b.
 - Desktop pending restart of 7 bees.
 
+### Night heartbeat (03:44, Laptop)
+- All 15 bees alive after kill-and-restart with PYTHONUNBUFFERED=1. Desktop confirmed 7/7 running, Laptop 8/8 running.
+- Topology (commit 38dc332) applied clean, no duplicate rows.
+- Calibration in progress: Raja qwen3:14b generating Q1, GQ-a qwen3:8b generating Q1, DQ-a1 phi4-mini already past Q3 generation into Round 1.
+- One transient blip: dq_a1 hit brief Network unreachable retries during Laptop Flask restart window, moved past.
+- Ollama on rajabee 554% CPU, 9.4 GB resident, qwen3:14b q4_K_M loaded.
+- Expected Raja calibration completion 20-40 min from now. Q1 Mars Colony follows.
+
