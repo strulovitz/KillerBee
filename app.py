@@ -601,7 +601,7 @@ def api_available_subtasks(swarm_id):
 def api_available_components(swarm_id):
     """Return unclaimed non-subtask components for GiantQueens/DwarfQueens to claim."""
     swarm = Swarm.query.get_or_404(swarm_id)
-    job_ids = [j.id for j in SwarmJob.query.filter_by(swarm_id=swarm.id, status='processing').all()]
+    job_ids = [j.id for j in SwarmJob.query.filter_by(swarm_id=swarm.id).all()]
     components = JobComponent.query.filter(
         JobComponent.job_id.in_(job_ids),
         JobComponent.component_type == 'component',
