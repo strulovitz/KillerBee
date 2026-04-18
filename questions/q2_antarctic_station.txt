@@ -1,0 +1,8 @@
+Design a 40-person year-round Antarctic research station at the South Pole.
+Cover in equal depth:
+(a) structural engineering against minus 80 Celsius and katabatic winds,
+(b) medical infrastructure for 6-month darkness with no evacuation,
+(c) psychological screening and crew cohesion over a 12-month winter-over,
+(d) logistics chain for annual resupply via icebreaker plus LC-130,
+(e) environmental and treaty compliance under the Antarctic Treaty System.
+Conclude with an estimate of annual operating cost in 2026 US dollars.

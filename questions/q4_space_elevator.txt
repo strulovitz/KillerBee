@@ -1,0 +1,10 @@
+A space elevator cable reaches from the Earth's surface (6378 km)
+to geosynchronous orbit (35786 km). Compute and justify:
+(a) total cable length,
+(b) total mass assuming carbon nanotubes with density 1.3 g per cm cubed
+    and cable radius 1 cm,
+(c) mass of the counterweight beyond GEO needed to keep the cable under tension,
+(d) tensile strength required at the cable's strongest point, and how this
+    compares to the measured strength of carbon nanotubes today,
+(e) taper ratio from Earth end to GEO end.
+Conclude: is a space elevator physically feasible with 2026 materials?

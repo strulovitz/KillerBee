@@ -1,0 +1,7 @@
+Design a 6-person, 2-year Mars base. Cover in equal depth:
+(a) rocket propulsion tradeoffs for crew and cargo transport,
+(b) crew psychological selection and conflict management in isolation,
+(c) international treaty issues around off-world resource extraction,
+(d) bidirectional microbial contamination risk (Earth to Mars and Mars to Earth),
+(e) closed-loop food supply mathematics for 6 people for 730 days.
+Conclude with a go or no-go recommendation for a 2032 launch.

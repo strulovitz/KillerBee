@@ -1,0 +1,10 @@
+Compute the volume of a sphere of radius 10 cm in five independent ways,
+then cross-check they all agree to within one percent:
+(1) the classical formula V equals four thirds pi r cubed,
+(2) a triple integral in spherical coordinates with full derivation,
+(3) Archimedes' sphere-and-cylinder ratio,
+(4) Pappus's theorem applied to rotation of a semicircle,
+(5) a Monte Carlo estimate of volume by sampling a cube, including
+    reasoning about expected variance.
+Report each method's answer in cubic cm, then the agreement matrix,
+then flag any method that disagrees by more than one percent.

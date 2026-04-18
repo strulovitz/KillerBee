@@ -1,0 +1,8 @@
+Prove that for every prime p greater than 3, the number p squared minus 1
+is divisible by 24. Structure the proof as:
+(a) show p squared is congruent to 1 modulo 8,
+(b) show p squared is congruent to 1 modulo 3,
+(c) argue 8 and 3 are coprime so by the Chinese Remainder Theorem the
+    result is congruent to 1 modulo 24,
+(d) verify numerically for p equals 5, 7, 11, 13, 17, 19, 23,
+(e) compose (a) through (c) into the final proof with no gaps.
