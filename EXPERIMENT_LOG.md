@@ -298,3 +298,13 @@ These experiments belong in the chapter about real-world testing of the hierarch
 - Dense-batch processing is REAL and WORKING end-to-end. Workers answering real sub-parts of "Design a 6-person Mars base".
 - Waiting for last combine + Raja's final integrate to deliver Royal Honey.
 
+
+### Q1 DENSE Mars Colony — COMPLETE at 06:48
+
+- **Royal Honey delivered**: 3271 chars, coherent 5-part Mars base design.
+- **Job ID**: 2. Submitted 05:04, completed 06:48. Total wall clock: 1h44m.
+- **Structure**: Raja split into 6 components proportional to fractions (GQ-b 53% / GQ-a 47%). Each DQ sub-split to workers. 22 total components across tree.
+- **One combine hang**: DQ-a2 Ollama generation looped on phi4-mini:3.8b combine for Component 218. Restarted Ollama on 10.0.0.25 to unstick (51 min stall). The bee posted an error-result from the exception, job continued.
+- **Saved to**: `results/q1_mars_royal_honey.md`.
+- **Q2 DENSE Antarctic** now submitted as Job 3.
+
