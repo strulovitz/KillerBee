@@ -361,3 +361,10 @@ Documentation for MadHoney book:
 - Laptop 8 VMs were shut off at start — booted all 8 via `sudo virsh start rajabee/giantqueen-a/dwarfqueen-a1-a2/worker-a1-a4`. All came up with expected IPs 10.0.0.14/17/19/25/27/29/31/33 after ~90s DHCP settle.
 - Part A (rsync patched GiantHoneyBee 03766a3 to all 8 Laptop VMs): first pass returned rsync protocol error code 12 on all 8. Root cause: `rsync` package was not installed on any of the 8 Laptop VMs. Installed rsync on all 8 via passwordless sudo apt-get. Retried rsync, clean exit=0 on all 8. Verified `max_wait = 60` lands 3 times per VM (raja_bee.py + giant_queen_client.py + dwarf_queen_client.py = 3 hits). Laptop Part A DONE.
 - Desktop Part A (his 7 VMs) still running per his last ICQ; awaiting his done-signal before Part B bottom-up bring-up.
+
+### Pre-flight — Desktop side — 01:50 UTC
+
+- Desktop 7 VMs were also shut off at start. Booted all 7 via `sudo virsh start giantqueen-b/dwarfqueen-b1/dwarfqueen-b2/worker-b1/worker-b2/worker-b3/worker-b4`. All 7 DHCP leases landed at same IPs as 2026-04-18 table: GQ-b 10.0.0.6, DQ-b1 10.0.0.7, DQ-b2 10.0.0.9, workers-b1..b4 at 10.0.0.10/11/12/16. MAC-stable leases held across overnight shutdown.
+- Part A rsync patched GiantHoneyBee (commit 03766a3) from Desktop host to all 7 Desktop VMs in parallel. rsync package already present on Desktop VMs (unlike Laptop — Desktop VMs were cloned from giantqueen-b which had rsync pre-installed). All 7 rsync exit=0.
+- Verified `max_wait = 60` landed 3 times per VM (raja_bee.py + giant_queen_client.py + dwarf_queen_client.py) on all 7 Desktop VMs.
+- Desktop Part A DONE. Both sides Part A complete. Ready to coordinate Part B bottom-up bring-up.
