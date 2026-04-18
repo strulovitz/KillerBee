@@ -199,6 +199,7 @@ Comprehensive answer covering: propulsion concepts (light sails, nuclear pulse, 
 
 - `00:38 UTC` **desktop-claude**: 7 Desktop bees alive, giantqueen-b calibrating. Topology helper confirmed working (GQ-b sees 2 DwarfQueens, no claim race). Waiting for Raja cluster-wide calibration.
 - `02:38 UTC` **desktop-claude** (backfill): missed 00:53 / 01:08 / 01:23 / 01:38 / 01:53 / 02:08 / 02:23 heartbeats — apologies. Status now: all 7 Desktop bees still alive. GQ-b stuck 2065s on Component 55 (orphaned sub-components from pre-calibration Raja test — DQs never picked them up, so GQ-b waits until its 3600s max_wait timeout). DQ-b1 idle. DQ-b2 completing Component 140 (1 worker subtask done in 290s). DQ-b2's worker pipeline is functional. GQ-b blocked means Raja Q1 Mars split will wait for GQ-b to free. Will report GQ-b timeout and behavior when it happens.
+- `03:55 UTC` **desktop-claude**: Q1 Mars completed (Laptop-subtree-only, 1h44m, per Laptop report). Desktop GQ-b contributed zero — she was stuck on Component 55 (timed out at 3600s) then immediately on Component 65 (another orphan). Surgical restart applied per plan Section 11 "stop cleanly, fix, restart, note in log": rsynced patched GiantHoneyBee 03766a3 (max_wait 60 for calibration) to 10.0.0.6 and 10.0.0.7 only; killed + restarted GQ-b and DQ-b1 (new PIDs 71599 and 40496); DQ-b2 and workers kept running untouched. Goal: Desktop subtree functional for Q2 Antarctic.
 
 ---
 
