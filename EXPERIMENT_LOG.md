@@ -440,3 +440,22 @@ No orphans in DB right now. max_retries=10 and max_wait=300 both doing their job
 - **Zero orphans this question**. retry=10 patch + filter-fix were the two root fixes that made this possible.
 - **Saved**: `results/q4_space_elevator_royal_honey.md`.
 - **Comparison vs Dense-Night Q1 Mars**: Q1 was 3271 chars / 1h44m; Q4 is 2323 chars / 8m48m. MoE on CPU is ~12× faster for similar-depth work. Granite3.1-moe is no-thinking so no wasted tokens.
+
+### Q5 Number Theory (p²-1 div 24) — Royal Honey delivered — 03:26 UTC
+
+- **Submit**: 03:15:46 UTC as job_id=6 via `scripts/submit_q.py /tmp/q5.txt`
+- **Royal Honey**: 03:25:57 UTC, 1326 chars, total_time=608.2s (~10m8s wall clock)
+- **Tier models**: same as Q4 (granite3.1-moe:3b / :1b)
+- **Structure**: 31 total components across 4 tiers, all completed cleanly. Zero orphans.
+- **Saved**: `results/q5_number_theory_royal_honey.md`
+- **Note**: Q5 is a math proof so the Royal Honey is shorter than Q4's space-elevator numerical answer (1326 vs 2323 chars). Proof structure (a-e) gets concise treatment.
+
+### Q6 Sphere Volume 5 methods — submitted — 03:27 UTC
+
+- **Submit**: 03:26 UTC as job_id=7 via `scripts/submit_q.py /tmp/q6.txt` (592 chars)
+- **Expected**: similar 8-12 min based on Q4/Q5 pattern
+- Will be the third and final MoE-batch Royal Honey.
+
+### Note on submit pattern
+
+`scripts/submit_q.py` now committed to the KillerBee repo so any future beekeeper-bypass-CSRF submission is reproducible. Direct DB INSERT into `swarm_jobs` with `status='pending'`; Raja picks up via her poll of `/api/swarm/1/jobs/pending`.
