@@ -430,3 +430,13 @@ Raja calibration completed with REAL data all 6 rounds (no timeouts under new ma
 Raja entered main_loop. Q4 Space Elevator submitted as job_id=5 (581 chars) via direct DB INSERT per Laptop (bypassing the CSRF web form). Desktop subtree at 03:15 UTC: GQ-b processing Component 555, DQ-b1 on 560, DQ-b2 on 559, workers polling. Cascade is flowing.
 
 No orphans in DB right now. max_retries=10 and max_wait=300 both doing their job - RETRY markers visible in Raja's log but all self-recover within 1-2 attempts.
+
+### Q4 Space Elevator — Royal Honey delivered — 03:06 UTC
+
+- **Submit**: 02:57:18 UTC as job_id=5 via `scripts/submit_q.py /tmp/q4.txt`
+- **Royal Honey**: 03:06:07 UTC, 2323 chars, total_time=528.47s (~8m48s wall clock)
+- **Tier models**: Raja/GQ/DQ granite3.1-moe:3b, Workers granite3.1-moe:1b
+- **Structure**: Raja split Q4 into 6 level-0 components (555-560). Topology race — only 2 of 6 claimed by GQs (555 GQ-b, 558 GQ-a), other 4 grabbed by DQs directly (556 DQ-a2, 557 DQ-a1, 559 DQ-b2, 560 DQ-b1) because both tiers poll `api_available_components` and DQs won the race. DQs then split to workers (30 components total across the full cascade).
+- **Zero orphans this question**. retry=10 patch + filter-fix were the two root fixes that made this possible.
+- **Saved**: `results/q4_space_elevator_royal_honey.md`.
+- **Comparison vs Dense-Night Q1 Mars**: Q1 was 3271 chars / 1h44m; Q4 is 2323 chars / 8m48m. MoE on CPU is ~12× faster for similar-depth work. Granite3.1-moe is no-thinking so no wasted tokens.
