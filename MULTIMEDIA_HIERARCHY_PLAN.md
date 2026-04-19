@@ -241,7 +241,9 @@ No automatic cleanup of abandoned jobs — separate operational concern, out of 
 
 ## 13. KillerBee server changes
 
-### 13a. Database migration (Alembic)
+### 13a. Database migration
+
+KillerBee has no Alembic / Flask-Migrate setup (verified 2026-04-19). Use a one-off Python migration script in `KillerBee/scripts/migrate_multimedia.py` that connects to `instance/killerbee.db` via SQLite and runs raw `ALTER TABLE ... ADD COLUMN` statements. SQLite supports adding nullable columns cleanly. The script should be idempotent — check `PRAGMA table_info(...)` before adding, so re-running is safe.
 
 `swarm_jobs` — add:
 - `media_type` (String(16), nullable) — `'text'` | `'photo'` | `'audio'` | `'video'`.
