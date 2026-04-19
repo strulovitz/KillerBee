@@ -190,7 +190,7 @@ Self-describing at every level. Path tells the complete lineage; no DB lookup ne
 
 ```
 KillerBee/uploads/
-  photos/
+  photo/
     swarmjob_<id>/
       original.jpg
       cut_by_raja/
@@ -209,7 +209,7 @@ KillerBee/uploads/
           grid_a_sec_1.mp3 ...
           cut_by_dq_grid_a_sec_1/
             grid_a_sec_1.mp3 ...                (Worker slices, leaves)
-  videos/
+  video/
     swarmjob_<id>/
       original.mp4
       original_audio.mp3                        (ffmpeg-extracted audio track)
@@ -413,7 +413,7 @@ Plan is complete when all of the following are green:
 6. Photo Royal Honey produced end-to-end for `65291268.JPG`.
 7. Every level of the tree logged a vision-model call on its downsampled region.
 8. Every non-leaf level logged a text-integrator call.
-9. `uploads/photos/swarmjob_<id>/` deleted after `complete_job`.
+9. `uploads/photo/swarmjob_<id>/` deleted after `complete_job`.
 
 ### 16c. Audio
 10. Audio Royal Honey produced end-to-end for the 3-min Prince-of-Persia clip.
