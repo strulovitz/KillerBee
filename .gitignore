@@ -4,3 +4,4 @@ instance/
 *.log
 killerbee.db
 killerbee-venv/
+uploads/

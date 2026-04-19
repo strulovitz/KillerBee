@@ -152,6 +152,10 @@ class SwarmJob(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     completed_at = db.Column(db.DateTime, nullable=True)
 
+    # Multimedia fields — all nullable; None means text-only job
+    media_type = db.Column(db.String(16), nullable=True)   # 'photo' | 'audio' | 'video'
+    media_url  = db.Column(db.String(512), nullable=True)  # server-relative path to original file
+
     # Track which components went to which members
     components = db.relationship('JobComponent', backref='job', lazy=True)
 
@@ -177,6 +181,9 @@ class JobComponent(db.Model):
     level = db.Column(db.Integer, default=0)  # 0=from RajaBee, 1=from GiantQueen, 2=from DwarfQueen
     component_type = db.Column(db.String(20), default='component')  # 'component' or 'subtask'
     processing_time = db.Column(db.Float, nullable=True)
+    # Multimedia piece paths — server-relative under KillerBee/uploads/
+    piece_path       = db.Column(db.String(512), nullable=True)  # primary piece (photo/audio/video visual)
+    audio_piece_path = db.Column(db.String(512), nullable=True)  # video audio slice only; null for photo/audio/text
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     member = db.relationship('SwarmMember', backref='components')

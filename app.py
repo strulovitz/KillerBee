@@ -9,12 +9,15 @@ Roles: 'raja', 'giant_queen', 'dwarf_queen', 'worker', 'beekeeper'.
 
 import os
 import base64
+import shutil
+import subprocess
 import time
 from datetime import datetime, timezone
-from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, send_from_directory, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 from functools import wraps
+from werkzeug.utils import secure_filename, safe_join
 from models import db, User, Swarm, SwarmMember, SwarmJob, JobComponent
 from forms import RegisterForm, LoginForm, CreateSwarmForm, JoinSwarmForm, SubmitJobForm
 
@@ -22,6 +25,11 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('KILLERBEE_SECRET_KEY', 'dev-only-secret-key-not-for-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///killerbee.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB cap for video uploads
+
+# Multimedia uploads root — sub-folders: photo/, audio/, video/
+UPLOADS_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+os.makedirs(UPLOADS_ROOT, exist_ok=True)
 
 db.init_app(app)
 csrf = CSRFProtect(app)
@@ -203,12 +211,58 @@ def submit_job(swarm_id):
     swarm = Swarm.query.get_or_404(swarm_id)
     form = SubmitJobForm()
     if form.validate_on_submit():
+        media_type = form.media_type.data  # 'text' | 'photo' | 'audio' | 'video'
+
         job = SwarmJob(
             swarm_id=swarm.id,
             beekeeper_id=current_user.id,
             task=form.task.data,
+            media_type=media_type if media_type != 'text' else None,
         )
         db.session.add(job)
+        db.session.flush()  # get job.id before commit
+
+        if media_type != 'text' and form.media_file.data:
+            uploaded = form.media_file.data
+            original_filename = secure_filename(uploaded.filename)
+            ext = os.path.splitext(original_filename)[1].lower()  # e.g. '.jpg'
+            if not ext:
+                ext = {'photo': '.jpg', 'audio': '.mp3', 'video': '.mp4'}[media_type]
+
+            # Save to uploads/<media_type>/swarmjob_<id>/original<ext>
+            job_folder = os.path.join(UPLOADS_ROOT, media_type, f'swarmjob_{job.id}')
+            os.makedirs(job_folder, exist_ok=True)
+            original_path = os.path.join(job_folder, f'original{ext}')
+            uploaded.save(original_path)
+
+            # Server-relative URL (used by GiantHoneyBee clients to fetch)
+            media_url = f'{media_type}/swarmjob_{job.id}/original{ext}'
+            job.media_url = media_url
+
+            # For video: extract audio track via ffmpeg
+            if media_type == 'video':
+                audio_path = os.path.join(job_folder, 'original_audio.mp3')
+                try:
+                    result = subprocess.run(
+                        ['ffmpeg', '-y', '-i', original_path,
+                         '-vn', '-acodec', 'libmp3lame', audio_path],
+                        capture_output=True, timeout=120,
+                    )
+                    if result.returncode != 0:
+                        app.logger.warning(
+                            f'ffmpeg audio extract failed for job {job.id}: '
+                            f'{result.stderr.decode(errors="replace")}'
+                        )
+                except FileNotFoundError:
+                    # TODO: make ffmpeg a hard requirement before production
+                    app.logger.warning(
+                        f'ffmpeg not found — skipping audio track extraction for job {job.id}'
+                    )
+                except subprocess.TimeoutExpired:
+                    app.logger.warning(
+                        f'ffmpeg audio extract timed out for job {job.id}'
+                    )
+
         db.session.commit()
         flash(f'Job submitted to Swarm "{swarm.name}"!', 'success')
         return redirect(url_for('view_job', job_id=job.id))
@@ -426,6 +480,17 @@ def api_job_result(job_id):
     swarm.total_jobs_completed += 1
 
     db.session.commit()
+
+    # Cleanup uploaded media files now that the job is complete (Section 12)
+    if job.media_type:
+        media_folder = os.path.join(UPLOADS_ROOT, job.media_type, f'swarmjob_{job.id}')
+        if os.path.isdir(media_folder):
+            try:
+                shutil.rmtree(media_folder)
+                app.logger.info(f'Cleaned up media folder: {media_folder}')
+            except Exception as exc:
+                app.logger.warning(f'Failed to clean up {media_folder}: {exc}')
+
     return jsonify({'ok': True, 'job_id': job.id})
 
 
@@ -932,6 +997,97 @@ def api_member_fractions(member_id):
             'buzzing': s.buzzing,
             'capacity': s.capacity,
         } for s in subs]
+    })
+
+
+# ── Multimedia file serving ──────────────────────────────────────────────────
+
+@app.route('/uploads/<path:filepath>')
+def serve_upload(filepath):
+    """Serve uploaded multimedia files to GiantHoneyBee clients fetching over HTTP.
+    TODO (hardening): add auth for non-localhost callers before production.
+    Security: safe_join blocks directory traversal; 404 on missing files.
+    No autoindex — only explicit paths are served.
+    """
+    # Block any traversal attempts that survive routing
+    if '..' in filepath or filepath.startswith('/'):
+        abort(404)
+    try:
+        safe_path = safe_join(UPLOADS_ROOT, filepath)
+    except Exception:
+        abort(404)
+
+    if not os.path.isfile(safe_path):
+        abort(404)
+
+    directory = os.path.dirname(safe_path)
+    filename = os.path.basename(safe_path)
+    return send_from_directory(directory, filename, as_attachment=False)
+
+
+# ── Multimedia piece upload API ───────────────────────────────────────────────
+
+@app.route('/api/component/<int:component_id>/upload-piece', methods=['POST'])
+@csrf.exempt
+def api_upload_piece(component_id):
+    """GiantHoneyBee tier clients upload a cut piece (tile / audio slice / video clip).
+
+    Multipart form fields:
+      piece_path       (str)  — server-relative path under uploads/, e.g.
+                                 'photo/swarmjob_42/cut_by_raja/grid_a_q1.jpg'
+      piece            (file) — binary content of the piece
+      audio_piece_path (str)  — optional; for video pieces only
+      audio_piece      (file) — optional; for video pieces only
+
+    Auth: Bearer token (same pattern as other tier-client endpoints).
+    Returns: {ok: true, piece_path: ..., audio_piece_path: ...}
+    """
+    # Auth: require a valid Bearer token (same helper used by other API endpoints)
+    api_user = get_api_user()
+    if api_user is None:
+        return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
+
+    comp = JobComponent.query.get_or_404(component_id)
+
+    piece_path_rel = request.form.get('piece_path')
+    if not piece_path_rel:
+        return jsonify({'ok': False, 'error': 'piece_path field required'}), 400
+    if 'piece' not in request.files:
+        return jsonify({'ok': False, 'error': 'piece file required'}), 400
+
+    # Validate and write primary piece
+    if '..' in piece_path_rel or piece_path_rel.startswith('/'):
+        return jsonify({'ok': False, 'error': 'Invalid piece_path'}), 400
+    try:
+        abs_piece_path = safe_join(UPLOADS_ROOT, piece_path_rel)
+    except Exception:
+        return jsonify({'ok': False, 'error': 'Invalid piece_path'}), 400
+
+    os.makedirs(os.path.dirname(abs_piece_path), exist_ok=True)
+    request.files['piece'].save(abs_piece_path)
+    comp.piece_path = piece_path_rel
+
+    # Optional audio piece (video components)
+    audio_piece_path_rel = request.form.get('audio_piece_path')
+    if audio_piece_path_rel and 'audio_piece' in request.files:
+        if '..' in audio_piece_path_rel or audio_piece_path_rel.startswith('/'):
+            return jsonify({'ok': False, 'error': 'Invalid audio_piece_path'}), 400
+        try:
+            abs_audio_path = safe_join(UPLOADS_ROOT, audio_piece_path_rel)
+        except Exception:
+            return jsonify({'ok': False, 'error': 'Invalid audio_piece_path'}), 400
+
+        os.makedirs(os.path.dirname(abs_audio_path), exist_ok=True)
+        request.files['audio_piece'].save(abs_audio_path)
+        comp.audio_piece_path = audio_piece_path_rel
+
+    db.session.commit()
+
+    return jsonify({
+        'ok': True,
+        'component_id': comp.id,
+        'piece_path': comp.piece_path,
+        'audio_piece_path': comp.audio_piece_path,
     })
 
 
