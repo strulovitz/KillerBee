@@ -709,16 +709,27 @@ def api_component_result(component_id):
 @app.route('/api/swarm/<int:swarm_id>/subtasks/available', methods=['GET'])
 @csrf.exempt
 def api_available_subtasks(swarm_id):
-    """Return unclaimed subtask components for Workers to claim."""
+    """Return unclaimed subtask components for Workers to claim.
+
+    By default, components belonging to calibration SwarmJobs
+    (status='calibration') are excluded so Workers are not sidetracked
+    by the Buzzing performance cascade.
+    Pass ?include_calibration=1 to include them (used by the Buzzing cascade).
+    """
     swarm = Swarm.query.get_or_404(swarm_id)
-    # Get all jobs in this swarm, then find unclaimed subtasks
-    job_ids = [j.id for j in SwarmJob.query.filter_by(swarm_id=swarm.id).all()]
+    include_calibration = request.args.get('include_calibration', '0') == '1'
+
+    # Filter out calibration jobs unless explicitly requested
+    real_job_ids = [
+        j.id for j in SwarmJob.query.filter_by(swarm_id=swarm.id).all()
+        if include_calibration or j.status != 'calibration'
+    ]
     subtasks = JobComponent.query.filter(
-        JobComponent.job_id.in_(job_ids),
+        JobComponent.job_id.in_(real_job_ids),
         JobComponent.component_type == 'subtask',
         JobComponent.member_id.is_(None),
         JobComponent.status == 'pending',
-    ).all() if job_ids else []
+    ).all() if real_job_ids else []
 
     return jsonify({
         'swarm_id': swarm.id,
@@ -748,19 +759,28 @@ def api_available_components(swarm_id):
       Level 2: components produced by a DwarfQueen from her level-1 piece.
                Consumed by Workers (leaf level, no further cuts) — pass ?level=2.
 
-    Optional query parameter:
-      ?level=N  — filter to components whose JobComponent.level == N.
-                  If omitted, all levels are returned (backward-compatible).
+    Optional query parameters:
+      ?level=N              — filter to components whose JobComponent.level == N.
+                              If omitted, all levels are returned (backward-compatible).
+      ?include_calibration=1 — include components from calibration SwarmJobs
+                              (status='calibration'). Default: exclude them so real
+                              work is never blocked by the Buzzing cascade.
     """
     swarm = Swarm.query.get_or_404(swarm_id)
-    job_ids = [j.id for j in SwarmJob.query.filter_by(swarm_id=swarm.id).all()]
+    include_calibration = request.args.get('include_calibration', '0') == '1'
+
+    # Exclude calibration jobs by default so real-work tiers are not sidetracked
+    real_job_ids = [
+        j.id for j in SwarmJob.query.filter_by(swarm_id=swarm.id).all()
+        if include_calibration or j.status != 'calibration'
+    ]
 
     query = JobComponent.query.filter(
-        JobComponent.job_id.in_(job_ids),
+        JobComponent.job_id.in_(real_job_ids),
         JobComponent.component_type == 'component',
         JobComponent.member_id.is_(None),
         JobComponent.status == 'pending',
-    ) if job_ids else None
+    ) if real_job_ids else None
 
     # Optional level filter — backward-compat: omitting ?level returns all levels
     level_param = request.args.get('level')
