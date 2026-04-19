@@ -459,3 +459,31 @@ No orphans in DB right now. max_retries=10 and max_wait=300 both doing their job
 ### Note on submit pattern
 
 `scripts/submit_q.py` now committed to the KillerBee repo so any future beekeeper-bypass-CSRF submission is reproducible. Direct DB INSERT into `swarm_jobs` with `status='pending'`; Raja picks up via her poll of `/api/swarm/1/jobs/pending`.
+
+### Q6 Sphere Volume — Royal Honey delivered — 03:37 UTC
+
+- **Submit**: 03:26:40 UTC as job_id=7 via `scripts/submit_q.py /tmp/q6.txt`
+- **Royal Honey**: 03:37:52 UTC, 2657 chars, total_time=502.34s (~8m22s wall clock)
+- **Tier models**: same as Q4/Q5 (granite3.1-moe:3b / :1b)
+- **Structure**: 32 total components across 4 tiers, all completed cleanly. Zero orphans.
+- **Saved**: `results/q6_sphere_volume_royal_honey.md`
+
+### MoE batch WRAP — 2026-04-19 Night 2 Summary
+
+| Question | Chars | Wall clock | Orphans |
+|---|---|---|---|
+| Q4 Space Elevator | 2323 | 8m48s | 0 |
+| Q5 Number Theory (p²-1 div 24) | 1326 | 10m8s | 0 |
+| Q6 Sphere Volume (5 methods) | 2657 | 8m22s | 0 |
+| **TOTAL** | **6306 chars** | **27m18s** | **0 stubs on Q4/Q5/Q6** |
+
+Compare Dense Night 1 (last night): Q1/Q2/Q3 total ~5h28m for 33702 chars (27073 of which was Q3 raw-concat because Raja's poll timed out on Werkzeug). **MoE is ~12× faster, no thinking-token overhead, no runaway generations, all three delivered clean.**
+
+Three root fixes landed mid-night made this possible:
+1. **GiantHoneyBee `6c0896c`** — `max_wait` 60 → 300 (4-tier calibration cascade measured 60-143s per call, old 60s was too tight).
+2. **GiantHoneyBee `67e1c95`** — `max_retries` 3 → 10 (90s cumulative recovery window vs old 6s; covers transient VM-kernel Network-is-unreachable blips).
+3. **KillerBee `322c7b4`** — `api_available_components` filter bug (removed asymmetric `status='processing'` filter to match `api_available_subtasks`; unblocked calibration cascade for 4-tier).
+
+Full Laptop-subtree night log: `PHASE3_MOE_NIGHT_LOG_LAPTOP.md` (19 sections). Desktop companion log pending.
+
+Cluster left running. Bees left running. Next session can resume from main_loop state. Good night 🍯.
