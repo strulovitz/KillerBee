@@ -422,7 +422,24 @@ def api_pending_jobs(swarm_id):
             'task': j.task,
             'status': j.status,
             'created_at': j.created_at.isoformat(),
+            'media_type': j.media_type,
+            'media_url': j.media_url,
         } for j in jobs]
+    })
+
+
+@app.route('/api/job/<int:job_id>/status', methods=['GET'])
+@csrf.exempt
+def api_job_status(job_id):
+    """Return status and media fields of a single job."""
+    job = SwarmJob.query.get_or_404(job_id)
+    return jsonify({
+        'id': job.id,
+        'task': job.task,
+        'status': job.status,
+        'media_type': job.media_type,
+        'media_url': job.media_url,
+        'result': job.result,
     })
 
 
@@ -515,6 +532,8 @@ def api_member_work(member_id):
             'component_type': c.component_type,
             'parent_id': c.parent_id,
             'status': c.status,
+            'piece_path': c.piece_path,
+            'media_type': c.job.media_type,
         } for c in components]
     })
 
@@ -575,6 +594,59 @@ def api_component_split(component_id):
         'parent_id': parent.id,
         'children': [{'id': c.id, 'task': c.task_description, 'level': c.level, 'component_type': c.component_type} for c in created]
     })
+
+
+@app.route('/api/component/create-child', methods=['POST'])
+@csrf.exempt
+def api_create_child_component():
+    """Create a single child component with an explicit piece_path.
+
+    Used by multimedia tier clients (photo/audio/video) that need to set
+    piece_path at creation time (before uploading bytes via upload-piece).
+
+    Auth: Bearer token required.
+    Body JSON: {
+        parent_id:        int,          # parent component id (or null for top-level)
+        job_id:           int,
+        task_description: str,
+        level:            int,
+        piece_path:       str | null,   # server-relative path under uploads/
+        component_type:   str,          # 'component' | 'subtask' (default 'component')
+    }
+    Returns: {ok: true, component_id: int}
+    """
+    api_user = get_api_user()
+    if api_user is None:
+        return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'ok': False, 'error': 'JSON body required'}), 400
+
+    job_id = data.get('job_id')
+    if not job_id:
+        return jsonify({'ok': False, 'error': 'job_id required'}), 400
+
+    job = SwarmJob.query.get_or_404(job_id)
+
+    piece_path = data.get('piece_path')
+    if piece_path and ('..' in piece_path or piece_path.startswith('/')):
+        return jsonify({'ok': False, 'error': 'Invalid piece_path'}), 400
+
+    comp = JobComponent(
+        job_id=job.id,
+        member_id=None,  # starts unclaimed
+        parent_id=data.get('parent_id'),
+        task_description=data.get('task_description', ''),
+        level=data.get('level', 0),
+        component_type=data.get('component_type', 'component'),
+        piece_path=piece_path,
+        status='pending',
+    )
+    db.session.add(comp)
+    db.session.commit()
+
+    return jsonify({'ok': True, 'component_id': comp.id})
 
 
 @app.route('/api/component/<int:component_id>/children', methods=['GET'])
@@ -657,6 +729,8 @@ def api_available_subtasks(swarm_id):
             'original_task': s.job.task,
             'level': s.level,
             'parent_id': s.parent_id,
+            'piece_path': s.piece_path,
+            'media_type': s.job.media_type,
         } for s in subtasks]
     })
 
@@ -683,6 +757,8 @@ def api_available_components(swarm_id):
             'original_task': c.job.task,
             'level': c.level,
             'parent_id': c.parent_id,
+            'piece_path': c.piece_path,
+            'media_type': c.job.media_type,
         } for c in components]
     })
 
