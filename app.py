@@ -738,15 +738,40 @@ def api_available_subtasks(swarm_id):
 @app.route('/api/swarm/<int:swarm_id>/components/available', methods=['GET'])
 @csrf.exempt
 def api_available_components(swarm_id):
-    """Return unclaimed non-subtask components for GiantQueens/DwarfQueens to claim."""
+    """Return unclaimed non-subtask components for GiantQueens/DwarfQueens to claim.
+
+    Level convention (matches what photo_tier.py writes when it creates children):
+      Level 0: components produced by RajaBee from the original media.
+               Consumed by GiantQueens — pass ?level=0.
+      Level 1: components produced by a GiantQueen from her level-0 piece.
+               Consumed by DwarfQueens — pass ?level=1.
+      Level 2: components produced by a DwarfQueen from her level-1 piece.
+               Consumed by Workers (leaf level, no further cuts) — pass ?level=2.
+
+    Optional query parameter:
+      ?level=N  — filter to components whose JobComponent.level == N.
+                  If omitted, all levels are returned (backward-compatible).
+    """
     swarm = Swarm.query.get_or_404(swarm_id)
     job_ids = [j.id for j in SwarmJob.query.filter_by(swarm_id=swarm.id).all()]
-    components = JobComponent.query.filter(
+
+    query = JobComponent.query.filter(
         JobComponent.job_id.in_(job_ids),
         JobComponent.component_type == 'component',
         JobComponent.member_id.is_(None),
         JobComponent.status == 'pending',
-    ).all() if job_ids else []
+    ) if job_ids else None
+
+    # Optional level filter — backward-compat: omitting ?level returns all levels
+    level_param = request.args.get('level')
+    if query is not None and level_param is not None:
+        try:
+            level_int = int(level_param)
+            query = query.filter(JobComponent.level == level_int)
+        except ValueError:
+            return jsonify({'error': 'level must be an integer'}), 400
+
+    components = query.all() if query is not None else []
 
     return jsonify({
         'swarm_id': swarm.id,
