@@ -533,6 +533,7 @@ def api_member_work(member_id):
             'parent_id': c.parent_id,
             'status': c.status,
             'piece_path': c.piece_path,
+            'audio_piece_path': c.audio_piece_path,
             'media_type': c.job.media_type,
         } for c in components]
     })
@@ -666,6 +667,8 @@ def api_component_children(component_id):
             'component_type': c.component_type,
             'member_id': c.member_id,
             'processing_time': c.processing_time,
+            'piece_path': c.piece_path,
+            'audio_piece_path': c.audio_piece_path,
         } for c in children]
     })
 
@@ -741,6 +744,7 @@ def api_available_subtasks(swarm_id):
             'level': s.level,
             'parent_id': s.parent_id,
             'piece_path': s.piece_path,
+            'audio_piece_path': s.audio_piece_path,
             'media_type': s.job.media_type,
         } for s in subtasks]
     })
@@ -803,6 +807,7 @@ def api_available_components(swarm_id):
             'level': c.level,
             'parent_id': c.parent_id,
             'piece_path': c.piece_path,
+            'audio_piece_path': c.audio_piece_path,
             'media_type': c.job.media_type,
         } for c in components]
     })
@@ -1186,6 +1191,29 @@ def api_submit_multimedia_job():
 
         media_url = f'{media_type}/swarmjob_{job.id}/original{ext}'
         job.media_url = media_url
+
+        # For video: extract audio track via ffmpeg (same as web form submit_job)
+        if media_type == 'video':
+            audio_path = os.path.join(job_folder, 'original_audio.mp3')
+            try:
+                result = subprocess.run(
+                    ['ffmpeg', '-y', '-i', original_path,
+                     '-vn', '-acodec', 'libmp3lame', audio_path],
+                    capture_output=True, timeout=120,
+                )
+                if result.returncode != 0:
+                    app.logger.warning(
+                        f'ffmpeg audio extract failed for job {job.id}: '
+                        f'{result.stderr.decode(errors="replace")}'
+                    )
+            except FileNotFoundError:
+                app.logger.warning(
+                    f'ffmpeg not found — skipping audio extraction for job {job.id}'
+                )
+            except subprocess.TimeoutExpired:
+                app.logger.warning(
+                    f'ffmpeg audio extract timed out for job {job.id}'
+                )
 
     db.session.commit()
     app.logger.info(f'API submitted job {job.id} (media_type={media_type}) by {api_user.username}')
