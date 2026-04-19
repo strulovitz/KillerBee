@@ -516,11 +516,33 @@ def api_job_result(job_id):
 @app.route('/api/member/<int:member_id>/work', methods=['GET'])
 @csrf.exempt
 def api_member_work(member_id):
-    """Return components assigned to this member that need processing."""
+    """Return components assigned to this member that need processing.
+
+    By default, components belonging to calibration SwarmJobs
+    (status='calibration') are excluded so tier clients processing real
+    media work are not sidetracked by the Buzzing performance cascade.
+    Pass ?include_calibration=1 to include them (used by tier clients that
+    legitimately process calibration tasks assigned by their boss).
+    """
     member = SwarmMember.query.get_or_404(member_id)
-    components = JobComponent.query.filter_by(
-        member_id=member.id, status='pending'
-    ).all()
+    include_calibration = request.args.get('include_calibration', '0') == '1'
+
+    # Exclude calibration jobs by default so real-work tiers are not sidetracked
+    swarm = Swarm.query.get(member.swarm_id)
+    real_job_ids = [
+        j.id for j in SwarmJob.query.filter_by(swarm_id=swarm.id).all()
+        if include_calibration or j.status != 'calibration'
+    ] if swarm else []
+
+    if real_job_ids:
+        components = JobComponent.query.filter(
+            JobComponent.member_id == member.id,
+            JobComponent.status == 'pending',
+            JobComponent.job_id.in_(real_job_ids),
+        ).all()
+    else:
+        components = []
+
     return jsonify({
         'member_id': member.id,
         'components': [{
