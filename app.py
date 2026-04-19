@@ -1076,6 +1076,77 @@ def api_member_fractions(member_id):
     })
 
 
+# ── Multimedia job submit API (CSRF-free, Bearer auth) ──────────────────────
+
+@app.route('/api/submit-multimedia-job', methods=['POST'])
+@csrf.exempt
+def api_submit_multimedia_job():
+    """Submit a job (text or multimedia) via Bearer-authenticated multipart POST.
+
+    Used by smoke_submit_photo.py and any API client that can't do CSRF.
+
+    Form fields:
+      task       (str)  — The task / question
+      swarm_id   (int)  — Target swarm id
+      media_type (str)  — 'text' | 'photo' | 'audio' | 'video'
+      media_file (file) — Optional; required when media_type != 'text'
+
+    Auth: Bearer token in Authorization header.
+    Returns: {ok: true, job_id: int}
+    """
+    api_user = get_api_user()
+    if api_user is None:
+        return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
+
+    task = request.form.get('task', '').strip()
+    if not task:
+        return jsonify({'ok': False, 'error': 'task required'}), 400
+
+    swarm_id = request.form.get('swarm_id')
+    if not swarm_id:
+        return jsonify({'ok': False, 'error': 'swarm_id required'}), 400
+    try:
+        swarm_id = int(swarm_id)
+    except ValueError:
+        return jsonify({'ok': False, 'error': 'swarm_id must be an integer'}), 400
+
+    swarm = Swarm.query.get(swarm_id)
+    if swarm is None:
+        return jsonify({'ok': False, 'error': f'Swarm {swarm_id} not found'}), 404
+
+    media_type = request.form.get('media_type', 'text')
+    if media_type not in ('text', 'photo', 'audio', 'video'):
+        return jsonify({'ok': False, 'error': f'Invalid media_type: {media_type!r}'}), 400
+
+    job = SwarmJob(
+        swarm_id=swarm.id,
+        beekeeper_id=api_user.id,
+        task=task,
+        media_type=media_type if media_type != 'text' else None,
+    )
+    db.session.add(job)
+    db.session.flush()  # get job.id before commit
+
+    if media_type != 'text' and 'media_file' in request.files:
+        uploaded = request.files['media_file']
+        original_filename = secure_filename(uploaded.filename or 'upload')
+        ext = os.path.splitext(original_filename)[1].lower()
+        if not ext:
+            ext = {'photo': '.jpg', 'audio': '.mp3', 'video': '.mp4'}[media_type]
+
+        job_folder = os.path.join(UPLOADS_ROOT, media_type, f'swarmjob_{job.id}')
+        os.makedirs(job_folder, exist_ok=True)
+        original_path = os.path.join(job_folder, f'original{ext}')
+        uploaded.save(original_path)
+
+        media_url = f'{media_type}/swarmjob_{job.id}/original{ext}'
+        job.media_url = media_url
+
+    db.session.commit()
+    app.logger.info(f'API submitted job {job.id} (media_type={media_type}) by {api_user.username}')
+    return jsonify({'ok': True, 'job_id': job.id})
+
+
 # ── Multimedia file serving ──────────────────────────────────────────────────
 
 @app.route('/uploads/<path:filepath>')
